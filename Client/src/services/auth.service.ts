@@ -1,302 +1,175 @@
-import { AUTH_ENDPOINTS, REQUEST_TIMEOUT } from "../config/api.config";
+import { apiPost, apiGet } from '../utils/api.utils';
+import { AUTH_ENDPOINTS } from '../config/api.config';
+import { logout as clearAuthTokens, getRefreshToken } from '../utils/auth.utils';
+import type { ApiResponse } from '../config/api.config';
+import type {
+  LoginRequest,
+  LoginResponse,
+  RegisterRequest,
+  RegisterResponse,
+  VerifyEmailRequest,
+  VerifyEmailResponse,
+  ResendVerificationRequest,
+  CheckEmailResponse,
+  CheckUsernameResponse,
+  User,
+} from '../types/auth.types';
 
-type JsonValue =
-  | string
-  | number
-  | boolean
-  | null
-  | JsonValue[]
-  | { [key: string]: JsonValue };
+// ----------------------------------------------------------------------
+// Authentication
+// ----------------------------------------------------------------------
 
-type JsonRecord = Record<string, JsonValue>;
-
-const SESSION_HEADER = "Authorization";
-
-export interface AuthTokens {
-  accessToken: string;
-  refreshToken?: string;
-}
-
-export interface AuthUser {
-  id?: string;
-  name?: string;
-  username?: string;
-  email?: string;
-  role?: string;
-  verified?: boolean;
-}
-
-export interface LoginPayload {
-  identifier: string;
-  password: string;
-}
-
-export interface RegisterPayload {
-  name: string;
-  username: string;
-  email: string;
-  password: string;
-  role?: string;
-}
-
-export interface OtpVerifyPayload {
-  email: string;
-  otp: string;
-}
-
-export interface AuthResult {
-  tokens?: AuthTokens;
-  user?: AuthUser;
-  message?: string;
-}
-
-export class ApiRequestError extends Error {
-  readonly status: number;
-  readonly code?: string;
-
-  constructor(message: string, status: number, code?: string) {
-    super(message);
-    this.name = "ApiRequestError";
-    this.status = status;
-    this.code = code;
-  }
-}
-
-const getRecord = (value: unknown): JsonRecord | undefined => {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
-  return value as JsonRecord;
-};
-
-const getString = (value: unknown): string | undefined => {
-  return typeof value === "string" && value.trim() ? value : undefined;
-};
-
-const getNested = (obj: JsonRecord | undefined, key: string): unknown => {
-  if (!obj) return undefined;
-  return obj[key];
-};
-
-const extractMessage = (payload: unknown): string | undefined => {
-  const root = getRecord(payload);
-  const directMessage = getString(root?.message);
-  if (directMessage) return directMessage;
-
-  const directError = getString(root?.error);
-  if (directError) return directError;
-
-  const error = getRecord(root?.error);
-  const errorMessage = getString(error?.message);
-  if (errorMessage) return errorMessage;
-
-  const data = getRecord(root?.data);
-  return getString(data?.message);
-};
-
-const extractErrorCode = (payload: unknown): string | undefined => {
-  const root = getRecord(payload);
-  const error = getRecord(root?.error);
-
-  return (
-    getString(error?.code) ??
-    getString(root?.error_code) ??
-    getString(root?.code)
+/**
+ * Login with email and password
+ */
+export const login = async (credentials: LoginRequest): Promise<ApiResponse<LoginResponse>> => {
+  console.log('[AuthService] Logging in user:', credentials.email);
+  return await apiPost<LoginResponse>(
+    AUTH_ENDPOINTS.LOGIN,
+    credentials,
+    { skipAuth: true }
   );
 };
 
-const isExplicitFailurePayload = (payload: unknown): boolean => {
-  const root = getRecord(payload);
-  return root?.success === false;
+/**
+ * Register a new user (player or organizer)
+ */
+export const register = async (userData: RegisterRequest): Promise<ApiResponse<RegisterResponse>> => {
+  console.log('[AuthService] Registering user:', userData.email);
+  return await apiPost<RegisterResponse>(
+    AUTH_ENDPOINTS.REGISTER,
+    userData,
+    { skipAuth: true }
+  );
 };
 
-const extractUser = (payload: unknown): AuthUser | undefined => {
-  const root = getRecord(payload);
-  const data = getRecord(root?.data);
-
-  const source =
-    getRecord(root?.user) ??
-    getRecord(data?.user) ??
-    (data ?? undefined);
-
-  if (!source) return undefined;
-
-  return {
-    id: getString(source.id) ?? getString(source._id),
-    name: getString(source.name),
-    username: getString(source.username),
-    email: getString(source.email),
-    role: getString(source.role),
-    verified:
-      typeof source.verified === "boolean"
-        ? source.verified
-        : typeof source.isVerified === "boolean"
-          ? source.isVerified
-          : undefined,
-  };
+/**
+ * Verify email with OTP
+ */
+export const verifyEmail = async (data: VerifyEmailRequest): Promise<ApiResponse<VerifyEmailResponse>> => {
+  console.log('[AuthService] Verifying email:', data.email);
+  return await apiPost<VerifyEmailResponse>(
+    AUTH_ENDPOINTS.VERIFY_EMAIL,
+    data,
+    { skipAuth: true }
+  );
 };
 
-const extractTokens = (payload: unknown): AuthTokens | undefined => {
-  const root = getRecord(payload);
-  const data = getRecord(root?.data);
-  const tokensContainer = getRecord(root?.tokens) ?? getRecord(data?.tokens) ?? data;
-
-  const accessToken =
-    getString(getNested(tokensContainer, "accessToken")) ??
-    getString(getNested(tokensContainer, "access_token")) ??
-    getString(root?.accessToken) ??
-    getString(root?.token);
-
-  if (!accessToken) return undefined;
-
-  const refreshToken =
-    getString(getNested(tokensContainer, "refreshToken")) ??
-    getString(getNested(tokensContainer, "refresh_token")) ??
-    getString(root?.refreshToken);
-
-  return {
-    accessToken,
-    refreshToken,
-  };
+/**
+ * Resend email verification OTP
+ */
+export const resendVerification = async (data: ResendVerificationRequest): Promise<ApiResponse<any>> => {
+  console.log('[AuthService] Resending verification OTP to:', data.email);
+  return await apiPost(
+    AUTH_ENDPOINTS.RESEND_VERIFICATION,
+    data,
+    { skipAuth: true }
+  );
 };
 
-const normalizeAuthResult = (payload: unknown): AuthResult => {
-  return {
-    tokens: extractTokens(payload),
-    user: extractUser(payload),
-    message: extractMessage(payload),
-  };
-};
+/**
+ * Logout current user
+ * - Calls the logout endpoint to invalidate refresh token on server
+ * - Clears local tokens regardless of server response
+ */
+export const logout = async (): Promise<ApiResponse<any>> => {
+  console.log('[AuthService] Logging out user');
 
-const request = async <T>(
-  url: string,
-  options: RequestInit = {},
-): Promise<T> => {
-  const controller = new AbortController();
-  const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+  const refreshToken = getRefreshToken(); // imported from auth.utils
 
   try {
-    const response = await fetch(url, {
-      credentials: "include",
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        ...(options.headers ?? {}),
-      },
-      signal: controller.signal,
+    // Attempt to call logout endpoint
+    const response = await fetch(AUTH_ENDPOINTS.LOGOUT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
     });
 
-    const rawText = await response.text();
-    const payload = rawText ? (JSON.parse(rawText) as unknown) : undefined;
-
-    if (!response.ok || isExplicitFailurePayload(payload)) {
-      throw new ApiRequestError(
-        extractMessage(payload) ?? "Request failed.",
-        response.status,
-        extractErrorCode(payload),
-      );
+    try {
+      const data = await response.json();
+      console.log('[AuthService] Logout API response:', data);
+    } catch {
+      console.warn('[AuthService] Could not parse logout response (not critical)');
     }
-
-    return payload as T;
   } catch (error) {
-    if (error instanceof ApiRequestError) {
-      throw error;
-    }
-
-    if (error instanceof DOMException && error.name === "AbortError") {
-      throw new ApiRequestError("Request timed out.", 408, "REQUEST_TIMEOUT");
-    }
-
-    if (error instanceof SyntaxError) {
-      throw new ApiRequestError("Invalid server response.", 500, "BAD_RESPONSE");
-    }
-
-    throw new ApiRequestError("Network error. Please try again.", 0, "NETWORK_ERROR");
-  } finally {
-    window.clearTimeout(timeoutId);
+    console.warn('[AuthService] Logout API call failed (not critical):', error);
   }
+
+  // Always clear local auth
+  clearAuthTokens();
+
+  return {
+    success: true,
+    data: {},
+    message: 'Logged out successfully',
+  };
 };
 
-const withAuthHeader = (accessToken?: string): Record<string, string> => {
-  if (!accessToken) return {};
-  return { [SESSION_HEADER]: `Bearer ${accessToken}` };
+/**
+ * Get current authenticated user's profile
+ */
+export const getCurrentUser = async (): Promise<ApiResponse<User>> => {
+  console.log('[AuthService] Fetching current user');
+  return await apiGet<User>(AUTH_ENDPOINTS.ME);
 };
 
-export const authService = {
-  async register(payload: RegisterPayload): Promise<AuthResult> {
-    const response = await request<unknown>(AUTH_ENDPOINTS.REGISTER, {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
-    return normalizeAuthResult(response);
-  },
+// ----------------------------------------------------------------------
+// Helpers for registration forms
+// ----------------------------------------------------------------------
 
-  async login(payload: LoginPayload): Promise<AuthResult> {
-    const identifier = payload.identifier.trim();
-    const isEmail = identifier.includes("@");
+/**
+ * Check if email is available for registration
+ */
+export const checkEmailAvailability = async (email: string): Promise<ApiResponse<CheckEmailResponse>> => {
+  console.log('[AuthService] Checking email availability:', email);
+  const url = `${AUTH_ENDPOINTS.CHECK_EMAIL}?email=${encodeURIComponent(email)}`;
+  return await apiGet<CheckEmailResponse>(url, { skipAuth: true });
+};
 
-    const response = await request<unknown>(AUTH_ENDPOINTS.LOGIN, {
-      method: "POST",
-      body: JSON.stringify({
-        identifier,
-        email: isEmail ? identifier : undefined,
-        username: !isEmail ? identifier : undefined,
-        password: payload.password,
-      }),
-    });
-    return normalizeAuthResult(response);
-  },
+/**
+ * Check if username is available for registration
+ */
+export const checkUsernameAvailability = async (username: string): Promise<ApiResponse<CheckUsernameResponse>> => {
+  console.log('[AuthService] Checking username availability:', username);
+  const url = `${AUTH_ENDPOINTS.CHECK_USERNAME}?username=${encodeURIComponent(username)}`;
+  return await apiGet<CheckUsernameResponse>(url, { skipAuth: true });
+};
 
-  async logout(accessToken?: string): Promise<void> {
-    await request<unknown>(AUTH_ENDPOINTS.LOGOUT, {
-      method: "POST",
-      headers: withAuthHeader(accessToken),
-    });
-  },
+// ----------------------------------------------------------------------
+// Password management
+// ----------------------------------------------------------------------
 
-  async verifyOtp(payload: OtpVerifyPayload): Promise<AuthResult> {
-    const response = await request<unknown>(AUTH_ENDPOINTS.OTP_VERIFY, {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
-    return normalizeAuthResult(response);
-  },
+/**
+ * Request password reset (send OTP)
+ */
+export const requestPasswordReset = async (email: string): Promise<ApiResponse<any>> => {
+  console.log('[AuthService] Requesting password reset for:', email);
+  return await apiPost(
+    AUTH_ENDPOINTS.PASSWORD_RESET,
+    { email },
+    { skipAuth: true }
+  );
+};
 
-  async resendOtp(email: string): Promise<AuthResult> {
-    const response = await request<unknown>(AUTH_ENDPOINTS.OTP_RESEND, {
-      method: "POST",
-      body: JSON.stringify({ email }),
-    });
-    return normalizeAuthResult(response);
-  },
+/**
+ * Confirm password reset with OTP and new password
+ */
+export const confirmPasswordReset = async (email: string, otp: string, newPassword: string): Promise<ApiResponse<any>> => {
+  console.log('[AuthService] Confirming password reset');
+  return await apiPost(
+    AUTH_ENDPOINTS.PASSWORD_RESET_CONFIRM,
+    { email, otp, newPassword },
+    { skipAuth: true }
+  );
+};
 
-  async requestPasswordReset(email: string): Promise<AuthResult> {
-    const response = await request<unknown>(AUTH_ENDPOINTS.PASSWORD_RESET, {
-      method: "POST",
-      body: JSON.stringify({ email }),
-    });
-    return normalizeAuthResult(response);
-  },
-
-  async refreshToken(refreshToken?: string): Promise<AuthResult> {
-    const response = await request<unknown>(AUTH_ENDPOINTS.TOKEN_REFRESH, {
-      method: "POST",
-      body: JSON.stringify(refreshToken ? { refreshToken } : {}),
-    });
-    return normalizeAuthResult(response);
-  },
-
-  async validateToken(accessToken: string): Promise<AuthResult> {
-    const response = await request<unknown>(AUTH_ENDPOINTS.TOKEN_VALIDATE, {
-      method: "POST",
-      headers: withAuthHeader(accessToken),
-    });
-    return normalizeAuthResult(response);
-  },
-
-  async getProfile(accessToken: string): Promise<AuthResult> {
-    const response = await request<unknown>(AUTH_ENDPOINTS.PROFILE, {
-      method: "GET",
-      headers: withAuthHeader(accessToken),
-    });
-    return normalizeAuthResult(response);
-  },
+/**
+ * Change password (requires authentication)
+ */
+export const changePassword = async (currentPassword: string, newPassword: string): Promise<ApiResponse<any>> => {
+  console.log('[AuthService] Changing password');
+  return await apiPost(
+    AUTH_ENDPOINTS.PASSWORD_CHANGE,
+    { currentPassword, newPassword }
+  );
 };
