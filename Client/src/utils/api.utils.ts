@@ -1,4 +1,4 @@
-import { getAccessToken, getRefreshToken, saveTokens, logout } from './auth.utils';
+import { getAccessToken, getRefreshToken, saveTokens } from './auth.utils';
 import { AUTH_ENDPOINTS } from '../config/api.config';
 import type { ApiResponse } from '../config/api.config';
 import { generateUniqueIdempotencyKey } from './idempotency.utils';
@@ -143,9 +143,8 @@ async function executeRequest<T = any>(
       console.warn('[API] 401 Unauthorized - attempting token refresh');
       const refreshed = await refreshAccessToken();
       if (!refreshed) {
-        console.error('[API] Token refresh failed - logging out');
-        logout();
-        // You might want to trigger navigation here – but keep it separate
+        // Don't clear localStorage here — let the auth context handle logout
+        // so React state stays in sync
         return {
           success: false,
           error: {
@@ -175,7 +174,22 @@ async function executeRequest<T = any>(
       };
     }
 
-    const data: ApiResponse<T> = await response.json();
+    const raw = await response.json();
+
+    // Normalise: the backend may return { success, error_code, message, details }
+    // but the frontend expects { success, data, error: { code, message } }
+    let data: ApiResponse<T>;
+    if (raw.success) {
+      data = raw as ApiResponse<T>;
+    } else {
+      data = {
+        success: false,
+        error: {
+          code: raw.error_code ?? raw.error?.code ?? 'REQUEST_FAILED',
+          message: raw.message ?? raw.details ?? raw.error?.message ?? 'Request failed',
+        },
+      };
+    }
 
     if (!data.success) {
       console.error('[API] Request failed:', { url, status: response.status, error: data.error });
