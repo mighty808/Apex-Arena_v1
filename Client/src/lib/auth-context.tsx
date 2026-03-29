@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type PropsWithChildren,
 } from "react";
@@ -16,6 +17,11 @@ import {
   type LoginPayload,
   type RegisterPayload,
 } from "../services/auth.service";
+import { saveTokens, clearTokens } from "../utils/auth.utils";
+import {
+  startTokenRefreshTimer,
+  stopTokenRefreshTimer,
+} from "../utils/token-refresh.utils";
 
 const AUTH_STORAGE_KEY = "apex_arenas_auth";
 
@@ -31,6 +37,8 @@ interface AuthContextValue {
   isInitializing: boolean;
   login: (payload: LoginPayload) => Promise<AuthResult>;
   register: (payload: RegisterPayload) => Promise<AuthResult>;
+  loginWithGoogle: (idToken: string, role?: 'player' | 'organizer') => Promise<AuthResult>;
+  linkGoogle: (idToken: string, password: string) => Promise<AuthResult>;
   logout: () => Promise<void>;
   refreshAccessToken: () => Promise<string | null>;
   setSession: (tokens: AuthTokens | null, user?: AuthUser | null) => void;
@@ -83,12 +91,17 @@ const fromStorageValue = (raw: string | null): StoredSession | null => {
   }
 };
 
-const saveSession = (session: StoredSession | null): void => {
+const persistSession = (session: StoredSession | null): void => {
   if (!session) {
     localStorage.removeItem(AUTH_STORAGE_KEY);
+    clearTokens();
     return;
   }
   localStorage.setItem(AUTH_STORAGE_KEY, toStorageValue(session));
+  saveTokens({
+    accessToken: session.tokens.accessToken,
+    refreshToken: session.tokens.refreshToken,
+  });
 };
 
 const readSession = (): StoredSession | null => {
@@ -100,25 +113,61 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
 
+  // Refs mirror state so callbacks have stable identities (no state in dep arrays)
+  const tokensRef = useRef(tokens);
+  const userRef = useRef(user);
+  tokensRef.current = tokens;
+  userRef.current = user;
+
   const setSession = useCallback(
     (nextTokens: AuthTokens | null, nextUser?: AuthUser | null) => {
       if (!nextTokens?.accessToken) {
         setTokens(null);
         setUser(null);
-        saveSession(null);
+        persistSession(null);
         return;
       }
 
       const resolvedUser = nextUser ?? null;
       setTokens(nextTokens);
       setUser(resolvedUser);
-      saveSession({
+      persistSession({
         tokens: nextTokens,
         user: resolvedUser ?? undefined,
       });
     },
     [],
   );
+
+  const refreshAccessToken = useCallback(async (): Promise<string | null> => {
+    const currentTokens = tokensRef.current;
+    if (!currentTokens?.refreshToken && !currentTokens?.accessToken) {
+      return null;
+    }
+
+    try {
+      const result = await authService.refreshToken(currentTokens?.refreshToken);
+      const nextTokens = result.tokens;
+
+      if (!nextTokens?.accessToken) {
+        setSession(null, null);
+        return null;
+      }
+
+      setSession(
+        {
+          accessToken: nextTokens.accessToken,
+          refreshToken: nextTokens.refreshToken ?? currentTokens?.refreshToken,
+        },
+        result.user ?? userRef.current,
+      );
+
+      return nextTokens.accessToken;
+    } catch {
+      setSession(null, null);
+      return null;
+    }
+  }, [setSession]);
 
   const login = useCallback(
     async (payload: LoginPayload) => {
@@ -135,43 +184,38 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
     return authService.register(payload);
   }, []);
 
+  const loginWithGoogle = useCallback(
+    async (idToken: string, role?: 'player' | 'organizer') => {
+      const result = await authService.googleAuth(idToken, role);
+      if (result.tokens?.accessToken) {
+        setSession(result.tokens, result.user ?? null);
+      }
+      return result;
+    },
+    [setSession],
+  );
+
+  const linkGoogle = useCallback(
+    async (idToken: string, password: string) => {
+      const result = await authService.googleLink(idToken, password);
+      if (result.tokens?.accessToken) {
+        setSession(result.tokens, result.user ?? null);
+      }
+      return result;
+    },
+    [setSession],
+  );
+
   const logout = useCallback(async () => {
+    const accessToken = tokensRef.current?.accessToken;
     try {
-      await authService.logout(tokens?.accessToken);
+      await authService.logout(accessToken);
     } finally {
       setSession(null, null);
     }
-  }, [setSession, tokens?.accessToken]);
+  }, [setSession]);
 
-  const refreshAccessToken = useCallback(async (): Promise<string | null> => {
-    if (!tokens?.refreshToken && !tokens?.accessToken) {
-      return null;
-    }
-
-    try {
-      const result = await authService.refreshToken(tokens?.refreshToken);
-      const nextTokens = result.tokens;
-
-      if (!nextTokens?.accessToken) {
-        setSession(null, null);
-        return null;
-      }
-
-      setSession(
-        {
-          accessToken: nextTokens.accessToken,
-          refreshToken: nextTokens.refreshToken ?? tokens?.refreshToken,
-        },
-        result.user ?? user,
-      );
-
-      return nextTokens.accessToken;
-    } catch {
-      setSession(null, null);
-      return null;
-    }
-  }, [setSession, tokens?.accessToken, tokens?.refreshToken, user]);
-
+  // Bootstrap: validate stored session on mount — runs exactly once
   useEffect(() => {
     let active = true;
 
@@ -183,8 +227,11 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
         return;
       }
 
+      // Hydrate state immediately so the UI shows the cached user while we validate
       setTokens(stored.tokens);
       setUser(stored.user ?? null);
+      tokensRef.current = stored.tokens;
+      userRef.current = stored.user ?? null;
 
       try {
         const validateResult = await authService.validateToken(
@@ -194,30 +241,69 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
         if (!active) return;
 
         if (validateResult.user || validateResult.tokens) {
-          setSession(
-            {
-              accessToken:
-                validateResult.tokens?.accessToken ?? stored.tokens.accessToken,
-              refreshToken:
-                validateResult.tokens?.refreshToken ??
-                stored.tokens.refreshToken,
-            },
-            validateResult.user ?? stored.user ?? null,
-          );
+          const freshTokens: AuthTokens = {
+            accessToken:
+              validateResult.tokens?.accessToken ?? stored.tokens.accessToken,
+            refreshToken:
+              validateResult.tokens?.refreshToken ??
+              stored.tokens.refreshToken,
+          };
+          const freshUser = validateResult.user ?? stored.user ?? null;
+
+          setTokens(freshTokens);
+          setUser(freshUser);
+          persistSession({
+            tokens: freshTokens,
+            user: freshUser ?? undefined,
+          });
         }
       } catch (error) {
         if (!active) return;
 
-        if (
+        const isAuthError =
           error instanceof ApiRequestError &&
-          (error.status === 401 || error.status === 403)
-        ) {
-          const refreshed = await refreshAccessToken();
-          if (!refreshed) {
-            setSession(null, null);
+          (error.status === 401 || error.status === 403);
+
+        if (isAuthError && stored.tokens.refreshToken) {
+          // Token expired — try refreshing directly (don't go through the
+          // callback so we avoid any state-timing issues during init)
+          try {
+            const refreshResult = await authService.refreshToken(
+              stored.tokens.refreshToken,
+            );
+
+            if (!active) return;
+
+            if (refreshResult.tokens?.accessToken) {
+              const freshTokens: AuthTokens = {
+                accessToken: refreshResult.tokens.accessToken,
+                refreshToken:
+                  refreshResult.tokens.refreshToken ??
+                  stored.tokens.refreshToken,
+              };
+              const freshUser = refreshResult.user ?? stored.user ?? null;
+
+              setTokens(freshTokens);
+              setUser(freshUser);
+              persistSession({
+                tokens: freshTokens,
+                user: freshUser ?? undefined,
+              });
+            } else {
+              setTokens(null);
+              setUser(null);
+              persistSession(null);
+            }
+          } catch {
+            if (!active) return;
+            setTokens(null);
+            setUser(null);
+            persistSession(null);
           }
         } else {
-          setSession(null, null);
+          setTokens(null);
+          setUser(null);
+          persistSession(null);
         }
       } finally {
         if (active) setIsInitializing(false);
@@ -229,7 +315,17 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
     return () => {
       active = false;
     };
-  }, [refreshAccessToken, setSession]);
+  }, []);
+
+  // Start / stop the background token-refresh timer based on auth state
+  useEffect(() => {
+    if (tokens?.accessToken) {
+      startTokenRefreshTimer(refreshAccessToken);
+    } else {
+      stopTokenRefreshTimer();
+    }
+    return () => stopTokenRefreshTimer();
+  }, [tokens?.accessToken, refreshAccessToken]);
 
   const value = useMemo<AuthContextValue>(() => {
     return {
@@ -239,13 +335,17 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
       isInitializing,
       login,
       register,
+      loginWithGoogle,
+      linkGoogle,
       logout,
       refreshAccessToken,
       setSession,
     };
   }, [
     isInitializing,
+    linkGoogle,
     login,
+    loginWithGoogle,
     logout,
     refreshAccessToken,
     register,
