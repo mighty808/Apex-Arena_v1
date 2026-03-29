@@ -1,5 +1,8 @@
 /**
  * Authentication related TypeScript types
+ *
+ * Field names use camelCase in the frontend. The auth service maps
+ * from the backend's snake_case responses when needed.
  */
 
 // User roles – player and organizer are the primary frontend roles (admin omitted)
@@ -9,19 +12,27 @@ export interface User {
   id: string;
   email: string;
   username: string;
+  firstName: string;
+  lastName: string;
   role: UserRole;
-  isEmailVerified: boolean;
-  isActive: boolean;
-  profilePicture?: string;
-  createdAt: string;      // ISO date string
-  updatedAt: string;      // ISO date string
+  avatarUrl?: string;
+  isEmailVerified?: boolean;
+  isActive?: boolean;
+  createdAt?: string;      // ISO date string
+  updatedAt?: string;      // ISO date string
 }
+
+/** Helper to get a display name from a User */
+export const getDisplayName = (user: User): string => {
+  const full = `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim();
+  return full || user.username;
+};
 
 // ----------------------------------------------------------------------
 // Login
 // ----------------------------------------------------------------------
 export interface LoginRequest {
-  email: string;
+  email: string;  // backend only supports email-based login
   password: string;
 }
 
