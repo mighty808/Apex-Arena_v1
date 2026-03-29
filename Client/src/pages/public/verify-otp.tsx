@@ -201,9 +201,15 @@ const VerifyOtp = () => {
       navigate(nextPath);
     } catch (error) {
       if (error instanceof ApiRequestError) {
-        setError(error.message);
+        const friendlyMessages: Record<string, string> = {
+          OTP_EXPIRED: "This code has expired. Please request a new one.",
+          OTP_INVALID: "Incorrect code. Please check and try again.",
+          OTP_MAX_ATTEMPTS: "Too many attempts. Please request a new code.",
+          ALREADY_VERIFIED: "Your email is already verified. You can log in now.",
+        };
+        setError(friendlyMessages[error.code] ?? error.message);
       } else {
-        setError("Verification failed. Please try again.");
+        setError("Something went wrong. Please try again.");
       }
     } finally {
       setIsLoading(false);
