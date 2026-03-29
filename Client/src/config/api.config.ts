@@ -1,3 +1,6 @@
+export const GOOGLE_CLIENT_ID =
+  '741961090257-2jlbfq9ovv99bvcqpu01m4cf04qm0en4.apps.googleusercontent.com';
+
 export const API_BASE_URLS = {
   AUTH: "https://api-apexarenas.onrender.com/api/v1/auth",
   TOURNAMENT: "https://api-apexarenas.onrender.com/api/v1/tournament"
@@ -98,7 +101,7 @@ export const TOURNAMENT_ENDPOINTS = {
   REGISTER: `${API_BASE_URLS.TOURNAMENT}/tournaments`,                    // + /:tournamentId/register
   UNREGISTER: `${API_BASE_URLS.TOURNAMENT}/tournaments`,                  // + /:tournamentId/unregister
   TOURNAMENT_REGISTRATIONS: `${API_BASE_URLS.TOURNAMENT}/tournaments`,    // + /:tournamentId/registrations
-  MY_REGISTRATIONS: `${API_BASE_URLS.TOURNAMENT}/my-registrations`,
+  MY_REGISTRATIONS: `${API_BASE_URLS.TOURNAMENT}/tournaments/my-registrations`,
   UPDATE_IN_GAME_ID: `${API_BASE_URLS.TOURNAMENT}/registrations`,         // + /:registrationId/in-game-id
 
   // Bracket
