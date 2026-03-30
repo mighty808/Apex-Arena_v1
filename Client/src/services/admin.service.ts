@@ -1,6 +1,137 @@
-import { apiGet, apiPost, apiPatch } from '../utils/api.utils';
-import { AUTH_ENDPOINTS } from '../config/api.config';
+import { apiGet, apiPost, apiPatch, apiDelete } from '../utils/api.utils';
+import { AUTH_ENDPOINTS, TOURNAMENT_ENDPOINTS } from '../config/api.config';
+import { getAdminAccessToken } from '../utils/auth.utils';
 import type { AdminStats, ManagedUser } from '../types/admin.types';
+
+// Helper — injects the admin Bearer token into every request
+function adminHeaders(): { headers: Record<string, string>; skipAuth: true } {
+  const token = getAdminAccessToken();
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  } else {
+    console.warn('[AdminService] No admin token found in storage');
+  }
+  return { headers, skipAuth: true };
+}
+
+// ─── Game Types ───────────────────────────────────────────────────────────────
+
+export interface AdminGame {
+  id: string;
+  name: string;
+  slug: string;
+  category: string;
+  platform: string[];
+  supportedFormats: string[];
+  inGameIdLabel: string;
+  inGameIdExample: string;
+  logoUrl?: string;
+  bannerUrl?: string;
+  isActive: boolean;
+  isFeatured: boolean;
+  publisher?: string;
+  tournamentCount: number;
+  playerCount: number;
+}
+
+export interface CreateGamePayload {
+  name: string;
+  slug: string;
+  category: string;
+  platform: string[];
+  supportedFormats: string[];
+  inGameIdLabel: string;
+  inGameIdExample: string;
+  logoUrl?: string;
+  bannerUrl?: string;
+  publisher?: string;
+  isFeatured?: boolean;
+}
+
+// ─── Verification Types ───────────────────────────────────────────────────────
+
+export interface OrganizerVerificationRequest {
+  id: string;
+  userId: string;
+  username: string;
+  email: string;
+  displayName: string;
+  avatarUrl?: string;
+  businessName: string;
+  businessType: string;
+  registrationNumber?: string;
+  contactPerson?: string;
+  address?: string;
+  documents: {
+    idFront?: string;
+    idBack?: string;
+    selfieWithId?: string;
+    businessRegistration?: string;
+  };
+  status: 'pending' | 'under_review' | 'approved' | 'rejected' | 'needs_resubmission';
+  submittedAt: string;
+  reviewedAt?: string;
+  rejectionReasons?: string[];
+  reviewNotes?: string;
+  reviewerId?: string;
+}
+
+function mapGame(raw: Record<string, unknown>): AdminGame {
+  const stats = (raw.stats ?? {}) as Record<string, unknown>;
+  const inGameIdConfig = (raw.in_game_id_config ?? {}) as Record<string, unknown>;
+  return {
+    id: String(raw._id ?? raw.id ?? ''),
+    name: String(raw.name ?? ''),
+    slug: String(raw.slug ?? ''),
+    category: String(raw.category ?? ''),
+    platform: (raw.platform ?? []) as string[],
+    supportedFormats: (raw.supported_formats ?? raw.supportedFormats ?? []) as string[],
+    inGameIdLabel: String(inGameIdConfig.label ?? ''),
+    inGameIdExample: String(inGameIdConfig.example ?? ''),
+    logoUrl: raw.logo_url as string | undefined,
+    bannerUrl: raw.banner_url as string | undefined,
+    isActive: Boolean(raw.is_active ?? true),
+    isFeatured: Boolean(raw.is_featured ?? false),
+    publisher: raw.publisher as string | undefined,
+    tournamentCount: Number(stats.tournament_count ?? 0),
+    playerCount: Number(stats.player_count ?? 0),
+  };
+}
+
+function mapVerification(raw: Record<string, unknown>): OrganizerVerificationRequest {
+  const user = (raw.user_id ?? raw.user ?? {}) as Record<string, unknown>;
+  const userProfile = (user.profile ?? {}) as Record<string, unknown>;
+  const docs = (raw.documents ?? {}) as Record<string, unknown>;
+  const firstName = String(userProfile.first_name ?? user.first_name ?? '');
+  const lastName = String(userProfile.last_name ?? user.last_name ?? '');
+
+  return {
+    id: String(raw._id ?? raw.id ?? ''),
+    userId: String(user._id ?? raw.user_id ?? ''),
+    username: String(user.username ?? ''),
+    email: String(user.email ?? ''),
+    displayName: `${firstName} ${lastName}`.trim() || String(user.username ?? ''),
+    avatarUrl: (userProfile.avatar_url ?? user.avatar_url) as string | undefined,
+    businessName: String(raw.business_name ?? ''),
+    businessType: String(raw.business_type ?? ''),
+    registrationNumber: raw.registration_number as string | undefined,
+    contactPerson: raw.contact_person as string | undefined,
+    address: raw.address as string | undefined,
+    documents: {
+      idFront: (docs.id_front ?? docs.idFront) as string | undefined,
+      idBack: (docs.id_back ?? docs.idBack) as string | undefined,
+      selfieWithId: (docs.selfie_with_id ?? docs.selfieWithId) as string | undefined,
+      businessRegistration: (docs.business_registration ?? docs.businessRegistration) as string | undefined,
+    },
+    status: String(raw.status ?? 'pending') as OrganizerVerificationRequest['status'],
+    submittedAt: String(raw.created_at ?? raw.submittedAt ?? ''),
+    reviewedAt: raw.reviewed_at as string | undefined,
+    rejectionReasons: raw.rejection_reasons as string[] | undefined,
+    reviewNotes: raw.review_notes as string | undefined,
+    reviewerId: raw.reviewed_by as string | undefined,
+  };
+}
 
 // ─── Mapping ─────────────────────────────────────────────────────────────────
 
@@ -80,7 +211,7 @@ export interface UsersListResult {
 
 export const adminService = {
   async fetchStats(): Promise<AdminStats | null> {
-    const response = await apiGet(AUTH_ENDPOINTS.ADMIN_STATS);
+    const response = await apiGet(AUTH_ENDPOINTS.ADMIN_STATS, adminHeaders());
     if (!response.success) return null;
     return mapStats(response.data as Record<string, unknown>);
   },
@@ -96,7 +227,7 @@ export const adminService = {
     if (params.order) query.set('order', params.order);
 
     const url = `${AUTH_ENDPOINTS.ADMIN_USERS}?${query.toString()}`;
-    const response = await apiGet(url);
+    const response = await apiGet(url, adminHeaders());
 
     if (!response.success) {
       return { users: [], pagination: { total: 0, page: 1, limit: 20, pages: 0 } };
@@ -118,42 +249,166 @@ export const adminService = {
   },
 
   async banUser(userId: string, reason: string): Promise<boolean> {
-    const response = await apiPost(`${AUTH_ENDPOINTS.ADMIN_USER_BAN}/${userId}/ban`, { reason });
+    const response = await apiPost(`${AUTH_ENDPOINTS.ADMIN_USER_BAN}/${userId}/ban`, { reason }, adminHeaders());
     return response.success;
   },
 
   async unbanUser(userId: string): Promise<boolean> {
-    const response = await apiPost(`${AUTH_ENDPOINTS.ADMIN_USER_UNBAN}/${userId}/unban`, {});
+    const response = await apiPost(`${AUTH_ENDPOINTS.ADMIN_USER_UNBAN}/${userId}/unban`, {}, adminHeaders());
     return response.success;
   },
 
   async deactivateUser(userId: string): Promise<boolean> {
-    const response = await apiPost(`${AUTH_ENDPOINTS.ADMIN_USER_DEACTIVATE}/${userId}/deactivate`, {});
+    const response = await apiPost(`${AUTH_ENDPOINTS.ADMIN_USER_DEACTIVATE}/${userId}/deactivate`, {}, adminHeaders());
     return response.success;
   },
 
   async reactivateUser(userId: string): Promise<boolean> {
-    const response = await apiPost(`${AUTH_ENDPOINTS.ADMIN_USER_REACTIVATE}/${userId}/reactivate`, {});
+    const response = await apiPost(`${AUTH_ENDPOINTS.ADMIN_USER_REACTIVATE}/${userId}/reactivate`, {}, adminHeaders());
     return response.success;
   },
 
   async changeUserRole(userId: string, role: string): Promise<boolean> {
-    const response = await apiPatch(`${AUTH_ENDPOINTS.ADMIN_USER_ROLE}/${userId}/role`, { role });
+    const response = await apiPatch(`${AUTH_ENDPOINTS.ADMIN_USER_ROLE}/${userId}/role`, { role }, adminHeaders());
     return response.success;
   },
 
   async forceVerifyEmail(userId: string): Promise<boolean> {
-    const response = await apiPost(`${AUTH_ENDPOINTS.ADMIN_USER_FORCE_VERIFY_EMAIL}/${userId}/verify-email`, {});
+    const response = await apiPost(`${AUTH_ENDPOINTS.ADMIN_USER_FORCE_VERIFY_EMAIL}/${userId}/verify-email`, {}, adminHeaders());
     return response.success;
   },
 
   async forceLogout(userId: string): Promise<boolean> {
-    const response = await apiPost(`${AUTH_ENDPOINTS.ADMIN_USER_FORCE_LOGOUT}/${userId}/force-logout`, {});
+    const response = await apiPost(`${AUTH_ENDPOINTS.ADMIN_USER_FORCE_LOGOUT}/${userId}/force-logout`, {}, adminHeaders());
     return response.success;
   },
 
   async unlockUser(userId: string): Promise<boolean> {
-    const response = await apiPost(`${AUTH_ENDPOINTS.ADMIN_USER_UNLOCK}/${userId}/unlock`, {});
+    const response = await apiPost(`${AUTH_ENDPOINTS.ADMIN_USER_UNLOCK}/${userId}/unlock`, {}, adminHeaders());
+    return response.success;
+  },
+
+  async verifyOrganizer(userId: string): Promise<boolean> {
+    const response = await apiPost(`${AUTH_ENDPOINTS.ADMIN_USER_VERIFY_ORGANIZER}/${userId}/verify-organizer`, {}, adminHeaders());
+    return response.success;
+  },
+
+  // ─── Games ────────────────────────────────────────────────────────────────
+
+  async fetchGames(): Promise<AdminGame[]> {
+    const response = await apiGet(TOURNAMENT_ENDPOINTS.GAMES, adminHeaders());
+    if (!response.success) return [];
+    const raw = response.data as Record<string, unknown>;
+    const list = Array.isArray(raw) ? raw : ((raw.games ?? raw.data ?? []) as Record<string, unknown>[]);
+    return list.map(mapGame);
+  },
+
+  async createGame(payload: CreateGamePayload): Promise<AdminGame> {
+    const body = {
+      name: payload.name,
+      slug: payload.slug,
+      category: payload.category,
+      platform: payload.platform,
+      supported_formats: payload.supportedFormats,
+      in_game_id_config: {
+        label: payload.inGameIdLabel,
+        example: payload.inGameIdExample,
+      },
+      logo_url: payload.logoUrl || undefined,
+      banner_url: payload.bannerUrl || undefined,
+      publisher: payload.publisher || undefined,
+      is_featured: payload.isFeatured ?? false,
+      is_active: true,
+    };
+    const response = await apiPost(TOURNAMENT_ENDPOINTS.GAMES, body, adminHeaders());
+    if (!response.success) {
+      const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to create game';
+      throw new Error(msg);
+    }
+    const data = response.data as Record<string, unknown>;
+    return mapGame((data.game ?? data) as Record<string, unknown>);
+  },
+
+  async updateGame(gameId: string, updates: Partial<CreateGamePayload>): Promise<AdminGame> {
+    const body: Record<string, unknown> = {};
+    if (updates.name) body.name = updates.name;
+    if (updates.logoUrl !== undefined) body.logo_url = updates.logoUrl;
+    if (updates.bannerUrl !== undefined) body.banner_url = updates.bannerUrl;
+    if (updates.publisher !== undefined) body.publisher = updates.publisher;
+    if (updates.isFeatured !== undefined) body.is_featured = updates.isFeatured;
+    if (updates.platform) body.platform = updates.platform;
+    if (updates.supportedFormats) body.supported_formats = updates.supportedFormats;
+    if (updates.inGameIdLabel || updates.inGameIdExample) {
+      body.in_game_id_config = {
+        ...(updates.inGameIdLabel && { label: updates.inGameIdLabel }),
+        ...(updates.inGameIdExample && { example: updates.inGameIdExample }),
+      };
+    }
+
+    const response = await apiPatch(`${TOURNAMENT_ENDPOINTS.GAME_DETAIL}/${gameId}`, body, adminHeaders());
+    if (!response.success) {
+      const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to update game';
+      throw new Error(msg);
+    }
+    const data = response.data as Record<string, unknown>;
+    return mapGame((data.game ?? data) as Record<string, unknown>);
+  },
+
+  async toggleGameActive(gameId: string): Promise<boolean> {
+    const response = await apiPatch(`${TOURNAMENT_ENDPOINTS.GAME_TOGGLE_ACTIVE}/${gameId}/toggle-active`, {}, adminHeaders());
+    return response.success;
+  },
+
+  async deleteGame(gameId: string): Promise<boolean> {
+    const response = await apiDelete(`${TOURNAMENT_ENDPOINTS.GAME_DETAIL}/${gameId}`, adminHeaders());
+    return response.success;
+  },
+
+  // ─── Organizer Verifications ──────────────────────────────────────────────
+
+  async fetchVerifications(status?: string): Promise<OrganizerVerificationRequest[]> {
+    const url = status
+      ? `${AUTH_ENDPOINTS.ADMIN_VERIFICATIONS}?status=${status}`
+      : AUTH_ENDPOINTS.ADMIN_VERIFICATIONS;
+    const response = await apiGet(url, adminHeaders());
+    if (!response.success) return [];
+    const raw = response.data as Record<string, unknown>;
+    const list = Array.isArray(raw) ? raw : ((raw.verifications ?? raw.requests ?? raw.data ?? []) as Record<string, unknown>[]);
+    return list.map(mapVerification);
+  },
+
+  async startVerificationReview(requestId: string): Promise<boolean> {
+    const response = await apiPost(`${AUTH_ENDPOINTS.ADMIN_VERIFICATIONS}/${requestId}/review-start`, {}, adminHeaders());
+    return response.success;
+  },
+
+  async reviewVerification(
+    requestId: string,
+    action: 'approve' | 'reject' | 'needs_resubmission',
+    notes?: string,
+    rejectionReasons?: string[],
+  ): Promise<boolean> {
+    const body: Record<string, unknown> = { action };
+    if (notes) body.review_notes = notes;
+    if (rejectionReasons?.length) body.rejection_reasons = rejectionReasons;
+    const response = await apiPost(`${AUTH_ENDPOINTS.ADMIN_VERIFICATIONS}/${requestId}/review`, body, adminHeaders());
+    return response.success;
+  },
+
+  // ─── Admin Profile ────────────────────────────────────────────────────────
+
+  async fetchProfile(): Promise<Record<string, unknown> | null> {
+    const response = await apiGet(AUTH_ENDPOINTS.ADMIN_SESSIONS, adminHeaders());
+    if (!response.success) return null;
+    return response.data as Record<string, unknown>;
+  },
+
+  async updateAdminProfile(updates: { firstName?: string; lastName?: string; avatarUrl?: string }): Promise<boolean> {
+    const body: Record<string, unknown> = {};
+    if (updates.firstName !== undefined) body.first_name = updates.firstName;
+    if (updates.lastName !== undefined) body.last_name = updates.lastName;
+    if (updates.avatarUrl !== undefined) body.avatar_url = updates.avatarUrl;
+    const response = await apiPatch(AUTH_ENDPOINTS.PROFILE, body, adminHeaders());
     return response.success;
   },
 };
