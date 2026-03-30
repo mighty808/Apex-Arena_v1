@@ -1,6 +1,5 @@
+import ProfilePage from "../ProfilePage";
 
-const Profile = () => {
-  return <h1>Organizer Profile</h1>;
-};
+const Profile = () => <ProfilePage />;
 
 export default Profile;
