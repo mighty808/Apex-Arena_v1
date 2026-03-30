@@ -10,6 +10,7 @@ import {
 } from 'react';
 import { adminAuthService, AdminApiError } from '../services/admin-auth.service';
 import type { AdminUser, AdminTokens } from '../types/admin.types';
+import { saveAdminTokens, clearAdminTokens } from '../utils/auth.utils';
 
 const ADMIN_STORAGE_KEY = 'apex_arenas_admin_auth';
 
@@ -63,12 +64,14 @@ export const AdminAuthProvider = ({ children }: PropsWithChildren) => {
         setTokens(null);
         setAdmin(null);
         persistSession(null);
+        clearAdminTokens();
         return;
       }
       const resolvedUser = nextUser ?? null;
       setTokens(nextTokens);
       setAdmin(resolvedUser);
       persistSession({ tokens: nextTokens, user: resolvedUser ?? undefined });
+      saveAdminTokens(nextTokens);
     },
     [],
   );
@@ -98,6 +101,7 @@ export const AdminAuthProvider = ({ children }: PropsWithChildren) => {
       setTokens(stored.tokens);
       setAdmin(stored.user ?? null);
       tokensRef.current = stored.tokens;
+      saveAdminTokens(stored.tokens);
 
       try {
         const result = await adminAuthService.validateToken(stored.tokens.accessToken);
