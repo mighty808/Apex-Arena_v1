@@ -1,7 +1,12 @@
-import { apiPost, apiGet } from '../utils/api.utils';
+import { apiPost, apiGet, apiPut } from '../utils/api.utils';
 import { AUTH_ENDPOINTS } from '../config/api.config';
 import type { ApiSuccessResponse } from '../config/api.config';
-import type { User } from '../types/auth.types';
+import type {
+  User,
+  OrganizerVerificationInfo,
+  OrganizerVerificationPayload,
+  UpdateProfilePayload,
+} from '../types/auth.types';
 
 // ─── Error ───────────────────────────────────────────────────────────────────
 
@@ -43,18 +48,38 @@ function assertSuccess<T>(
 
 /** Map a snake_case user object from the backend to our camelCase User type */
 function mapUser(raw: Record<string, unknown>): User {
+  const profile = (raw.profile ?? {}) as Record<string, unknown>;
+  const social = (profile.social_links ?? raw.social_links ?? {}) as Record<string, unknown>;
+  const games = (profile.game_profiles ?? raw.game_profiles ?? []) as Record<string, unknown>[];
+
   return {
-    id: String(raw.user_id ?? raw.id ?? ''),
+    id: String(raw.user_id ?? raw._id ?? raw.id ?? ''),
     email: String(raw.email ?? ''),
     username: String(raw.username ?? ''),
-    firstName: String(raw.first_name ?? raw.firstName ?? ''),
-    lastName: String(raw.last_name ?? raw.lastName ?? ''),
+    firstName: String(profile.first_name ?? raw.first_name ?? raw.firstName ?? ''),
+    lastName: String(profile.last_name ?? raw.last_name ?? raw.lastName ?? ''),
     role: (raw.role as User['role']) ?? 'player',
-    avatarUrl: raw.avatar_url as string | undefined ?? raw.avatarUrl as string | undefined,
-    isEmailVerified: raw.is_email_verified as boolean | undefined ?? raw.isEmailVerified as boolean | undefined,
-    isActive: raw.is_active as boolean | undefined ?? raw.isActive as boolean | undefined,
-    createdAt: raw.created_at as string | undefined ?? raw.createdAt as string | undefined,
-    updatedAt: raw.updated_at as string | undefined ?? raw.updatedAt as string | undefined,
+    avatarUrl: (profile.avatar_url ?? raw.avatar_url ?? raw.avatarUrl) as string | undefined,
+    bio: (profile.bio ?? raw.bio) as string | undefined,
+    country: (profile.country ?? raw.country) as string | undefined,
+    phone: (profile.phone ?? raw.phone) as string | undefined,
+    socialLinks: {
+      discord: social.discord as string | undefined,
+      twitter: social.twitter as string | undefined,
+      twitch: social.twitch as string | undefined,
+      youtube: social.youtube as string | undefined,
+    },
+    gameProfiles: games.map((g) => ({
+      gameId: String(g.game_id ?? g.gameId ?? ''),
+      gameName: g.game_name as string | undefined,
+      inGameId: String(g.in_game_id ?? ''),
+      skillLevel: g.skill_level as User['gameProfiles'] extends (infer T)[] ? (T extends { skillLevel?: infer S } ? S : never) : never,
+    })),
+    organizerVerified: (raw.organizer_verified ?? raw.organizerVerified) as boolean | undefined,
+    isEmailVerified: (raw.is_email_verified ?? raw.isEmailVerified) as boolean | undefined,
+    isActive: (raw.is_active ?? raw.isActive) as boolean | undefined,
+    createdAt: (raw.created_at ?? raw.createdAt) as string | undefined,
+    updatedAt: (raw.updated_at ?? raw.updatedAt) as string | undefined,
   };
 }
 
@@ -272,6 +297,74 @@ export const authService = {
     return {
       tokens: { accessToken, refreshToken: refreshToken ? String(refreshToken) : undefined },
       user: mapUser(rawUser),
+    };
+  },
+
+  async updateProfile(payload: UpdateProfilePayload): Promise<AuthResult> {
+    const body: Record<string, unknown> = {};
+    if (payload.firstName !== undefined) body.first_name = payload.firstName;
+    if (payload.lastName !== undefined) body.last_name = payload.lastName;
+    if (payload.bio !== undefined) body.bio = payload.bio;
+    if (payload.country !== undefined) body.country = payload.country;
+    if (payload.phone !== undefined) body.phone_number = payload.phone;
+    if (payload.avatarUrl !== undefined) body.avatar_url = payload.avatarUrl;
+    if (payload.discord !== undefined || payload.twitter !== undefined || payload.twitch !== undefined || payload.youtube !== undefined) {
+      body.social_links = {
+        ...(payload.discord !== undefined && { discord: payload.discord }),
+        ...(payload.twitter !== undefined && { twitter: payload.twitter }),
+        ...(payload.twitch !== undefined && { twitch: payload.twitch }),
+        ...(payload.youtube !== undefined && { youtube: payload.youtube }),
+      };
+    }
+    if (payload.gameProfiles !== undefined) {
+      body.game_profiles = payload.gameProfiles.map((g) => ({
+        game_id: g.gameId,
+        in_game_id: g.inGameId,
+        skill_level: g.skillLevel,
+      }));
+    }
+
+    const response = await apiPut(AUTH_ENDPOINTS.UPDATE_PROFILE, body);
+    assertSuccess<Record<string, unknown>>(response);
+
+    const data = response.data;
+    const rawUser = (data.user ?? data) as Record<string, unknown>;
+    return { user: mapUser(rawUser) };
+  },
+
+  async requestOrganizerVerification(payload: OrganizerVerificationPayload): Promise<{ message?: string }> {
+    const body = {
+      business_name: payload.businessName,
+      business_type: payload.businessType,
+      registration_number: payload.registrationNumber,
+      tax_id: payload.taxId,
+      contact_person: payload.contactPerson,
+      address: payload.address,
+      documents: {
+        id_front: payload.idFrontUrl,
+        id_back: payload.idBackUrl,
+        selfie_with_id: payload.selfieWithIdUrl,
+        ...(payload.businessRegistrationUrl && { business_registration: payload.businessRegistrationUrl }),
+      },
+    };
+    const response = await apiPost(AUTH_ENDPOINTS.ORGANIZER_VERIFICATION_REQUEST, body);
+    assertSuccess<Record<string, unknown>>(response);
+    return { message: response.data.message as string | undefined };
+  },
+
+  async getVerificationStatus(): Promise<OrganizerVerificationInfo | null> {
+    const response = await apiGet(AUTH_ENDPOINTS.ORGANIZER_VERIFICATION_STATUS);
+    if (!response.success) return null;
+
+    const data = response.data as Record<string, unknown>;
+    const req = (data.request ?? data) as Record<string, unknown>;
+    return {
+      status: (req.status as OrganizerVerificationInfo['status']) ?? 'pending',
+      requestId: req._id as string | undefined,
+      submittedAt: req.created_at as string | undefined,
+      reviewedAt: req.reviewed_at as string | undefined,
+      rejectionReasons: req.rejection_reasons as string[] | undefined,
+      reviewNotes: req.review_notes as string | undefined,
     };
   },
 };
