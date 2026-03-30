@@ -32,6 +32,9 @@ export interface AdminLoginResult {
   requires2FASetup?: boolean;
   qrCode?: string;
   secret?: string;
+  /** 2FA setup confirmed — no tokens, must re-login */
+  setupComplete?: boolean;
+  backupCodes?: string[];
 }
 
 export interface Admin2FAVerifyPayload {
