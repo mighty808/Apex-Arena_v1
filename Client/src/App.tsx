@@ -3,10 +3,7 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import PageTransition from "./components/PageTransition";
 import DashboardLayout from "./components/DashboardLayout";
-import CreateTournament from "./pages/auth/organizer/create-tournament";
-import JoinTournament from "./pages/auth/player/join-tournament";
 import Landing from "./pages/public/landing";
-import Profile from "./pages/public/profile";
 import NotFound from "./pages/public/not-found";
 import ForgotPassword from "./pages/public/forgot";
 import Register from "./pages/public/register";
@@ -14,6 +11,16 @@ import Login from "./pages/public/login";
 import Dashboard from "./pages/auth/Dashboard";
 import VerifyOtp from "./pages/public/verify-otp";
 import ProtectedRoute from "./components/ProtectedRoute";
+import RoleRoute from "./components/RoleRoute";
+
+// Auth pages
+import PlayerProfile from "./pages/auth/player/profile";
+import OrganizerProfile from "./pages/auth/organizer/profile";
+import JoinTournament from "./pages/auth/player/join-tournament";
+import CreateTournament from "./pages/auth/organizer/create-tournament";
+import MyTournaments from "./pages/auth/organizer/my-tournaments";
+import TournamentManage from "./pages/auth/organizer/tournament-manage";
+import BecomeOrganizer from "./pages/auth/become-organizer";
 
 // Admin
 import AdminLogin from "./pages/admin/login";
@@ -21,6 +28,9 @@ import AdminProtectedRoute from "./components/admin/AdminProtectedRoute";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/Dashboard";
 import UserManagement from "./pages/admin/UserManagement";
+import GamesManagement from "./pages/admin/GamesManagement";
+import OrganizerVerifications from "./pages/admin/OrganizerVerifications";
+import AdminProfile from "./pages/admin/AdminProfile";
 
 /** Public layout — Navbar + Footer */
 const PublicLayout = () => {
@@ -56,13 +66,20 @@ const App = () => {
       <Route path="auth" element={<ProtectedRoute />}>
         <Route element={<DashboardLayout />}>
           <Route index element={<Dashboard />} />
-          <Route path="organizer">
-            <Route path="profile" element={<Profile />} />
-            <Route path="create-tournament" element={<CreateTournament />} />
+
+          {/* Player-only routes */}
+          <Route element={<RoleRoute role="player" />}>
+            <Route path="player/profile" element={<PlayerProfile />} />
+            <Route path="tournaments" element={<JoinTournament />} />
+            <Route path="become-organizer" element={<BecomeOrganizer />} />
           </Route>
-          <Route path="player">
-            <Route path="profile" element={<Profile />} />
-            <Route path="join-tournament" element={<JoinTournament />} />
+
+          {/* Organizer-only routes */}
+          <Route element={<RoleRoute role="organizer" />}>
+            <Route path="organizer/profile" element={<OrganizerProfile />} />
+            <Route path="organizer/create-tournament" element={<CreateTournament />} />
+            <Route path="organizer/tournaments" element={<MyTournaments />} />
+            <Route path="organizer/tournaments/:tournamentId" element={<TournamentManage />} />
           </Route>
         </Route>
       </Route>
@@ -75,6 +92,9 @@ const App = () => {
         <Route element={<AdminLayout />}>
           <Route index element={<AdminDashboard />} />
           <Route path="users" element={<UserManagement />} />
+          <Route path="games" element={<GamesManagement />} />
+          <Route path="verifications" element={<OrganizerVerifications />} />
+          <Route path="profile" element={<AdminProfile />} />
         </Route>
       </Route>
     </Routes>
