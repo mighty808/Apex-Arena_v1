@@ -57,8 +57,8 @@ export const AUTH_ENDPOINTS = {
   PROFILE: `${API_BASE_URLS.AUTH}/user/profile`,
   UPDATE_PROFILE: `${API_BASE_URLS.AUTH}/user/profile`,      // PUT
   DEACTIVATE_ACCOUNT: `${API_BASE_URLS.AUTH}/user/deactivate`,
-  VERIFICATION_REQUEST: `${API_BASE_URLS.AUTH}/user/verification/request`,
-  VERIFICATION_STATUS: `${API_BASE_URLS.AUTH}/user/verification/status`,
+  ORGANIZER_VERIFICATION_REQUEST: `${API_BASE_URLS.AUTH}/user/request-organizer-verification`,
+  ORGANIZER_VERIFICATION_STATUS: `${API_BASE_URLS.AUTH}/user/verification-status`,
   ADD_PASSWORD: `${API_BASE_URLS.AUTH}/user/add-password`,
   AUTH_METHODS: `${API_BASE_URLS.AUTH}/user/auth-methods`,
 
