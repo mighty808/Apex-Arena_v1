@@ -333,23 +333,36 @@ export const authService = {
   },
 
   async requestOrganizerVerification(payload: OrganizerVerificationPayload): Promise<{ message?: string }> {
-    const body = {
-      business_name: payload.businessName,
-      business_type: payload.businessType,
-      registration_number: payload.registrationNumber,
-      tax_id: payload.taxId,
-      contact_person: payload.contactPerson,
-      address: payload.address,
-      documents: {
-        id_front: payload.idFrontUrl,
-        id_back: payload.idBackUrl,
-        selfie_with_id: payload.selfieWithIdUrl,
-        ...(payload.businessRegistrationUrl && { business_registration: payload.businessRegistrationUrl }),
-      },
-    };
-    const response = await apiPost(AUTH_ENDPOINTS.ORGANIZER_VERIFICATION_REQUEST, body);
-    assertSuccess<Record<string, unknown>>(response);
-    return { message: response.data.message as string | undefined };
+    const { getAccessToken } = await import('../utils/auth.utils');
+
+    const form = new FormData();
+    form.append('business_name', payload.businessName);
+    form.append('business_type', payload.businessType);
+    if (payload.registrationNumber) form.append('registration_number', payload.registrationNumber);
+    if (payload.taxId) form.append('tax_id', payload.taxId);
+    if (payload.contactPerson) form.append('contact_person', payload.contactPerson);
+    if (payload.address) form.append('address', payload.address);
+    form.append('id_front', payload.idFront);
+    form.append('id_back', payload.idBack);
+    form.append('selfie_with_id', payload.selfieWithId);
+    if (payload.businessRegistration) form.append('business_registration', payload.businessRegistration);
+
+    const token = getAccessToken();
+    const res = await fetch(AUTH_ENDPOINTS.ORGANIZER_VERIFICATION_REQUEST, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: form,
+    });
+
+    const raw = await res.json() as Record<string, unknown>;
+    if (!raw.success) {
+      const code = (raw.error_code ?? (raw.error as Record<string, unknown>)?.code ?? 'REQUEST_FAILED') as string;
+      const message = (raw.message ?? raw.details ?? (raw.error as Record<string, unknown>)?.message ?? 'Submission failed') as string;
+      throw new ApiRequestError(message, res.status, code);
+    }
+
+    const data = raw.data as Record<string, unknown> | undefined;
+    return { message: data?.message as string | undefined };
   },
 
   async getVerificationStatus(): Promise<OrganizerVerificationInfo | null> {
