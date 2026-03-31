@@ -79,10 +79,10 @@ export interface OrganizerVerificationPayload {
   taxId?: string;
   contactPerson?: string;
   address?: string;
-  idFrontUrl: string;
-  idBackUrl: string;
-  selfieWithIdUrl: string;
-  businessRegistrationUrl?: string;
+  idFront: File;
+  idBack: File;
+  selfieWithId: File;
+  businessRegistration?: File;
 }
 
 /** Helper to get a display name from a User */
