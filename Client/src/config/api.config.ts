@@ -3,7 +3,9 @@ export const GOOGLE_CLIENT_ID =
 
 export const API_BASE_URLS = {
   AUTH: "https://api-apexarenas.onrender.com/api/v1/auth",
-  TOURNAMENT: "https://api-apexarenas.onrender.com/api/v1/tournament"
+  TOURNAMENT: "https://api-apexarenas.onrender.com/api/v1/tournament",
+  FINANCE: "https://api-apexarenas.onrender.com/api/v1/finance",
+  WEBHOOKS: "https://api-apexarenas.onrender.com/api/v1/webhooks",
 } as const;
 
 export const AUTH_ENDPOINTS = {
@@ -29,8 +31,8 @@ export const AUTH_ENDPOINTS = {
   OTP_GENERATE: `${API_BASE_URLS.AUTH}/otp/generate`,
   OTP_VERIFY: `${API_BASE_URLS.AUTH}/otp/verify`,
   OTP_RESEND: `${API_BASE_URLS.AUTH}/otp/resend`,
-  OTP_CAN_REQUEST: `${API_BASE_URLS.AUTH}/otp/can-request`, // + /:type
-  OTP_ATTEMPTS: `${API_BASE_URLS.AUTH}/otp/attempts`,       // + /:type
+  OTP_CAN_REQUEST: `${API_BASE_URLS.AUTH}/otp/can-request/:type`, // + /:type
+  OTP_ATTEMPTS: `${API_BASE_URLS.AUTH}/otp/attempts/:type`,       // + /:type
 
   // Password Management
   PASSWORD_CHANGE: `${API_BASE_URLS.AUTH}/password/change`,
@@ -45,14 +47,15 @@ export const AUTH_ENDPOINTS = {
   TOKEN_VALIDATE: `${API_BASE_URLS.AUTH}/token/validate`,
   ADMIN_TOKEN_REFRESH: `${API_BASE_URLS.AUTH}/admin/token/refresh`,
   ADMIN_TOKEN_VALIDATE: `${API_BASE_URLS.AUTH}/admin/token/validate`,
-  SESSIONS: `${API_BASE_URLS.AUTH}/sessions`,                // GET /sessions, DELETE /sessions/:sessionId
+  SESSIONS: `${API_BASE_URLS.AUTH}/sessions`,                // GET /sessions,
+  SESSION_REVOKE_SPECIFIC: `${API_BASE_URLS.AUTH}/sessions`, //  delete sessions/:sessionId
   SESSIONS_REVOKE_OTHERS: `${API_BASE_URLS.AUTH}/sessions/revoke-others`,
   ADMIN_SESSIONS: `${API_BASE_URLS.AUTH}/admin/sessions`,    // GET /admin/sessions, DELETE /admin/sessions/:sessionId
   LOGOUT: `${API_BASE_URLS.AUTH}/logout`,
   LOGOUT_ALL: `${API_BASE_URLS.AUTH}/logout-all`,
   ADMIN_LOGOUT: `${API_BASE_URLS.AUTH}/admin/logout`,
   ADMIN_LOGOUT_ALL: `${API_BASE_URLS.AUTH}/admin/logout-all`,
-
+  ADMIN_SESSION_SPECIFIC: `${API_BASE_URLS.AUTH}/admin/sessions`, // Deleting specific admin sesiion /:sessionId
   // User Profile & Account
   PROFILE: `${API_BASE_URLS.AUTH}/user/profile`,
   UPDATE_PROFILE: `${API_BASE_URLS.AUTH}/user/profile`,      // PUT
@@ -64,7 +67,8 @@ export const AUTH_ENDPOINTS = {
 
   // Admin (Super Admin) Routes
   ADMIN_BOOTSTRAP: `${API_BASE_URLS.AUTH}/admin/bootstrap`,
-  ADMIN_USERS: `${API_BASE_URLS.AUTH}/admin/users`,          // + filters, /:userId, etc.
+  ADMIN_GET_USERS: `${API_BASE_URLS.AUTH}/admin/users`,          // + filters, /:userId, etc.
+  ADMIN_GET_USER_DETAILS: `${API_BASE_URLS.AUTH}/admin/users`,  // +/:userId
   ADMIN_USER_BAN: `${API_BASE_URLS.AUTH}/admin/users`,       // + /:userId/ban
   ADMIN_USER_UNBAN: `${API_BASE_URLS.AUTH}/admin/users`,     // + /:userId/unban
   ADMIN_USER_DEACTIVATE: `${API_BASE_URLS.AUTH}/admin/users`,// + /:userId/deactivate
@@ -77,14 +81,14 @@ export const AUTH_ENDPOINTS = {
   ADMIN_USER_SESSION_REVOKE: `${API_BASE_URLS.AUTH}/admin/users`, // + /:userId/sessions/:sessionId
   ADMIN_USER_UNLOCK: `${API_BASE_URLS.AUTH}/admin/users`,     // + /:userId/unlock
   ADMIN_USER_FORCE_PASSWORD_RESET: `${API_BASE_URLS.AUTH}/admin/users`, // + /:userId/force-password-reset
-  ADMIN_VERIFICATIONS: `${API_BASE_URLS.AUTH}/admin/verifications`, // + /:requestId/review etc.
-  ADMIN_AUDIT: `${API_BASE_URLS.AUTH}/admin/audit`,
-  ADMIN_STATS: `${API_BASE_URLS.AUTH}/admin/stats`,
+  ADMIN_VERIFICATIONS_DETAILS: `${API_BASE_URLS.AUTH}/admin/verifications`, // + /:requestId/
+  ADMIN_VERIFICATIONS_MARK_UNDER_REVIEW: `${API_BASE_URLS.AUTH}/admin/verifications`, // +/:requestId/review-start
+  ADMIN_APPROVE_OR_REJECT_VERIFICATIONS: `${API_BASE_URLS.AUTH}/admin/verifications`, // +/:requestId/review,
+  ADMIN_SEARCH_AUDIT_LOGS: `${API_BASE_URLS.AUTH}/admin/audit`,
+  ADMIN_USER_AUDIT_TRAIL: `${API_BASE_URLS.AUTH}/admin/users`, // +/:userId/audit
+  ADMIN_SYSTEM_STATS: `${API_BASE_URLS.AUTH}/admin/stats`,
   ADMIN_SECURITY_SUSPICIOUS: `${API_BASE_URLS.AUTH}/admin/security/suspicious`,
-  ADMIN_ADMINS: `${API_BASE_URLS.AUTH}/admin/admins`,
-  ADMIN_ADMINS_SETUP: `${API_BASE_URLS.AUTH}/admin/admins/setup`,
-  ADMIN_ADMINS_FORCE_2FA: `${API_BASE_URLS.AUTH}/admin/admins`, // + /:adminId/force-2fa
-
+  
   // Auth Status
   ME: `${API_BASE_URLS.AUTH}/me`,
 } as const;
@@ -105,7 +109,7 @@ export const TOURNAMENT_ENDPOINTS = {
   UPDATE_IN_GAME_ID: `${API_BASE_URLS.TOURNAMENT}/registrations`,         // + /:registrationId/in-game-id
 
   // Bracket
-  BRACKET: `${API_BASE_URLS.TOURNAMENT}/tournaments`,                     // + /:tournamentId/bracket (GET, POST for generate)
+  BRACKET: `${API_BASE_URLS.TOURNAMENT}/tournaments`,                     // GET + /:tournamentId/bracket | POST for generate /:tournamentId/bracket/generate
   BRACKET_CURRENT_ROUND: `${API_BASE_URLS.TOURNAMENT}/tournaments`,       // + /:tournamentId/bracket/current-round
 
   // Check-in
@@ -154,7 +158,8 @@ export const TOURNAMENT_ENDPOINTS = {
   RECRUITMENT_APPLICATION_RESPOND: `${API_BASE_URLS.TOURNAMENT}/recruitment`, // + /:postId/applications/:applicationId/respond
 
   // Games
-  GAMES: `${API_BASE_URLS.TOURNAMENT}/games`,                             // GET, POST (admin)
+  GAMES_LIST: `${API_BASE_URLS.TOURNAMENT}/games`,                         // GET GAMES
+  GAME_CREATE: `${API_BASE_URLS.TOURNAMENT}/games`,                        // GET, POST (admin)
   GAME_DETAIL: `${API_BASE_URLS.TOURNAMENT}/games`,                       // + /:gameId (GET, PATCH, DELETE)
   GAME_TOGGLE_ACTIVE: `${API_BASE_URLS.TOURNAMENT}/games`,                // + /:gameId/toggle-active
   GAME_UPDATE_STATS: `${API_BASE_URLS.TOURNAMENT}/games`,                 // + /:gameId/stats
@@ -186,6 +191,43 @@ export const TOURNAMENT_ENDPOINTS = {
   ADMIN_CHECK_IN_BULK: `${API_BASE_URLS.TOURNAMENT}/admin/checkin/tournaments`, // + /:tournamentId/check-in/bulk
   ADMIN_CHECK_IN_FORCE: `${API_BASE_URLS.TOURNAMENT}/admin/checkin/tournaments`, // + /:tournamentId/check-in/force/:userId
   ADMIN_CHECK_IN_UNDO: `${API_BASE_URLS.TOURNAMENT}/admin/checkin/tournaments`, // + /:tournamentId/check-in/undo/:userId
+} as const;
+
+
+export const FINANCE_ENDPOINTS = {
+
+  //  Wallet 
+  WALLET: `${API_BASE_URLS.FINANCE}/wallet`,                        // GET
+  DEPOSIT: `${API_BASE_URLS.FINANCE}/deposit`,                      // POST
+  DEPOSIT_VERIFY: `${API_BASE_URLS.FINANCE}/deposit/verify`,        // GET — TheTeller redirect callback (no JWT)
+  TRANSACTIONS: `${API_BASE_URLS.FINANCE}/transactions`,            // GET
+
+  //  Escrow (User) 
+  ESCROW_DEPOSIT: `${API_BASE_URLS.FINANCE}/escrow/deposit`,        // POST — organizer records prize pool deposit
+  ESCROW_STATUS: `${API_BASE_URLS.FINANCE}/escrow`,                 // + /:tournamentId (GET)
+  ESCROW_SUBMIT_WINNERS: `${API_BASE_URLS.FINANCE}/escrow`,         // + /:tournamentId/winners (POST)
+
+  // Escrow (Admin) 
+  ADMIN_ESCROW_PROCESSOR_RUN: `${API_BASE_URLS.FINANCE}/admin/escrow/processor/run`, // POST — manually trigger escrow processor
+  ADMIN_ESCROW_STATUS: `${API_BASE_URLS.FINANCE}/admin/escrow`,     // + /:tournamentId (GET)
+  ADMIN_ESCROW_CANCEL: `${API_BASE_URLS.FINANCE}/admin/escrow`,     // + /:tournamentId/cancel (POST)
+
+  //  Payouts (User)
+  PAYOUT_REQUEST: `${API_BASE_URLS.FINANCE}/payouts/request`,       // POST — submit withdrawal request
+  PAYOUT_MY_REQUESTS: `${API_BASE_URLS.FINANCE}/payouts/my-requests`, // GET — own requests
+  PAYOUT_DETAIL: `${API_BASE_URLS.FINANCE}/payouts`,                // + /:id (GET, DELETE)
+
+  // Payouts (Admin) 
+  ADMIN_PAYOUTS_PENDING: `${API_BASE_URLS.FINANCE}/admin/payouts/pending`, // GET — all pending requests
+  ADMIN_PAYOUT_DETAIL: `${API_BASE_URLS.FINANCE}/admin/payouts`,    // + /:id (GET)
+  ADMIN_PAYOUT_APPROVE: `${API_BASE_URLS.FINANCE}/admin/payouts`,   // + /:id/approve (PATCH)
+  ADMIN_PAYOUT_REJECT: `${API_BASE_URLS.FINANCE}/admin/payouts`,    // + /:id/reject (PATCH)
+
+} as const;
+
+export const WEBHOOK_ENDPOINTS = {
+  PAYSTACK: `${API_BASE_URLS.WEBHOOKS}/paystack`,                   // POST — called by Paystack gateway
+  FLUTTERWAVE: `${API_BASE_URLS.WEBHOOKS}/flutterwave`,             // POST — called by Flutterwave gateway
 } as const;
 
 export const HTTP_METHODS = {
