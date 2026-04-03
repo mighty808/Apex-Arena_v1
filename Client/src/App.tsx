@@ -20,7 +20,7 @@ import JoinTournament from "./pages/auth/player/join-tournament";
 import CreateTournament from "./pages/auth/organizer/create-tournament";
 import MyTournaments from "./pages/auth/organizer/my-tournaments";
 import TournamentManage from "./pages/auth/organizer/tournament-manage";
-import BecomeOrganizer from "./pages/auth/become-organizer";
+import BecomeOrganizer from "./pages/auth/player/become-organizer";
 
 // Admin
 
@@ -62,6 +62,7 @@ const App = () => {
           {/* Player-only routes */}
           <Route element={<RoleRoute role="player" />}>
             <Route path="player/profile" element={<PlayerProfile />} />
+            <Route path="player/join-tournament" element={<JoinTournament />} />
             <Route path="tournaments" element={<JoinTournament />} />
             <Route path="become-organizer" element={<BecomeOrganizer />} />
           </Route>
@@ -69,13 +70,18 @@ const App = () => {
           {/* Organizer-only routes */}
           <Route element={<RoleRoute role="organizer" />}>
             <Route path="organizer/profile" element={<OrganizerProfile />} />
-            <Route path="organizer/create-tournament" element={<CreateTournament />} />
+            <Route
+              path="organizer/create-tournament"
+              element={<CreateTournament />}
+            />
             <Route path="organizer/tournaments" element={<MyTournaments />} />
-            <Route path="organizer/tournaments/:tournamentId" element={<TournamentManage />} />
+            <Route
+              path="organizer/tournaments/:tournamentId"
+              element={<TournamentManage />}
+            />
           </Route>
         </Route>
       </Route>
-
     </Routes>
   );
 };
