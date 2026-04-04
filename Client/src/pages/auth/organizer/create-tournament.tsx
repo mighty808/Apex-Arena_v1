@@ -11,13 +11,20 @@ import {
   Loader2,
   Image,
 } from "lucide-react";
-import { organizerService, type CreateTournamentPayload } from "../../../services/organizer.service";
+import {
+  organizerService,
+  type CreateTournamentPayload,
+} from "../../../services/organizer.service";
 import { apiGet } from "../../../utils/api.utils";
 import { TOURNAMENT_ENDPOINTS } from "../../../config/api.config";
 
 // ─── Small UI helpers ────────────────────────────────────────────────────────
 
-function SectionCard({ title, icon: Icon, children }: {
+function SectionCard({
+  title,
+  icon: Icon,
+  children,
+}: {
   title: string;
   icon: React.ElementType;
   children: React.ReactNode;
@@ -33,7 +40,11 @@ function SectionCard({ title, icon: Icon, children }: {
   );
 }
 
-function Field({ label, required, children }: {
+function Field({
+  label,
+  required,
+  children,
+}: {
   label: string;
   required?: boolean;
   children: React.ReactNode;
@@ -41,7 +52,8 @@ function Field({ label, required, children }: {
   return (
     <div>
       <label className="block text-xs font-medium text-slate-400 mb-1.5">
-        {label}{required && <span className="text-red-400 ml-0.5">*</span>}
+        {label}
+        {required && <span className="text-red-400 ml-0.5">*</span>}
       </label>
       {children}
     </div>
@@ -56,7 +68,30 @@ const selectCls =
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-interface GameOption { id: string; name: string }
+interface GameOption {
+  id: string;
+  name: string;
+}
+
+const TEAM_FORMAT_REGEX = /^(\d+)v\1$/;
+
+function isTeamFormat(value: string): boolean {
+  return value !== "1v1" && value !== "solo";
+}
+
+function inferTeamSize(value: string): number | null {
+  const match = value.match(TEAM_FORMAT_REGEX);
+  if (!match) return null;
+  const size = Number.parseInt(match[1], 10);
+  return Number.isNaN(size) ? null : size;
+}
+
+function toIsoString(dateTimeLocal: string): string | null {
+  if (!dateTimeLocal) return null;
+  const parsed = new Date(dateTimeLocal);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed.toISOString();
+}
 
 const CreateTournament = () => {
   const navigate = useNavigate();
@@ -74,6 +109,7 @@ const CreateTournament = () => {
   const [format, setFormat] = useState("1v1");
   const [maxParticipants, setMaxParticipants] = useState("16");
   const [minParticipants, setMinParticipants] = useState("4");
+  const [teamSize, setTeamSize] = useState("2");
   const [isFree, setIsFree] = useState(true);
   const [entryFee, setEntryFee] = useState("");
   const [prizePool, setPrizePool] = useState("");
@@ -83,70 +119,322 @@ const CreateTournament = () => {
   const [tournamentEnd, setTournamentEnd] = useState("");
   const [checkInStart, setCheckInStart] = useState("");
   const [checkInEnd, setCheckInEnd] = useState("");
+  const [timezone, setTimezone] = useState(
+    () => Intl.DateTimeFormat().resolvedOptions().timeZone || "Africa/Accra",
+  );
   const [region, setRegion] = useState("");
   const [visibility, setVisibility] = useState("public");
+  const [contactEmail, setContactEmail] = useState("");
   const [rules, setRules] = useState("");
   const [thumbnailUrl, setThumbnailUrl] = useState("");
+  const [waitlistEnabled, setWaitlistEnabled] = useState(true);
+  const [firstPrizePercentage, setFirstPrizePercentage] = useState("60");
+  const [secondPrizePercentage, setSecondPrizePercentage] = useState("30");
+  const [thirdPrizePercentage, setThirdPrizePercentage] = useState("10");
+  const [mapPool, setMapPool] = useState("");
+  const [antiCheatRequired, setAntiCheatRequired] = useState(true);
+  const [streamRequired, setStreamRequired] = useState(false);
+  const [defaultBestOf, setDefaultBestOf] = useState("3");
+  const [inGameIdRequired, setInGameIdRequired] = useState(true);
+  const [allowedRegions, setAllowedRegions] = useState("");
+  const [verifiedEmailRequired, setVerifiedEmailRequired] = useState(true);
 
   useEffect(() => {
     if (hasFetchedGames.current) return;
     hasFetchedGames.current = true;
 
-    apiGet(TOURNAMENT_ENDPOINTS.GAMES).then((res) => {
-      if (!res.success) return;
-      const raw = res.data as Record<string, unknown>;
-      const list = Array.isArray(raw) ? raw : ((raw.games ?? raw.data ?? []) as Record<string, unknown>[]);
-      setGames(
-        list.map((g) => ({
-          id: String((g as Record<string, unknown>)._id ?? ''),
-          name: String((g as Record<string, unknown>).name ?? ''),
-        }))
-      );
-    }).catch(() => {});
+    apiGet(TOURNAMENT_ENDPOINTS.GAMES)
+      .then((res) => {
+        if (!res.success) return;
+        const raw = res.data as Record<string, unknown>;
+        const list = Array.isArray(raw)
+          ? raw
+          : ((raw.games ?? raw.data ?? []) as Record<string, unknown>[]);
+        setGames(
+          list.map((g) => ({
+            id: String((g as Record<string, unknown>)._id ?? ""),
+            name: String((g as Record<string, unknown>).name ?? ""),
+          })),
+        );
+      })
+      .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    const inferred = inferTeamSize(format);
+    if (inferred !== null) {
+      setTeamSize(String(inferred));
+      return;
+    }
+
+    if (!isTeamFormat(format)) {
+      setTeamSize("");
+    }
+  }, [format]);
+
+  useEffect(() => {
+    if (isFree) {
+      setEntryFee("");
+      setPrizePool("");
+    }
+  }, [isFree]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    if (!title.trim()) { setError("Tournament title is required."); return; }
-    if (!gameId) { setError("Please select a game."); return; }
-    if (!registrationStart || !registrationEnd || !tournamentStart) {
-      setError("Registration start, registration end, and tournament start dates are required.");
+    const trimmedTitle = title.trim();
+    const trimmedRules = rules.trim();
+    const trimmedContactEmail = contactEmail.trim();
+    const trimmedRegion = region.trim().toUpperCase();
+    const mapPoolValues = mapPool
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+    const allowedRegionValues = allowedRegions
+      .split(",")
+      .map((item) => item.trim().toUpperCase())
+      .filter(Boolean);
+    const timezoneValue = timezone.trim() || "Africa/Accra";
+
+    const maxParticipantsValue = Number.parseInt(maxParticipants, 10);
+    const minParticipantsValue = Number.parseInt(minParticipants, 10);
+    const teamSizeValue = Number.parseInt(teamSize, 10);
+    const inferredTeamSize = inferTeamSize(format);
+
+    const registrationStartIso = toIsoString(registrationStart);
+    const registrationEndIso = toIsoString(registrationEnd);
+    const tournamentStartIso = toIsoString(tournamentStart);
+    const tournamentEndIso = toIsoString(tournamentEnd);
+    const checkInStartIso = toIsoString(checkInStart);
+    const checkInEndIso = toIsoString(checkInEnd);
+
+    if (!trimmedTitle) {
+      setError("Tournament title is required.");
       return;
     }
-    if (!isFree && !entryFee) { setError("Entry fee is required for paid tournaments."); return; }
+    if (trimmedTitle.length > 100) {
+      setError("Tournament title must be 100 characters or less.");
+      return;
+    }
+    if (!gameId) {
+      setError("Please select a game.");
+      return;
+    }
+    if (!tournamentType) {
+      setError("Tournament type is required.");
+      return;
+    }
+    if (!format) {
+      setError("Tournament format is required.");
+      return;
+    }
+
+    if (!Number.isFinite(maxParticipantsValue) || maxParticipantsValue < 2) {
+      setError("Maximum participants must be at least 2.");
+      return;
+    }
+    if (!Number.isFinite(minParticipantsValue) || minParticipantsValue < 2) {
+      setError("Minimum participants must be at least 2.");
+      return;
+    }
+    if (minParticipantsValue > maxParticipantsValue) {
+      setError("Minimum participants cannot exceed maximum participants.");
+      return;
+    }
+
+    if (!registrationStartIso || !registrationEndIso || !tournamentStartIso) {
+      setError(
+        "Registration start, registration end, and tournament start dates are required.",
+      );
+      return;
+    }
+
+    const regStartDate = new Date(registrationStartIso);
+    const regEndDate = new Date(registrationEndIso);
+    const tournamentStartDate = new Date(tournamentStartIso);
+
+    if (regStartDate >= regEndDate) {
+      setError("Registration start must be before registration end.");
+      return;
+    }
+    if (regEndDate >= tournamentStartDate) {
+      setError("Registration end must be before tournament start.");
+      return;
+    }
+    if (regStartDate <= new Date()) {
+      setError("Registration start must be in the future.");
+      return;
+    }
+
+    if (tournamentEnd && !tournamentEndIso) {
+      setError("Tournament end date is invalid.");
+      return;
+    }
+    if (tournamentEndIso) {
+      const tournamentEndDate = new Date(tournamentEndIso);
+      if (tournamentStartDate >= tournamentEndDate) {
+        setError("Tournament start must be before tournament end.");
+        return;
+      }
+    }
+
+    if ((checkInStart && !checkInEnd) || (!checkInStart && checkInEnd)) {
+      setError(
+        "Provide both check-in start and check-in end, or leave both empty.",
+      );
+      return;
+    }
+    if (checkInStart && checkInEnd) {
+      if (!checkInStartIso || !checkInEndIso) {
+        setError("Check-in schedule is invalid.");
+        return;
+      }
+
+      const checkInStartDate = new Date(checkInStartIso);
+      const checkInEndDate = new Date(checkInEndIso);
+
+      if (checkInStartDate >= checkInEndDate) {
+        setError("Check-in start must be before check-in end.");
+        return;
+      }
+      if (checkInStartDate >= tournamentStartDate) {
+        setError("Check-in start must be before tournament start.");
+        return;
+      }
+      if (checkInEndDate > tournamentStartDate) {
+        setError("Check-in end must be on or before tournament start.");
+        return;
+      }
+    }
+
+    if (isTeamFormat(format)) {
+      if (
+        !Number.isFinite(teamSizeValue) ||
+        teamSizeValue < 1 ||
+        teamSizeValue > 100
+      ) {
+        setError("Team size must be between 1 and 100 for team formats.");
+        return;
+      }
+      if (inferredTeamSize !== null && teamSizeValue !== inferredTeamSize) {
+        setError(`Team size for ${format} must be ${inferredTeamSize}.`);
+        return;
+      }
+    }
+
+    const entryFeeValue = Number.parseFloat(entryFee);
+    const prizePoolValue = Number.parseFloat(prizePool);
+    const firstPrizeValue = Number.parseFloat(firstPrizePercentage);
+    const secondPrizeValue = Number.parseFloat(secondPrizePercentage);
+    const thirdPrizeValue = Number.parseFloat(thirdPrizePercentage);
+    const defaultBestOfValue = Number.parseInt(defaultBestOf, 10);
+
+    if (!isFree && (!Number.isFinite(entryFeeValue) || entryFeeValue <= 0)) {
+      setError("Entry fee must be greater than 0 for paid tournaments.");
+      return;
+    }
+    if (!isFree && (!Number.isFinite(prizePoolValue) || prizePoolValue <= 0)) {
+      setError(
+        "Prize pool deposit must be greater than 0 for paid tournaments.",
+      );
+      return;
+    }
+
+    if (!Number.isFinite(defaultBestOfValue) || defaultBestOfValue < 1) {
+      setError("Default best-of must be at least 1.");
+      return;
+    }
+
+    if (!isFree) {
+      if (
+        !Number.isFinite(firstPrizeValue) ||
+        !Number.isFinite(secondPrizeValue) ||
+        !Number.isFinite(thirdPrizeValue) ||
+        firstPrizeValue <= 0 ||
+        secondPrizeValue <= 0 ||
+        thirdPrizeValue <= 0
+      ) {
+        setError("Prize distribution percentages must be positive numbers.");
+        return;
+      }
+
+      const percentageTotal =
+        firstPrizeValue + secondPrizeValue + thirdPrizeValue;
+      if (Math.abs(percentageTotal - 100) > 0.001) {
+        setError("Prize distribution percentages must add up to 100.");
+        return;
+      }
+    }
+
+    if (trimmedRules.length > 5000) {
+      setError("Rules description must be 5000 characters or less.");
+      return;
+    }
+
+    if (
+      trimmedContactEmail &&
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedContactEmail)
+    ) {
+      setError("Contact email is invalid.");
+      return;
+    }
 
     setIsSubmitting(true);
     try {
       const payload: CreateTournamentPayload = {
-        title: title.trim(),
+        title: trimmedTitle,
         description: description.trim() || undefined,
         gameId,
-        tournamentType: tournamentType || undefined,
-        format: format || undefined,
+        tournamentType,
+        format,
         isFree,
-        entryFee: !isFree && entryFee ? Math.round(parseFloat(entryFee) * 100) : 0,
+        entryFee: !isFree ? Math.round(entryFeeValue * 100) : undefined,
         currency: "GHS",
-        maxParticipants: parseInt(maxParticipants) || 16,
-        minParticipants: parseInt(minParticipants) || 4,
-        registrationStart,
-        registrationEnd,
-        tournamentStart,
-        tournamentEnd: tournamentEnd || undefined,
-        checkInStart: checkInStart || undefined,
-        checkInEnd: checkInEnd || undefined,
-        prizePool: prizePool ? Math.round(parseFloat(prizePool) * 100) : undefined,
-        rules: rules.trim() || undefined,
-        region: region.trim() || undefined,
+        maxParticipants: maxParticipantsValue,
+        minParticipants: minParticipantsValue,
+        teamSize: isTeamFormat(format) ? teamSizeValue : undefined,
+        registrationStart: registrationStartIso,
+        registrationEnd: registrationEndIso,
+        tournamentStart: tournamentStartIso,
+        tournamentEnd: tournamentEndIso || undefined,
+        checkInStart: checkInStartIso || undefined,
+        checkInEnd: checkInEndIso || undefined,
+        timezone: timezoneValue,
+        prizePool: !isFree ? Math.round(prizePoolValue * 100) : undefined,
+        waitlistEnabled,
+        prizeDistribution: !isFree
+          ? [
+              { position: 1, percentage: firstPrizeValue },
+              { position: 2, percentage: secondPrizeValue },
+              { position: 3, percentage: thirdPrizeValue },
+            ]
+          : undefined,
+        rules: trimmedRules || undefined,
+        mapPool: mapPoolValues.length > 0 ? mapPoolValues : undefined,
+        antiCheatRequired,
+        streamRequired,
+        defaultBestOf: defaultBestOfValue,
+        inGameIdRequired,
+        region: trimmedRegion || undefined,
         visibility,
         thumbnailUrl: thumbnailUrl.trim() || undefined,
+        contactEmail: trimmedContactEmail || undefined,
+        allowedRegions:
+          allowedRegionValues.length > 0
+            ? allowedRegionValues
+            : trimmedRegion
+              ? [trimmedRegion]
+              : undefined,
+        verifiedEmailRequired,
       };
 
       const created = await organizerService.createTournament(payload);
       navigate(`/auth/organizer/tournaments/${created.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create tournament.");
+      setError(
+        err instanceof Error ? err.message : "Failed to create tournament.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -163,8 +451,12 @@ const CreateTournament = () => {
           <ChevronLeft className="w-5 h-5" />
         </button>
         <div>
-          <h1 className="font-display text-2xl font-bold text-white">Create Tournament</h1>
-          <p className="text-sm text-slate-400 mt-0.5">Fill in the details to set up your tournament.</p>
+          <h1 className="font-display text-2xl font-bold text-white">
+            Create Tournament
+          </h1>
+          <p className="text-sm text-slate-400 mt-0.5">
+            Fill in the details to set up your tournament.
+          </p>
         </div>
       </div>
 
@@ -202,35 +494,58 @@ const CreateTournament = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Game" required>
-              <select value={gameId} onChange={(e) => setGameId(e.target.value)} className={selectCls}>
+              <select
+                value={gameId}
+                onChange={(e) => setGameId(e.target.value)}
+                className={selectCls}
+              >
                 <option value="">Select a game</option>
                 {games.map((g) => (
-                  <option key={g.id} value={g.id}>{g.name}</option>
+                  <option key={g.id} value={g.id}>
+                    {g.name}
+                  </option>
                 ))}
               </select>
             </Field>
 
-            <Field label="Tournament Type">
-              <select value={tournamentType} onChange={(e) => setTournamentType(e.target.value)} className={selectCls}>
+            <Field label="Tournament Type" required>
+              <select
+                value={tournamentType}
+                onChange={(e) => setTournamentType(e.target.value)}
+                className={selectCls}
+              >
                 <option value="single_elimination">Single Elimination</option>
                 <option value="double_elimination">Double Elimination</option>
                 <option value="round_robin">Round Robin</option>
                 <option value="swiss">Swiss</option>
+                <option value="battle_royale">Battle Royale</option>
               </select>
             </Field>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Format">
-              <select value={format} onChange={(e) => setFormat(e.target.value)} className={selectCls}>
-                {["1v1", "2v2", "3v3", "4v4", "5v5", "solo", "squad"].map((f) => (
-                  <option key={f} value={f}>{f}</option>
-                ))}
+            <Field label="Format" required>
+              <select
+                value={format}
+                onChange={(e) => setFormat(e.target.value)}
+                className={selectCls}
+              >
+                {["1v1", "2v2", "3v3", "4v4", "5v5", "solo", "squad"].map(
+                  (f) => (
+                    <option key={f} value={f}>
+                      {f}
+                    </option>
+                  ),
+                )}
               </select>
             </Field>
 
             <Field label="Visibility">
-              <select value={visibility} onChange={(e) => setVisibility(e.target.value)} className={selectCls}>
+              <select
+                value={visibility}
+                onChange={(e) => setVisibility(e.target.value)}
+                className={selectCls}
+              >
                 <option value="public">Public</option>
                 <option value="private">Private</option>
                 <option value="invite_only">Invite Only</option>
@@ -247,6 +562,28 @@ const CreateTournament = () => {
               className={inputCls}
             />
           </Field>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Field label="Timezone">
+              <input
+                type="text"
+                value={timezone}
+                onChange={(e) => setTimezone(e.target.value)}
+                placeholder="Africa/Accra"
+                className={inputCls}
+              />
+            </Field>
+
+            <Field label="Contact Email">
+              <input
+                type="email"
+                value={contactEmail}
+                onChange={(e) => setContactEmail(e.target.value)}
+                placeholder="organizer@example.com"
+                className={inputCls}
+              />
+            </Field>
+          </div>
 
           <Field label="Thumbnail URL">
             <div className="flex gap-2 items-center">
@@ -275,7 +612,7 @@ const CreateTournament = () => {
                 className={inputCls}
               />
             </Field>
-            <Field label="Min Participants">
+            <Field label="Min Participants" required>
               <input
                 type="number"
                 value={minParticipants}
@@ -285,6 +622,30 @@ const CreateTournament = () => {
               />
             </Field>
           </div>
+
+          {isTeamFormat(format) && (
+            <Field label="Team Size" required>
+              <input
+                type="number"
+                value={teamSize}
+                onChange={(e) => setTeamSize(e.target.value)}
+                min={1}
+                max={100}
+                readOnly={inferTeamSize(format) !== null}
+                className={inputCls}
+              />
+            </Field>
+          )}
+
+          <label className="inline-flex items-center gap-2 text-sm text-slate-300">
+            <input
+              type="checkbox"
+              checked={waitlistEnabled}
+              onChange={(e) => setWaitlistEnabled(e.target.checked)}
+              className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-cyan-500 focus:ring-cyan-500"
+            />
+            Enable waitlist when tournament is full
+          </label>
         </SectionCard>
 
         {/* Schedule */}
@@ -371,7 +732,9 @@ const CreateTournament = () => {
           {!isFree && (
             <Field label="Entry Fee (GHS)" required>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">₵</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">
+                  ₵
+                </span>
                 <input
                   type="number"
                   value={entryFee}
@@ -385,20 +748,59 @@ const CreateTournament = () => {
             </Field>
           )}
 
-          <Field label="Prize Pool (GHS)">
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">₵</span>
-              <input
-                type="number"
-                value={prizePool}
-                onChange={(e) => setPrizePool(e.target.value)}
-                placeholder="0.00"
-                min={0}
-                step={0.01}
-                className={`${inputCls} pl-7`}
-              />
+          {!isFree && (
+            <Field label="Prize Pool (GHS)" required>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">
+                  ₵
+                </span>
+                <input
+                  type="number"
+                  value={prizePool}
+                  onChange={(e) => setPrizePool(e.target.value)}
+                  placeholder="0.00"
+                  min={0}
+                  step={0.01}
+                  className={`${inputCls} pl-7`}
+                />
+              </div>
+            </Field>
+          )}
+
+          {!isFree && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <Field label="1st Prize %" required>
+                <input
+                  type="number"
+                  value={firstPrizePercentage}
+                  onChange={(e) => setFirstPrizePercentage(e.target.value)}
+                  min={0}
+                  step={0.01}
+                  className={inputCls}
+                />
+              </Field>
+              <Field label="2nd Prize %" required>
+                <input
+                  type="number"
+                  value={secondPrizePercentage}
+                  onChange={(e) => setSecondPrizePercentage(e.target.value)}
+                  min={0}
+                  step={0.01}
+                  className={inputCls}
+                />
+              </Field>
+              <Field label="3rd Prize %" required>
+                <input
+                  type="number"
+                  value={thirdPrizePercentage}
+                  onChange={(e) => setThirdPrizePercentage(e.target.value)}
+                  min={0}
+                  step={0.01}
+                  className={inputCls}
+                />
+              </Field>
             </div>
-          </Field>
+          )}
         </SectionCard>
 
         {/* Rules */}
@@ -409,9 +811,84 @@ const CreateTournament = () => {
               onChange={(e) => setRules(e.target.value)}
               placeholder="Tournament rules, code of conduct, map pool, etc."
               rows={4}
+              maxLength={5000}
               className={`${inputCls} resize-none`}
             />
           </Field>
+
+          <Field label="Map Pool (comma-separated)">
+            <input
+              type="text"
+              value={mapPool}
+              onChange={(e) => setMapPool(e.target.value)}
+              placeholder="Miramar, Erangel, Vikendi"
+              className={inputCls}
+            />
+          </Field>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <label className="inline-flex items-center gap-2 text-sm text-slate-300">
+              <input
+                type="checkbox"
+                checked={antiCheatRequired}
+                onChange={(e) => setAntiCheatRequired(e.target.checked)}
+                className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-cyan-500 focus:ring-cyan-500"
+              />
+              Anti-cheat required
+            </label>
+
+            <label className="inline-flex items-center gap-2 text-sm text-slate-300">
+              <input
+                type="checkbox"
+                checked={streamRequired}
+                onChange={(e) => setStreamRequired(e.target.checked)}
+                className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-cyan-500 focus:ring-cyan-500"
+              />
+              Stream required
+            </label>
+
+            <label className="inline-flex items-center gap-2 text-sm text-slate-300">
+              <input
+                type="checkbox"
+                checked={inGameIdRequired}
+                onChange={(e) => setInGameIdRequired(e.target.checked)}
+                className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-cyan-500 focus:ring-cyan-500"
+              />
+              In-game ID required
+            </label>
+
+            <label className="inline-flex items-center gap-2 text-sm text-slate-300">
+              <input
+                type="checkbox"
+                checked={verifiedEmailRequired}
+                onChange={(e) => setVerifiedEmailRequired(e.target.checked)}
+                className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-cyan-500 focus:ring-cyan-500"
+              />
+              Verified email required
+            </label>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Field label="Default Best-Of">
+              <input
+                type="number"
+                value={defaultBestOf}
+                onChange={(e) => setDefaultBestOf(e.target.value)}
+                min={1}
+                className={inputCls}
+              />
+            </Field>
+
+            <Field label="Allowed Regions (comma-separated)">
+              <input
+                type="text"
+                value={allowedRegions}
+                onChange={(e) => setAllowedRegions(e.target.value)}
+                placeholder="GH, NG, KE"
+                className={inputCls}
+              />
+            </Field>
+          </div>
         </SectionCard>
 
         {/* Submit */}
