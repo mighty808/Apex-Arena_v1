@@ -9,6 +9,7 @@ import {
   Loader2,
   Globe,
   Lock,
+  AlertCircle,
 } from "lucide-react";
 import { organizerService } from "../../../services/organizer.service";
 import type { Tournament } from "../../../services/tournament.service";
@@ -17,6 +18,7 @@ import type { Tournament } from "../../../services/tournament.service";
 
 const STATUS_COLORS: Record<string, string> = {
   draft: "bg-slate-600/20 text-slate-400",
+  awaiting_deposit: "bg-amber-500/20 text-amber-300",
   published: "bg-cyan-500/20 text-cyan-300",
   open: "bg-green-500/20 text-green-300",
   locked: "bg-amber-500/20 text-amber-300",
@@ -38,11 +40,17 @@ function formatDate(iso?: string) {
 // ─── Tournament Card ──────────────────────────────────────────────────────────
 
 function TournamentCard({ tournament }: { tournament: Tournament }) {
-  const statusColor = STATUS_COLORS[tournament.status] ?? "bg-slate-700 text-slate-300";
+  const statusColor =
+    STATUS_COLORS[tournament.status] ?? "bg-slate-700 text-slate-300";
+  const needsPrizeDeposit =
+    tournament.status === "awaiting_deposit" && !tournament.isFree;
+  const cardHref = needsPrizeDeposit
+    ? `/auth/organizer/tournaments/${tournament.id}?openDeposit=1`
+    : `/auth/organizer/tournaments/${tournament.id}`;
 
   return (
     <Link
-      to={`/auth/organizer/tournaments/${tournament.id}`}
+      to={cardHref}
       className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 flex flex-col gap-3 hover:border-slate-600 transition-colors group"
     >
       <div className="flex items-start justify-between gap-3">
@@ -55,7 +63,9 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <span className={`text-xs px-2 py-0.5 rounded-full capitalize ${statusColor}`}>
+          <span
+            className={`text-xs px-2 py-0.5 rounded-full capitalize ${statusColor}`}
+          >
             {tournament.status}
           </span>
           <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-slate-400 transition-colors" />
@@ -77,9 +87,21 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
           ) : (
             <Lock className="w-3.5 h-3.5" />
           )}
-          {tournament.isFree ? "Free" : `${tournament.currency} ${(tournament.entryFee / 100).toFixed(2)}`}
+          {tournament.isFree
+            ? "Free"
+            : `${tournament.currency} ${(tournament.entryFee / 100).toFixed(2)}`}
         </span>
       </div>
+
+      {needsPrizeDeposit && (
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-300 flex items-center justify-between gap-2">
+          <span className="inline-flex items-center gap-1.5">
+            <AlertCircle className="w-3.5 h-3.5" />
+            Prize deposit required to open registration
+          </span>
+          <span className="font-semibold">Complete now</span>
+        </div>
+      )}
     </Link>
   );
 }
@@ -111,10 +133,19 @@ const MyTournaments = () => {
 
   const byStatus = {
     active: tournaments.filter((t) =>
-      ["published", "open", "locked", "started", "ongoing"].includes(t.status)
+      [
+        "awaiting_deposit",
+        "published",
+        "open",
+        "locked",
+        "started",
+        "ongoing",
+      ].includes(t.status),
     ),
     draft: tournaments.filter((t) => t.status === "draft"),
-    past: tournaments.filter((t) => ["completed", "cancelled"].includes(t.status)),
+    past: tournaments.filter((t) =>
+      ["completed", "cancelled"].includes(t.status),
+    ),
   };
 
   return (
@@ -122,7 +153,9 @@ const MyTournaments = () => {
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-bold text-white">My Tournaments</h1>
+          <h1 className="font-display text-2xl font-bold text-white">
+            My Tournaments
+          </h1>
           <p className="text-sm text-slate-400 mt-1">
             Manage and monitor your tournaments.
           </p>
@@ -145,9 +178,12 @@ const MyTournaments = () => {
           <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center mb-4">
             <Trophy className="w-8 h-8 text-slate-600" />
           </div>
-          <h2 className="text-lg font-semibold text-white mb-2">No Tournaments Yet</h2>
+          <h2 className="text-lg font-semibold text-white mb-2">
+            No Tournaments Yet
+          </h2>
           <p className="text-sm text-slate-400 max-w-xs mb-5">
-            You haven't created any tournaments. Start by creating your first one.
+            You haven't created any tournaments. Start by creating your first
+            one.
           </p>
           <Link
             to="/auth/organizer/create-tournament"
