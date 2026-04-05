@@ -97,7 +97,23 @@ export interface MyTournamentRegistration {
   tournamentGameName?: string;
   status: string;
   checkedIn: boolean;
+  inGameId?: string;
   registeredAt?: string;
+}
+
+export interface MatchResultProofPayload {
+  screenshots?: string[];
+  videoUrl?: string;
+}
+
+export interface SubmitMatchResultPayload {
+  winnerId: string;
+  proof?: MatchResultProofPayload;
+}
+
+export interface DisputeMatchResultPayload {
+  reason: string;
+  evidence?: string[];
 }
 
 function extractId(value: unknown): string {
@@ -448,11 +464,69 @@ export const tournamentService = {
           tournamentGameName: (game.name as string | undefined),
           status: normalizeStatus(item.status),
           checkedIn: Boolean(checkIn.checked_in ?? false),
+          inGameId: (item.in_game_id as string | undefined) ??
+            (item.inGameId as string | undefined),
           registeredAt:
             (item.created_at as string | undefined) ??
             (item.createdAt as string | undefined),
         };
       })
       .filter((item) => item.tournamentId.length > 0);
+  },
+
+  async submitMatchResult(
+    matchId: string,
+    payload: SubmitMatchResultPayload,
+  ): Promise<void> {
+    const body: Record<string, unknown> = {
+      winnerId: payload.winnerId,
+    };
+
+    if (payload.proof) {
+      body.proof = {
+        screenshots: payload.proof.screenshots ?? [],
+        video_url: payload.proof.videoUrl,
+      };
+    }
+
+    const response = await apiPost(
+      `${TOURNAMENT_ENDPOINTS.MATCH_RESULT}/${matchId}/result`,
+      body,
+    );
+
+    if (!response.success) {
+      const msg = response.error?.message ?? 'Failed to submit match result';
+      throw new Error(msg);
+    }
+  },
+
+  async confirmMatchResult(matchId: string): Promise<void> {
+    const response = await apiPost(
+      `${TOURNAMENT_ENDPOINTS.MATCH_CONFIRM}/${matchId}/confirm`,
+      {},
+    );
+
+    if (!response.success) {
+      const msg = response.error?.message ?? 'Failed to confirm match result';
+      throw new Error(msg);
+    }
+  },
+
+  async disputeMatchResult(
+    matchId: string,
+    payload: DisputeMatchResultPayload,
+  ): Promise<void> {
+    const response = await apiPost(
+      `${TOURNAMENT_ENDPOINTS.MATCH_DISPUTE}/${matchId}/dispute`,
+      {
+        reason: payload.reason,
+        evidence: payload.evidence ?? [],
+      },
+    );
+
+    if (!response.success) {
+      const msg = response.error?.message ?? 'Failed to dispute match result';
+      throw new Error(msg);
+    }
   },
 };
