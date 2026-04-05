@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { authService } from "../../../services/auth.service";
+import DocumentDropzoneField from "../../../components/DocumentDropzoneField";
 import type {
   OrganizerVerificationInfo,
   OrganizerVerificationPayload,
@@ -202,18 +203,12 @@ function VerificationForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fileInputRefs: Record<
-    FileKeys,
-    React.RefObject<HTMLInputElement | null>
-  > = {
-    idFrontFile: useRef<HTMLInputElement | null>(null),
-    idBackFile: useRef<HTMLInputElement | null>(null),
-    selfieWithIdFile: useRef<HTMLInputElement | null>(null),
-    businessRegistrationFile: useRef<HTMLInputElement | null>(null),
-  };
-
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
+
+  const setFile = (key: FileKeys, file: File | null) => {
+    setForm((prev) => ({ ...prev, [key]: file }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -367,80 +362,16 @@ function VerificationForm({
             const meta = fileLabels[key];
             const file = form[key];
 
-            const handleFiles = (files: FileList | null) => {
-              if (!files || files.length === 0) return;
-              const picked = files[0];
-              set(key, picked as FormState[typeof key]);
-            };
-
-            const onDrop: React.DragEventHandler<HTMLDivElement> = (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              handleFiles(e.dataTransfer.files);
-            };
-
-            const onBrowse = () => {
-              fileInputRefs[key].current?.click();
-            };
-
             return (
-              <Field
+              <DocumentDropzoneField
                 key={key}
                 label={meta.label}
                 required={meta.required}
                 hint={meta.hint}
-              >
-                <div
-                  className="border border-dashed border-slate-700 rounded-lg px-4 py-3 bg-slate-800/50 hover:border-cyan-500 transition-colors"
-                  onDrop={onDrop}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                  }}
-                  onDragEnter={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                  }}
-                >
-                  <div className="flex items-center gap-3 text-sm text-slate-300">
-                    <div className="flex-1">
-                      {file ? (
-                        <>
-                          <p className="font-medium text-white">{file.name}</p>
-                          <p className="text-xs text-slate-500 mt-0.5">
-                            {(file.size / 1024 / 1024).toFixed(2)} MB
-                          </p>
-                        </>
-                      ) : (
-                        <p className="text-slate-400">
-                          Drop a file here or
-                          <button
-                            type="button"
-                            onClick={onBrowse}
-                            className="text-cyan-300 font-semibold ml-1 hover:text-cyan-200"
-                          >
-                            browse
-                          </button>
-                        </p>
-                      )}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={onBrowse}
-                      className="px-3 py-1.5 rounded-md bg-slate-700 text-white text-xs font-semibold hover:bg-slate-600"
-                    >
-                      Choose File
-                    </button>
-                  </div>
-                  <input
-                    ref={fileInputRefs[key]}
-                    type="file"
-                    accept="image/*,application/pdf"
-                    className="hidden"
-                    onChange={(e) => handleFiles(e.target.files)}
-                  />
-                </div>
-              </Field>
+                file={file}
+                disabled={isSubmitting}
+                onChange={(nextFile) => setFile(key, nextFile)}
+              />
             );
           })}
         </div>
