@@ -4,9 +4,6 @@ import {
   Trophy,
   Medal,
   Target,
-  CalendarDays,
-  ChevronLeft,
-  ChevronRight,
   Clock,
   Users,
   Gamepad2,
@@ -21,442 +18,20 @@ import { useAuth } from "../../lib/auth-context";
 import {
   dashboardService,
   type DashboardData,
-  type TournamentRegistration,
 } from "../../services/dashboard.service";
 import {
   organizerService,
   type Tournament as OrganizerTournament,
 } from "../../services/organizer.service";
-
-// ─── Calendar Widget ────────────────────────────────────────────────────────
-
-const DAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
-
-function CalendarWidget() {
-  const [date, setDate] = useState(() => new Date());
-  const today = useMemo(() => new Date(), []);
-
-  const year = date.getFullYear();
-  const month = date.getMonth();
-  const monthName = date.toLocaleString("default", { month: "long" });
-
-  const firstDay = new Date(year, month, 1);
-  // Monday = 0 offset
-  const startOffset = (firstDay.getDay() + 6) % 7;
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const daysInPrev = new Date(year, month, 0).getDate();
-
-  const cells: { day: number; current: boolean; isToday: boolean }[] = [];
-
-  for (let i = startOffset - 1; i >= 0; i--) {
-    cells.push({ day: daysInPrev - i, current: false, isToday: false });
-  }
-  for (let d = 1; d <= daysInMonth; d++) {
-    const isToday =
-      d === today.getDate() &&
-      month === today.getMonth() &&
-      year === today.getFullYear();
-    cells.push({ day: d, current: true, isToday });
-  }
-  const remaining = 7 - (cells.length % 7);
-  if (remaining < 7) {
-    for (let d = 1; d <= remaining; d++) {
-      cells.push({ day: d, current: false, isToday: false });
-    }
-  }
-
-  return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-white">
-          {monthName}, {year}
-        </h3>
-        <div className="flex gap-1">
-          <button
-            onClick={() => setDate(new Date(year, month - 1, 1))}
-            className="p-1 rounded hover:bg-white/10 text-slate-400"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => setDate(new Date(year, month + 1, 1))}
-            className="p-1 rounded hover:bg-white/10 text-slate-400"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-      <div className="grid grid-cols-7 text-center text-xs">
-        {DAYS.map((d) => (
-          <div key={d} className="py-1 text-slate-500 font-medium">
-            {d}
-          </div>
-        ))}
-        {cells.map((c, i) => (
-          <div
-            key={i}
-            className={`py-1.5 rounded-md text-xs ${
-              c.isToday
-                ? "bg-cyan-500 text-slate-950 font-bold"
-                : c.current
-                  ? "text-slate-200"
-                  : "text-slate-600"
-            }`}
-          >
-            {c.day}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ─── Stat Card ──────────────────────────────────────────────────────────────
-
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-  accent,
-}: {
-  icon: React.ElementType;
-  label: string;
-  value: string | number;
-  accent?: string;
-}) {
-  return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 flex items-center justify-between">
-      <div>
-        <p className="text-xs text-slate-400 mb-1">{label}</p>
-        <p className={`text-2xl font-bold ${accent ?? "text-white"}`}>
-          {value}
-        </p>
-      </div>
-      <div className="w-10 h-10 rounded-lg bg-cyan-500/10 flex items-center justify-center text-cyan-400">
-        <Icon className="w-5 h-5" />
-      </div>
-    </div>
-  );
-}
-
-// ─── Tournament Card ────────────────────────────────────────────────────────
-
-function TournamentImage({
-  reg,
-  className,
-}: {
-  reg: TournamentRegistration;
-  className?: string;
-}) {
-  const [hasImageError, setHasImageError] = useState(false);
-  const imageUrl =
-    reg.tournamentThumbnailUrl ?? reg.tournamentBannerUrl ?? reg.gameLogoUrl;
-
-  if (!imageUrl || hasImageError) {
-    return (
-      <div
-        className={`rounded-lg border border-slate-700 bg-slate-800/70 flex items-center justify-center text-slate-500 ${className ?? "w-12 h-12"}`}
-      >
-        <Gamepad2 className="w-4 h-4" />
-      </div>
-    );
-  }
-
-  return (
-    <img
-      src={imageUrl}
-      alt={reg.tournamentTitle}
-      className={`rounded-lg border border-slate-700 object-cover ${className ?? "w-12 h-12"}`}
-      onError={() => setHasImageError(true)}
-    />
-  );
-}
-
-function TournamentCard({ reg }: { reg: TournamentRegistration }) {
-  const statusColors: Record<string, string> = {
-    registered: "bg-cyan-500/20 text-cyan-300",
-    checked_in: "bg-green-500/20 text-green-300",
-    pending_payment: "bg-amber-500/20 text-amber-300",
-    disqualified: "bg-red-500/20 text-red-300",
-    withdrawn: "bg-slate-500/20 text-slate-400",
-    cancelled: "bg-slate-500/20 text-slate-400",
-  };
-
-  const statusLabel = reg.status.replace(/_/g, " ");
-  const dateStr = reg.tournamentSchedule.startDate
-    ? new Date(reg.tournamentSchedule.startDate).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      })
-    : "TBD";
-
-  return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 h-full">
-      <div className="flex items-start justify-between gap-3 mb-3">
-        <div className="flex items-start gap-3 flex-1 min-w-0">
-          <TournamentImage reg={reg} className="w-12 h-12 shrink-0" />
-          <div className="min-w-0">
-            <h4 className="text-sm font-semibold text-white truncate">
-              {reg.tournamentTitle}
-            </h4>
-            <div className="flex items-center gap-3 mt-1.5 text-xs text-slate-400">
-              <span className="flex items-center gap-1">
-                <CalendarDays className="w-3.5 h-3.5" />
-                {dateStr}
-              </span>
-              <span className="flex items-center gap-1">
-                <Gamepad2 className="w-3.5 h-3.5" />
-                {reg.gameName ?? reg.registrationType}
-              </span>
-            </div>
-          </div>
-        </div>
-        <span
-          className={`text-xs px-2 py-0.5 rounded-full capitalize whitespace-nowrap ${
-            statusColors[reg.status] ?? "bg-slate-700 text-slate-300"
-          }`}
-        >
-          {statusLabel}
-        </span>
-      </div>
-      {reg.finalPlacement && (
-        <p className="text-xs text-cyan-300">
-          Placed #{reg.finalPlacement}
-          {reg.prizeWon ? ` — Won $${reg.prizeWon.toLocaleString()}` : ""}
-        </p>
-      )}
-    </div>
-  );
-}
-
-function formatTournamentDate(value?: string) {
-  if (!value) return "TBD";
-  return new Date(value).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function JoinedTournamentDetailsCard({ reg }: { reg: TournamentRegistration }) {
-  const registrationStatusColors: Record<string, string> = {
-    registered: "bg-cyan-500/20 text-cyan-300 border-cyan-500/30",
-    checked_in: "bg-green-500/20 text-green-300 border-green-500/30",
-    pending_payment: "bg-amber-500/20 text-amber-300 border-amber-500/30",
-    disqualified: "bg-red-500/20 text-red-300 border-red-500/30",
-    withdrawn: "bg-slate-500/20 text-slate-400 border-slate-600/30",
-    cancelled: "bg-slate-500/20 text-slate-400 border-slate-600/30",
-  };
-
-  const tournamentStatusColors: Record<string, string> = {
-    draft: "bg-slate-600/20 text-slate-300 border-slate-600/30",
-    awaiting_deposit: "bg-amber-500/20 text-amber-300 border-amber-500/30",
-    published: "bg-cyan-500/20 text-cyan-300 border-cyan-500/30",
-    open: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
-    ongoing: "bg-blue-500/20 text-blue-300 border-blue-500/30",
-    awaiting_results: "bg-yellow-500/20 text-yellow-300 border-yellow-500/30",
-    verifying_results: "bg-purple-500/20 text-purple-300 border-purple-500/30",
-    completed: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
-    cancelled: "bg-slate-500/20 text-slate-400 border-slate-600/30",
-  };
-
-  const registrationStatus = reg.status.replace(/_/g, " ");
-  const tournamentStatus = reg.tournamentStatus
-    ? reg.tournamentStatus.replace(/_/g, " ")
-    : "Unknown";
-
-  return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 h-full">
-      <div className="flex items-start justify-between gap-3 mb-3">
-        <div className="flex items-start gap-3 min-w-0">
-          <TournamentImage reg={reg} className="w-12 h-12 shrink-0" />
-          <div className="min-w-0">
-            <h4 className="text-sm font-semibold text-white truncate">
-              {reg.tournamentTitle}
-            </h4>
-            <p className="text-xs text-slate-400 mt-1">
-              Joined {formatTournamentDate(reg.createdAt)}
-            </p>
-            <p className="text-[11px] text-slate-500 mt-0.5 truncate">
-              {reg.gameName ?? "Game not set"}
-            </p>
-          </div>
-        </div>
-        <Link
-          to={`/auth/tournaments/${reg.tournamentId}`}
-          className="text-xs px-2.5 py-1 rounded-md border border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/10 transition-colors whitespace-nowrap"
-        >
-          View Details
-        </Link>
-      </div>
-
-      <div className="flex flex-wrap gap-2 mb-3">
-        <span
-          className={`text-[11px] px-2 py-0.5 rounded-full capitalize border ${
-            registrationStatusColors[reg.status] ??
-            "bg-slate-700 text-slate-300 border-slate-600"
-          }`}
-        >
-          Registration: {registrationStatus}
-        </span>
-        <span
-          className={`text-[11px] px-2 py-0.5 rounded-full capitalize border ${
-            tournamentStatusColors[reg.tournamentStatus] ??
-            "bg-slate-700 text-slate-300 border-slate-600"
-          }`}
-        >
-          Tournament: {tournamentStatus}
-        </span>
-      </div>
-
-      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-        <div className="text-slate-400">Start Date</div>
-        <div className="text-slate-200 text-right">
-          {formatTournamentDate(reg.tournamentSchedule.startDate)}
-        </div>
-
-        <div className="text-slate-400">Check-In</div>
-        <div className="text-slate-200 text-right">
-          {formatTournamentDate(reg.tournamentSchedule.checkInStart)}
-        </div>
-
-        <div className="text-slate-400">Entry Type</div>
-        <div className="text-slate-200 text-right capitalize">
-          {reg.registrationType}
-        </div>
-
-        <div className="text-slate-400">In-Game ID</div>
-        <div
-          className="text-slate-200 text-right truncate"
-          title={reg.inGameId || "Not set"}
-        >
-          {reg.inGameId || "Not set"}
-        </div>
-
-        {reg.teamName ? (
-          <>
-            <div className="text-slate-400">Team Name</div>
-            <div
-              className="text-slate-200 text-right truncate"
-              title={reg.teamName}
-            >
-              {reg.teamName}
-            </div>
-          </>
-        ) : null}
-      </div>
-    </div>
-  );
-}
-
-function OrganizerTournamentCard({
-  tournament,
-}: {
-  tournament: OrganizerTournament;
-}) {
-  const statusColors: Record<string, string> = {
-    draft: "bg-slate-600/20 text-slate-300",
-    awaiting_deposit: "bg-amber-500/20 text-amber-300",
-    published: "bg-cyan-500/20 text-cyan-300",
-    open: "bg-green-500/20 text-green-300",
-    completed: "bg-emerald-500/20 text-emerald-300",
-    cancelled: "bg-red-500/20 text-red-300",
-  };
-
-  const startDate = tournament.schedule.tournamentStart
-    ? new Date(tournament.schedule.tournamentStart).toLocaleDateString(
-        "en-US",
-        {
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-        },
-      )
-    : "TBD";
-
-  const fillPercent =
-    tournament.maxParticipants > 0
-      ? Math.min(
-          100,
-          Math.round(
-            (tournament.currentCount / tournament.maxParticipants) * 100,
-          ),
-        )
-      : 0;
-
-  return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 space-y-2 overflow-hidden">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h4 className="text-sm font-semibold text-white truncate">
-            {tournament.title}
-          </h4>
-          <p className="text-xs text-slate-400 mt-1">
-            {tournament.game?.name ?? "Unknown Game"} •{" "}
-            {tournament.format ?? "Solo"}
-          </p>
-        </div>
-        <span
-          className={`text-xs px-2 py-0.5 rounded-full capitalize whitespace-nowrap ${
-            statusColors[tournament.status] ?? "bg-slate-700 text-slate-300"
-          }`}
-        >
-          {tournament.status.replace(/_/g, " ")}
-        </span>
-      </div>
-
-      <div className="flex items-center justify-between text-xs text-slate-400">
-        <span className="flex items-center gap-1">
-          <CalendarDays className="w-3.5 h-3.5" />
-          {startDate}
-        </span>
-        <span>
-          {tournament.currentCount}/{tournament.maxParticipants} slots
-        </span>
-      </div>
-
-      <div className="h-1.5 rounded-full bg-slate-800 overflow-hidden">
-        <div
-          className="h-full bg-linear-to-r from-cyan-400 to-emerald-400"
-          style={{ width: `${fillPercent}%` }}
-        />
-      </div>
-    </div>
-  );
-}
-
-// ─── Empty State ────────────────────────────────────────────────────────────
-
-function EmptyState({
-  icon: Icon,
-  title,
-  description,
-  actionLabel,
-  actionTo,
-}: {
-  icon: React.ElementType;
-  title: string;
-  description: string;
-  actionLabel: string;
-  actionTo: string;
-}) {
-  return (
-    <div className="flex flex-col items-center justify-center py-10 text-center">
-      <div className="w-14 h-14 rounded-full bg-slate-800 flex items-center justify-center mb-4 text-slate-500">
-        <Icon className="w-7 h-7" />
-      </div>
-      <h3 className="text-base font-semibold text-white mb-1">{title}</h3>
-      <p className="text-sm text-slate-400 max-w-xs mb-4">{description}</p>
-      <Link
-        to={actionTo}
-        className="px-5 py-2 rounded-lg bg-cyan-500 text-slate-950 text-sm font-semibold hover:bg-cyan-400 transition-colors"
-      >
-        {actionLabel}
-      </Link>
-    </div>
-  );
-}
+import {
+  CalendarWidget,
+  type CalendarEvent,
+  EmptyState,
+  JoinedTournamentDetailsCard,
+  OrganizerTournamentCard,
+  StatCard,
+  TournamentCard,
+} from "../../components/dashboard";
 
 // ─── Dashboard Page ─────────────────────────────────────────────────────────
 
@@ -591,6 +166,66 @@ const Dashboard = () => {
     0,
     organizerActiveList.length - organizerActivePreview.length,
   );
+
+  const playerCalendarEvents = useMemo<CalendarEvent[]>(() => {
+    const events: CalendarEvent[] = [];
+
+    registrations.forEach((registration) => {
+      if (registration.tournamentSchedule.startDate) {
+        events.push({
+          id: `${registration.id}-start`,
+          title: registration.tournamentTitle,
+          date: registration.tournamentSchedule.startDate,
+          to: `/auth/tournaments/${registration.tournamentId}`,
+          badge: "Start",
+          status: registration.tournamentStatus,
+        });
+      }
+
+      if (registration.tournamentSchedule.checkInStart) {
+        events.push({
+          id: `${registration.id}-checkin`,
+          title: registration.tournamentTitle,
+          date: registration.tournamentSchedule.checkInStart,
+          to: `/auth/tournaments/${registration.tournamentId}`,
+          badge: "Check-In",
+          status: registration.tournamentStatus,
+        });
+      }
+    });
+
+    return events;
+  }, [registrations]);
+
+  const organizerCalendarEvents = useMemo<CalendarEvent[]>(() => {
+    const events: CalendarEvent[] = [];
+
+    organizerTournaments.forEach((tournament) => {
+      if (tournament.schedule.tournamentStart) {
+        events.push({
+          id: `${tournament.id}-start`,
+          title: tournament.title,
+          date: tournament.schedule.tournamentStart,
+          to: `/auth/organizer/tournaments/${tournament.id}`,
+          badge: "Start",
+          status: tournament.status,
+        });
+      }
+
+      if (tournament.schedule.checkInStart) {
+        events.push({
+          id: `${tournament.id}-checkin`,
+          title: tournament.title,
+          date: tournament.schedule.checkInStart,
+          to: `/auth/organizer/tournaments/${tournament.id}`,
+          badge: "Check-In",
+          status: tournament.status,
+        });
+      }
+    });
+
+    return events;
+  }, [organizerTournaments]);
 
   if (isLoading) {
     return (
@@ -745,7 +380,7 @@ const Dashboard = () => {
           </div>
 
           <div className="space-y-4">
-            <CalendarWidget />
+            <CalendarWidget events={organizerCalendarEvents} />
 
             <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
               <h3 className="text-sm font-semibold text-white mb-3">
@@ -954,7 +589,7 @@ const Dashboard = () => {
         {/* Right Column */}
         <div className="space-y-4">
           {/* Calendar */}
-          <CalendarWidget />
+          <CalendarWidget events={playerCalendarEvents} />
 
           {/* Score Confirmations */}
           <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
