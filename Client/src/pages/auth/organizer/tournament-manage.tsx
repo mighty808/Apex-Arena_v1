@@ -17,6 +17,7 @@ import {
   Trash2,
   Wallet,
   Circle,
+  RefreshCw,
 } from "lucide-react";
 import {
   organizerService,
@@ -29,6 +30,8 @@ import {
   tournamentService,
   type Tournament,
 } from "../../../services/tournament.service";
+import { apiGet } from "../../../utils/api.utils";
+import { TOURNAMENT_ENDPOINTS } from "../../../config/api.config";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -95,6 +98,64 @@ interface EscrowStageItem {
   state: EscrowStageState;
   timestamp?: string;
   detail?: string;
+}
+
+interface OrganizerBracketMatch {
+  round: number;
+  status: string;
+}
+
+function toFlatBracketMatchRecords(
+  payload: unknown,
+): Record<string, unknown>[] {
+  if (Array.isArray(payload)) {
+    const hasRoundShape = payload.some(
+      (item) =>
+        typeof item === "object" &&
+        item !== null &&
+        Array.isArray((item as Record<string, unknown>).matches),
+    );
+
+    if (hasRoundShape) {
+      return payload.flatMap((item) => {
+        if (!item || typeof item !== "object") return [];
+        const matches = (item as Record<string, unknown>).matches;
+        return Array.isArray(matches)
+          ? (matches as Record<string, unknown>[])
+          : [];
+      });
+    }
+
+    return payload.filter(
+      (item): item is Record<string, unknown> =>
+        !!item && typeof item === "object",
+    );
+  }
+
+  if (!payload || typeof payload !== "object") {
+    return [];
+  }
+
+  const record = payload as Record<string, unknown>;
+  return toFlatBracketMatchRecords(record.rounds ?? record.bracket ?? []);
+}
+
+function extractOrganizerBracketMatches(
+  payload: unknown,
+): OrganizerBracketMatch[] {
+  const rawMatches = toFlatBracketMatchRecords(payload);
+
+  return rawMatches.map((raw) => {
+    const roundCandidate = Number(raw.round ?? raw.round_number ?? 1);
+
+    return {
+      round:
+        Number.isFinite(roundCandidate) && roundCandidate > 0
+          ? roundCandidate
+          : 1,
+      status: String(raw.status ?? "pending"),
+    };
+  });
 }
 
 function buildEscrowStages(escrow: EscrowStatusSummary): EscrowStageItem[] {
@@ -387,6 +448,11 @@ const TournamentManage = () => {
     { position: 2, inGameId: "", prizePercentage: 30 },
     { position: 3, inGameId: "", prizePercentage: 10 },
   ]);
+  const [bracketMatches, setBracketMatches] = useState<OrganizerBracketMatch[]>(
+    [],
+  );
+  const [isRefreshingBracketProgress, setIsRefreshingBracketProgress] =
+    useState(false);
   const [escrowFlowView, setEscrowFlowView] = useState<"single" | "all">(
     "single",
   );
@@ -416,6 +482,35 @@ const TournamentManage = () => {
     [tournamentId],
   );
 
+  const loadBracketProgress = useCallback(
+    async (tid: string, options?: { silent?: boolean }) => {
+      if (!options?.silent) {
+        setIsRefreshingBracketProgress(true);
+      }
+
+      try {
+        const response = await apiGet(
+          `${TOURNAMENT_ENDPOINTS.BRACKET}/${tid}/bracket`,
+        );
+
+        if (response.success) {
+          setBracketMatches(extractOrganizerBracketMatches(response.data));
+        } else if (!options?.silent) {
+          setBracketMatches([]);
+        }
+      } catch {
+        if (!options?.silent) {
+          setBracketMatches([]);
+        }
+      } finally {
+        if (!options?.silent) {
+          setIsRefreshingBracketProgress(false);
+        }
+      }
+    },
+    [],
+  );
+
   const loadData = useCallback(async () => {
     if (!tournamentId) return;
     setIsLoading(true);
@@ -427,6 +522,22 @@ const TournamentManage = () => {
       setTournament(t);
       setRegistrants(regs);
 
+      if (
+        t &&
+        [
+          "locked",
+          "ready_to_start",
+          "ongoing",
+          "awaiting_results",
+          "verifying_results",
+          "completed",
+        ].includes(t.status)
+      ) {
+        await loadBracketProgress(tournamentId, { silent: true });
+      } else {
+        setBracketMatches([]);
+      }
+
       if (t && !t.isFree) {
         await refreshEscrowSummary();
       } else {
@@ -437,7 +548,7 @@ const TournamentManage = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [refreshEscrowSummary, tournamentId]);
+  }, [loadBracketProgress, refreshEscrowSummary, tournamentId]);
 
   useEffect(() => {
     if (hasFetched.current) return;
@@ -807,6 +918,49 @@ const TournamentManage = () => {
 
   const checkedInCount = activeRegistrants.filter((r) => r.checkedIn).length;
 
+  const totalBracketMatches = bracketMatches.length;
+  const completedBracketMatches = bracketMatches.filter(
+    (match) => match.status === "completed",
+  ).length;
+  const bracketCompletionPercent =
+    totalBracketMatches > 0
+      ? Math.round((completedBracketMatches / totalBracketMatches) * 100)
+      : 0;
+
+  const bracketRoundStats = Array.from(
+    bracketMatches.reduce((acc, match) => {
+      const existing = acc.get(match.round) ?? { total: 0, completed: 0 };
+      existing.total += 1;
+      if (match.status === "completed") {
+        existing.completed += 1;
+      }
+      acc.set(match.round, existing);
+      return acc;
+    }, new Map<number, { total: number; completed: number }>()),
+  )
+    .sort(([a], [b]) => a - b)
+    .map(([round, stats]) => ({
+      round,
+      total: stats.total,
+      completed: stats.completed,
+      done: stats.total > 0 && stats.completed === stats.total,
+    }));
+
+  const currentBracketRound =
+    bracketRoundStats.find((round) => !round.done) ??
+    bracketRoundStats[bracketRoundStats.length - 1] ??
+    null;
+
+  const hasBracketGenerated =
+    totalBracketMatches > 0 ||
+    [
+      "ready_to_start",
+      "ongoing",
+      "awaiting_results",
+      "verifying_results",
+      "completed",
+    ].includes(tournament?.status ?? "");
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -952,20 +1106,32 @@ const TournamentManage = () => {
               Publish
             </button>
           )}
-          {canGenerateBracket && (
+          {(canGenerateBracket || hasBracketGenerated) && (
             <button
               onClick={() => {
-                void handleGenerateBracket();
+                if (!hasBracketGenerated) {
+                  void handleGenerateBracket();
+                }
               }}
-              disabled={isGeneratingBracket}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-500 text-white text-sm font-semibold hover:bg-indigo-400 disabled:opacity-60 transition-colors"
+              disabled={isGeneratingBracket || hasBracketGenerated}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-60 ${
+                hasBracketGenerated
+                  ? "bg-emerald-500/15 border border-emerald-500/35 text-emerald-300"
+                  : "bg-indigo-500 text-white hover:bg-indigo-400"
+              }`}
             >
               {isGeneratingBracket ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
+              ) : hasBracketGenerated ? (
+                <CheckCircle2 className="w-4 h-4" />
               ) : (
                 <Trophy className="w-4 h-4" />
               )}
-              Generate Bracket
+              {isGeneratingBracket
+                ? "Generating..."
+                : hasBracketGenerated
+                  ? "Bracket Generated"
+                  : "Generate Bracket"}
             </button>
           )}
           {canDepositPrizePool && (
@@ -1052,6 +1218,112 @@ const TournamentManage = () => {
           </div>
         ))}
       </div>
+
+      {(hasBracketGenerated || canGenerateBracket) && (
+        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 space-y-3">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div>
+              <h2 className="font-display text-base font-semibold text-white flex items-center gap-2">
+                <Trophy className="w-4 h-4 text-cyan-400" />
+                Bracket Progress
+              </h2>
+              <p className="text-xs text-slate-400 mt-1">
+                {hasBracketGenerated
+                  ? "Track round completion and current bracket stage."
+                  : "Generate bracket to start tracking match progress."}
+              </p>
+            </div>
+
+            {hasBracketGenerated && tournamentId && (
+              <button
+                onClick={() => {
+                  void loadBracketProgress(tournamentId);
+                }}
+                disabled={isRefreshingBracketProgress}
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300 text-xs font-medium hover:bg-white/5 disabled:opacity-50 transition-colors"
+              >
+                <RefreshCw
+                  className={`w-3.5 h-3.5 ${
+                    isRefreshingBracketProgress ? "animate-spin" : ""
+                  }`}
+                />
+                Refresh Progress
+              </button>
+            )}
+          </div>
+
+          {hasBracketGenerated ? (
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-2">
+                  <p className="text-[11px] text-slate-500 mb-1">Bracket</p>
+                  <p className="text-base font-semibold text-emerald-300">
+                    Generated
+                  </p>
+                </div>
+                <div className="rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-2">
+                  <p className="text-[11px] text-slate-500 mb-1">Matches</p>
+                  <p className="text-base font-semibold text-white">
+                    {totalBracketMatches}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-2">
+                  <p className="text-[11px] text-slate-500 mb-1">Completed</p>
+                  <p className="text-base font-semibold text-cyan-300">
+                    {completedBracketMatches}/{totalBracketMatches}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-2">
+                  <p className="text-[11px] text-slate-500 mb-1">
+                    Current Round
+                  </p>
+                  <p className="text-base font-semibold text-white">
+                    {currentBracketRound
+                      ? `Round ${currentBracketRound.round}`
+                      : "TBD"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-400">Bracket completion</span>
+                  <span className="font-semibold text-emerald-300">
+                    {bracketCompletionPercent}%
+                  </span>
+                </div>
+                <div className="h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                  <div
+                    className="h-full bg-linear-to-r from-cyan-400 via-cyan-300 to-emerald-300 transition-all"
+                    style={{ width: `${bracketCompletionPercent}%` }}
+                  />
+                </div>
+              </div>
+
+              {bracketRoundStats.length > 0 && (
+                <div className="flex items-center gap-2 flex-wrap text-xs">
+                  {bracketRoundStats.map((round) => (
+                    <span
+                      key={round.round}
+                      className={`px-2 py-0.5 rounded-full border ${
+                        round.done
+                          ? "border-emerald-500/35 text-emerald-300 bg-emerald-500/10"
+                          : "border-cyan-500/30 text-cyan-300 bg-cyan-500/10"
+                      }`}
+                    >
+                      R{round.round}: {round.completed}/{round.total}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="rounded-lg border border-slate-800 bg-slate-900/70 px-3 py-2 text-sm text-slate-400">
+              Bracket is not generated yet.
+            </div>
+          )}
+        </div>
+      )}
 
       <div
         className={`grid gap-4 ${
