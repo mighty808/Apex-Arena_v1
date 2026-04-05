@@ -16,6 +16,7 @@ import {
   Globe,
   Award,
   RefreshCw,
+  Upload,
 } from "lucide-react";
 import {
   tournamentService,
@@ -24,6 +25,8 @@ import {
 } from "../../../services/tournament.service";
 import { apiGet, apiPost } from "../../../utils/api.utils";
 import { TOURNAMENT_ENDPOINTS } from "../../../config/api.config";
+import { useAuth } from "../../../lib/auth-context";
+import { uploadImageMedia } from "../../../services/media-upload.service";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -235,6 +238,22 @@ function RegisterModal({
 
 // ─── Bracket ─────────────────────────────────────────────────────────────────
 
+interface BracketParticipant {
+  in_game_id?: string;
+  username?: string;
+  result?: string;
+  score?: number;
+  user_id?: string | { _id?: string; id?: string; username?: string };
+  team_id?: string | { _id?: string; id?: string; name?: string; tag?: string };
+}
+
+interface BracketDispute {
+  is_disputed?: boolean;
+  resolved?: boolean;
+  dispute_reason?: string;
+  resolution?: string;
+}
+
 interface BracketMatch {
   _id?: string;
   id?: string;
@@ -248,12 +267,14 @@ interface BracketMatch {
   schedule?: {
     scheduled_time?: string;
   };
-  participants?: Array<{
-    in_game_id?: string;
-    username?: string;
-    result?: string;
-    user_id?: string | { username?: string };
-  }>;
+  participants?: BracketParticipant[];
+  winner_id?: string | { _id?: string; id?: string };
+  loser_id?: string | { _id?: string; id?: string };
+  result_reported_by?: string | { _id?: string; id?: string };
+  result_reported_at?: string;
+  result_confirmed_by?: string | { _id?: string; id?: string };
+  result_confirmed_at?: string;
+  dispute?: BracketDispute;
   player1?: Record<string, unknown>;
   player2?: Record<string, unknown>;
 }
@@ -277,11 +298,24 @@ const BRACKET_VISIBLE_STATUSES = new Set([
   "started",
 ]);
 
-function getParticipantLabel(participant?: {
-  in_game_id?: string;
-  username?: string;
-  user_id?: string | { username?: string };
-}): string {
+function extractEntityId(
+  value?: string | { _id?: string; id?: string },
+): string {
+  if (!value) return "";
+  if (typeof value === "string") return value;
+  if (typeof value._id === "string") return value._id;
+  if (typeof value.id === "string") return value.id;
+  return "";
+}
+
+function getParticipantEntityId(participant?: BracketParticipant): string {
+  if (!participant) return "";
+  const userId = extractEntityId(participant.user_id);
+  if (userId) return userId;
+  return extractEntityId(participant.team_id);
+}
+
+function getParticipantLabel(participant?: BracketParticipant): string {
   if (!participant) return "TBD";
   if (participant.in_game_id) return participant.in_game_id;
   if (participant.username) return participant.username;
@@ -292,6 +326,58 @@ function getParticipantLabel(participant?: {
   }
 
   return "TBD";
+}
+
+function matchIncludesCurrentPlayer(
+  match: BracketMatch,
+  currentUserId?: string,
+  myInGameId?: string,
+): boolean {
+  const participants = match.participants ?? [];
+  const normalizedInGameId = myInGameId?.trim().toLowerCase();
+
+  return participants.some((participant) => {
+    const participantId = getParticipantEntityId(participant);
+    if (currentUserId && participantId === currentUserId) {
+      return true;
+    }
+
+    const participantInGameId = participant.in_game_id?.trim().toLowerCase();
+    return Boolean(
+      normalizedInGameId &&
+        participantInGameId &&
+        participantInGameId === normalizedInGameId,
+    );
+  });
+}
+
+function getOpponentLabel(
+  match: BracketMatch,
+  currentUserId?: string,
+  myInGameId?: string,
+): string {
+  const participants = match.participants ?? [];
+  const normalizedInGameId = myInGameId?.trim().toLowerCase();
+
+  const opponent = participants.find((participant) => {
+    const participantId = getParticipantEntityId(participant);
+    if (currentUserId && participantId === currentUserId) {
+      return false;
+    }
+
+    const participantInGameId = participant.in_game_id?.trim().toLowerCase();
+    if (
+      normalizedInGameId &&
+      participantInGameId &&
+      participantInGameId === normalizedInGameId
+    ) {
+      return false;
+    }
+
+    return true;
+  });
+
+  return getParticipantLabel(opponent);
 }
 
 function buildRoundsFromFlatMatches(matches: BracketMatch[]): BracketRound[] {
@@ -617,6 +703,7 @@ function BracketView({ rounds }: { rounds: BracketRound[] }) {
 const TournamentDetail = () => {
   const { tournamentId } = useParams<{ tournamentId: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [myRegistration, setMyRegistration] =
@@ -636,6 +723,23 @@ const TournamentDetail = () => {
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [withdrawReason, setWithdrawReason] = useState("");
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isConfirmingMatch, setIsConfirmingMatch] = useState<string | null>(
+    null,
+  );
+  const [activeSubmitMatch, setActiveSubmitMatch] =
+    useState<BracketMatch | null>(null);
+  const [submitWinnerId, setSubmitWinnerId] = useState("");
+  const [submitVideoUrl, setSubmitVideoUrl] = useState("");
+  const [submitScreenshotFile, setSubmitScreenshotFile] =
+    useState<File | null>(null);
+  const [isSubmittingResult, setIsSubmittingResult] = useState(false);
+  const [activeDisputeMatch, setActiveDisputeMatch] =
+    useState<BracketMatch | null>(null);
+  const [disputeReason, setDisputeReason] = useState("");
+  const [disputeScreenshotFile, setDisputeScreenshotFile] =
+    useState<File | null>(null);
+  const [disputeEvidenceUrl, setDisputeEvidenceUrl] = useState("");
+  const [isSubmittingDispute, setIsSubmittingDispute] = useState(false);
 
   const hasFetched = useRef(false);
 
@@ -801,6 +905,201 @@ const TournamentDetail = () => {
     }
   };
 
+  const ensureMatchSessionExists = useCallback(async (matchId: string) => {
+    await apiGet(`${TOURNAMENT_ENDPOINTS.MATCH_SESSION}/${matchId}/session`, {
+      skipCache: true,
+    });
+  }, []);
+
+  const uploadMatchEvidence = useCallback(
+    async (matchId: string, file: File, description: string): Promise<string> => {
+      const uploadedUrl = await uploadImageMedia(file, `match-proof/${matchId}`);
+
+      try {
+        await ensureMatchSessionExists(matchId);
+        await apiPost(
+          `${TOURNAMENT_ENDPOINTS.MATCH_SESSION_EVIDENCE}/${matchId}/session/evidence`,
+          {
+            fileUrl: uploadedUrl,
+            fileType: "image",
+            description,
+          },
+        );
+      } catch {
+        // Evidence endpoint is best-effort. Result submission should still proceed.
+      }
+
+      return uploadedUrl;
+    },
+    [ensureMatchSessionExists],
+  );
+
+  const openSubmitResultModal = useCallback(
+    (match: BracketMatch) => {
+      const participants = (match.participants ?? []).filter(
+        (participant) => getParticipantEntityId(participant).length > 0,
+      );
+      const firstWinner = getParticipantEntityId(participants[0]);
+
+      setActiveSubmitMatch(match);
+      setSubmitWinnerId(firstWinner);
+      setSubmitVideoUrl("");
+      setSubmitScreenshotFile(null);
+    },
+    [],
+  );
+
+  const closeSubmitResultModal = useCallback(() => {
+    setActiveSubmitMatch(null);
+    setSubmitWinnerId("");
+    setSubmitVideoUrl("");
+    setSubmitScreenshotFile(null);
+  }, []);
+
+  const handleSubmitMatchResult = useCallback(async () => {
+    if (!activeSubmitMatch) return;
+
+    const matchId = activeSubmitMatch._id ?? activeSubmitMatch.id;
+    if (!matchId || !submitWinnerId) {
+      setErrorMsg("Please select a winner before submitting.");
+      return;
+    }
+
+    setIsSubmittingResult(true);
+    setErrorMsg(null);
+
+    try {
+      const screenshots: string[] = [];
+
+      if (submitScreenshotFile) {
+        const proofUrl = await uploadMatchEvidence(
+          matchId,
+          submitScreenshotFile,
+          "Result proof screenshot",
+        );
+        screenshots.push(proofUrl);
+      }
+
+      await tournamentService.submitMatchResult(matchId, {
+        winnerId: submitWinnerId,
+        proof: {
+          screenshots,
+          videoUrl: submitVideoUrl.trim() || undefined,
+        },
+      });
+
+      closeSubmitResultModal();
+      setSuccessMsg("Result submitted. Waiting for opponent confirmation.");
+      await handleRefresh();
+      setTimeout(() => setSuccessMsg(null), 5000);
+    } catch (err) {
+      setErrorMsg(
+        err instanceof Error ? err.message : "Failed to submit match result.",
+      );
+    } finally {
+      setIsSubmittingResult(false);
+    }
+  }, [
+    activeSubmitMatch,
+    closeSubmitResultModal,
+    handleRefresh,
+    submitScreenshotFile,
+    submitVideoUrl,
+    submitWinnerId,
+    uploadMatchEvidence,
+  ]);
+
+  const handleConfirmMatchResult = useCallback(
+    async (matchId: string) => {
+      setIsConfirmingMatch(matchId);
+      setErrorMsg(null);
+
+      try {
+        await tournamentService.confirmMatchResult(matchId);
+        setSuccessMsg("Result confirmed. Bracket has been updated.");
+        await handleRefresh();
+        setTimeout(() => setSuccessMsg(null), 5000);
+      } catch (err) {
+        setErrorMsg(
+          err instanceof Error
+            ? err.message
+            : "Failed to confirm match result.",
+        );
+      } finally {
+        setIsConfirmingMatch(null);
+      }
+    },
+    [handleRefresh],
+  );
+
+  const openDisputeModal = useCallback((match: BracketMatch) => {
+    setActiveDisputeMatch(match);
+    setDisputeReason("");
+    setDisputeScreenshotFile(null);
+    setDisputeEvidenceUrl("");
+  }, []);
+
+  const closeDisputeModal = useCallback(() => {
+    setActiveDisputeMatch(null);
+    setDisputeReason("");
+    setDisputeScreenshotFile(null);
+    setDisputeEvidenceUrl("");
+  }, []);
+
+  const handleSubmitDispute = useCallback(async () => {
+    if (!activeDisputeMatch) return;
+
+    const matchId = activeDisputeMatch._id ?? activeDisputeMatch.id;
+    if (!matchId || disputeReason.trim().length < 5) {
+      setErrorMsg("Please provide a brief dispute reason.");
+      return;
+    }
+
+    setIsSubmittingDispute(true);
+    setErrorMsg(null);
+
+    try {
+      const evidence: string[] = [];
+
+      if (disputeScreenshotFile) {
+        const evidenceUrl = await uploadMatchEvidence(
+          matchId,
+          disputeScreenshotFile,
+          "Dispute evidence screenshot",
+        );
+        evidence.push(evidenceUrl);
+      }
+
+      if (disputeEvidenceUrl.trim().length > 0) {
+        evidence.push(disputeEvidenceUrl.trim());
+      }
+
+      await tournamentService.disputeMatchResult(matchId, {
+        reason: disputeReason.trim(),
+        evidence,
+      });
+
+      closeDisputeModal();
+      setSuccessMsg("Dispute submitted. Organizer review is required.");
+      await handleRefresh();
+      setTimeout(() => setSuccessMsg(null), 5000);
+    } catch (err) {
+      setErrorMsg(
+        err instanceof Error ? err.message : "Failed to submit dispute.",
+      );
+    } finally {
+      setIsSubmittingDispute(false);
+    }
+  }, [
+    activeDisputeMatch,
+    closeDisputeModal,
+    disputeEvidenceUrl,
+    disputeReason,
+    disputeScreenshotFile,
+    handleRefresh,
+    uploadMatchEvidence,
+  ]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -845,6 +1144,17 @@ const TournamentDetail = () => {
   const canRegister = tournament.status === "open" && !isRegistered;
   const registrationClosed =
     !["open"].includes(tournament.status) && !isRegistered;
+
+  const currentUserId = user?.id;
+  const myInGameId = myRegistration?.inGameId;
+
+  const allBracketMatches = bracketRounds.flatMap(
+    (round) => round.matches ?? [],
+  );
+
+  const myMatches = allBracketMatches.filter((match) =>
+    matchIncludesCurrentPlayer(match, currentUserId, myInGameId),
+  );
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
@@ -1342,17 +1652,145 @@ const TournamentDetail = () => {
         </section>
       )}
 
-      {/* My Matches — visible only when registered and tournament has started */}
-      {isRegistered && ["started", "ongoing"].includes(tournament.status) && (
+      {/* My Match Voting */}
+      {isRegistered && showBracketSection && (
         <section className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-5">
           <h2 className="font-display text-base font-semibold text-white mb-3 flex items-center gap-2">
             <Gamepad2 className="w-4 h-4 text-cyan-400" />
-            My Matches
+            My Match Voting
           </h2>
-          <p className="text-sm text-slate-400">
-            Match details are available in the bracket above. Look for your
-            in-game ID to find your matches.
-          </p>
+
+          {myMatches.length === 0 ? (
+            <p className="text-sm text-slate-400">
+              No active matches for your registration yet. Your voting actions
+              will appear here when your bracket match is ready.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {myMatches.map((match, index) => {
+                const matchId = match._id ?? match.id ?? "";
+                const reporterId = extractEntityId(match.result_reported_by);
+                const confirmerId = extractEntityId(match.result_confirmed_by);
+                const winnerId = extractEntityId(match.winner_id);
+                const disputeActive = Boolean(
+                  match.dispute?.is_disputed && !match.dispute?.resolved,
+                );
+                const isCompleted = match.status === "completed";
+                const iReported = Boolean(
+                  currentUserId && reporterId === currentUserId,
+                );
+                const isConfirmLoading = isConfirmingMatch === matchId;
+
+                const canSubmitResult =
+                  Boolean(matchId) &&
+                  !reporterId &&
+                  !disputeActive &&
+                  !isCompleted &&
+                  ["scheduled", "ready_check", "ongoing"].includes(
+                    match.status ?? "",
+                  );
+
+                const canConfirmResult =
+                  Boolean(matchId) &&
+                  Boolean(reporterId) &&
+                  !disputeActive &&
+                  !isCompleted &&
+                  Boolean(currentUserId) &&
+                  reporterId !== currentUserId;
+
+                const canDisputeResult = canConfirmResult;
+
+                const winnerParticipant = (match.participants ?? []).find(
+                  (participant) => getParticipantEntityId(participant) === winnerId,
+                );
+
+                const statusText = disputeActive
+                  ? "Result disputed - waiting for organizer resolution"
+                  : isCompleted
+                    ? "Match completed"
+                    : reporterId && confirmerId
+                      ? "Result confirmed"
+                      : iReported
+                        ? "Awaiting opponent confirmation"
+                        : reporterId
+                          ? "Opponent submitted a result"
+                          : "Result not submitted yet";
+
+                return (
+                  <div
+                    key={matchId || index}
+                    className="rounded-xl border border-slate-700 bg-slate-900/70 p-4 space-y-3"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <p className="text-sm font-semibold text-white">
+                          Match #{match.match_number ?? index + 1}
+                        </p>
+                        <p className="text-xs text-slate-400">
+                          Round {match.round ?? match.round_number ?? 1} • Opponent: {getOpponentLabel(match, currentUserId, myInGameId)}
+                        </p>
+                      </div>
+                      <span className="text-[11px] uppercase tracking-wide text-slate-300 px-2.5 py-1 rounded-full border border-slate-600 bg-slate-800/60">
+                        {match.status ?? "pending"}
+                      </span>
+                    </div>
+
+                    <div className="text-xs text-slate-400 space-y-1">
+                      <p>{statusText}</p>
+                      {winnerParticipant && (
+                        <p className="text-cyan-300">
+                          Submitted winner: {getParticipantLabel(winnerParticipant)}
+                        </p>
+                      )}
+                      {match.dispute?.is_disputed && match.dispute?.dispute_reason && (
+                        <p className="text-amber-300">
+                          Dispute reason: {match.dispute.dispute_reason}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      {canSubmitResult && (
+                        <button
+                          onClick={() => openSubmitResultModal(match)}
+                          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-cyan-500 text-slate-950 hover:bg-cyan-400 transition-colors"
+                        >
+                          Submit Result
+                        </button>
+                      )}
+
+                      {canConfirmResult && (
+                        <button
+                          onClick={() => {
+                            void handleConfirmMatchResult(matchId);
+                          }}
+                          disabled={isConfirmLoading}
+                          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-green-500 text-slate-950 hover:bg-green-400 disabled:opacity-60 transition-colors"
+                        >
+                          {isConfirmLoading ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                          )}
+                          {isConfirmLoading ? "Confirming..." : "Confirm Result"}
+                        </button>
+                      )}
+
+                      {canDisputeResult && (
+                        <button
+                          onClick={() => openDisputeModal(match)}
+                          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30 hover:bg-amber-500/25 transition-colors"
+                        >
+                          <AlertCircle className="w-3.5 h-3.5" />
+                          Dispute Result
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </section>
       )}
 
@@ -1365,6 +1803,199 @@ const TournamentDetail = () => {
             void handleRegisterSuccess();
           }}
         />
+      )}
+
+      {activeSubmitMatch && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg shadow-xl">
+            <div className="flex items-start justify-between p-5 border-b border-slate-800">
+              <div>
+                <h2 className="font-display text-lg font-bold text-white">
+                  Submit Match Result
+                </h2>
+                <p className="text-sm text-slate-400 mt-0.5">
+                  Select the winner and attach proof if available.
+                </p>
+              </div>
+              <button
+                onClick={closeSubmitResultModal}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4">
+              <div className="space-y-2">
+                <p className="text-xs uppercase tracking-wide text-slate-400">
+                  Winner
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {(activeSubmitMatch.participants ?? []).map((participant, idx) => {
+                    const participantId = getParticipantEntityId(participant);
+                    if (!participantId) return null;
+
+                    const selected = submitWinnerId === participantId;
+
+                    return (
+                      <button
+                        key={`${participantId}-${idx}`}
+                        onClick={() => setSubmitWinnerId(participantId)}
+                        className={`text-left rounded-lg border px-3 py-2 text-sm transition-colors ${
+                          selected
+                            ? "border-cyan-500 bg-cyan-500/15 text-cyan-200"
+                            : "border-slate-700 bg-slate-800/60 text-slate-200 hover:border-slate-500"
+                        }`}
+                      >
+                        {getParticipantLabel(participant)}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <label className="block space-y-1">
+                <span className="text-xs uppercase tracking-wide text-slate-400">
+                  Proof Screenshot (optional)
+                </span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0] ?? null;
+                    setSubmitScreenshotFile(file);
+                  }}
+                  className="block w-full text-xs text-slate-300 file:mr-3 file:rounded-md file:border-0 file:bg-slate-700 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-slate-100 hover:file:bg-slate-600"
+                />
+              </label>
+
+              <label className="block space-y-1">
+                <span className="text-xs uppercase tracking-wide text-slate-400">
+                  Video URL (optional)
+                </span>
+                <input
+                  type="url"
+                  value={submitVideoUrl}
+                  onChange={(event) => setSubmitVideoUrl(event.target.value)}
+                  placeholder="https://..."
+                  className="w-full bg-slate-800/60 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
+                />
+              </label>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={closeSubmitResultModal}
+                  className="flex-1 py-2.5 rounded-lg border border-slate-700 text-slate-300 text-sm font-medium hover:bg-white/5 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    void handleSubmitMatchResult();
+                  }}
+                  disabled={isSubmittingResult || submitWinnerId.length === 0}
+                  className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 rounded-lg bg-cyan-500 text-slate-950 text-sm font-semibold hover:bg-cyan-400 disabled:opacity-60 transition-colors"
+                >
+                  {isSubmittingResult ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Upload className="w-4 h-4" />
+                  )}
+                  {isSubmittingResult ? "Submitting..." : "Submit Result"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeDisputeMatch && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg shadow-xl">
+            <div className="flex items-start justify-between p-5 border-b border-slate-800">
+              <div>
+                <h2 className="font-display text-lg font-bold text-white">
+                  Dispute Match Result
+                </h2>
+                <p className="text-sm text-slate-400 mt-0.5">
+                  Provide your reason and evidence for organizer review.
+                </p>
+              </div>
+              <button
+                onClick={closeDisputeModal}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4">
+              <label className="block space-y-1">
+                <span className="text-xs uppercase tracking-wide text-slate-400">
+                  Dispute Reason
+                </span>
+                <textarea
+                  value={disputeReason}
+                  onChange={(event) => setDisputeReason(event.target.value)}
+                  rows={3}
+                  placeholder="Explain what happened..."
+                  className="w-full bg-slate-800/60 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500 transition-colors resize-none"
+                />
+              </label>
+
+              <label className="block space-y-1">
+                <span className="text-xs uppercase tracking-wide text-slate-400">
+                  Screenshot Evidence (optional)
+                </span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0] ?? null;
+                    setDisputeScreenshotFile(file);
+                  }}
+                  className="block w-full text-xs text-slate-300 file:mr-3 file:rounded-md file:border-0 file:bg-slate-700 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-slate-100 hover:file:bg-slate-600"
+                />
+              </label>
+
+              <label className="block space-y-1">
+                <span className="text-xs uppercase tracking-wide text-slate-400">
+                  Evidence URL (optional)
+                </span>
+                <input
+                  type="url"
+                  value={disputeEvidenceUrl}
+                  onChange={(event) => setDisputeEvidenceUrl(event.target.value)}
+                  placeholder="https://..."
+                  className="w-full bg-slate-800/60 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
+                />
+              </label>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={closeDisputeModal}
+                  className="flex-1 py-2.5 rounded-lg border border-slate-700 text-slate-300 text-sm font-medium hover:bg-white/5 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    void handleSubmitDispute();
+                  }}
+                  disabled={isSubmittingDispute || disputeReason.trim().length < 5}
+                  className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 rounded-lg bg-amber-500 text-slate-950 text-sm font-semibold hover:bg-amber-400 disabled:opacity-60 transition-colors"
+                >
+                  {isSubmittingDispute ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <AlertCircle className="w-4 h-4" />
+                  )}
+                  {isSubmittingDispute ? "Submitting..." : "Submit Dispute"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {showWithdrawModal && (
