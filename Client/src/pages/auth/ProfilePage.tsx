@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../lib/auth-context";
 import { authService } from "../../services/auth.service";
+import ImageUploadDropzone from "../../components/ImageUploadDropzone";
 import { apiDelete, apiGet, apiPost, apiPut } from "../../utils/api.utils";
 import { AUTH_ENDPOINTS, TOURNAMENT_ENDPOINTS } from "../../config/api.config";
 import type {
@@ -817,11 +818,11 @@ const ProfilePage = () => {
           </Field>
         </div>
 
-        <Field label="Avatar URL">
-          <Input
+        <Field label="Avatar Image">
+          <ImageUploadDropzone
             value={form.avatarUrl}
             onChange={(v) => setField("avatarUrl", v)}
-            placeholder="https://example.com/your-avatar.png"
+            folder="apex-arenas/users/avatars"
           />
         </Field>
 
