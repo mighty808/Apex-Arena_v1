@@ -54,6 +54,7 @@ export interface ManagedUser {
   isEmailVerified: boolean;
   isActive: boolean;
   isBanned: boolean;
+  isLocked: boolean;
   banReason?: string;
   lastLogin?: string;
   createdAt: string;
