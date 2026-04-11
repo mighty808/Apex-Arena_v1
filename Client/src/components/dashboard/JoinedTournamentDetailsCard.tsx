@@ -48,7 +48,7 @@ export default function JoinedTournamentDetailsCard({
   return (
     <div className="rounded-xl border border-slate-800 bg-slate-900/70 overflow-hidden group hover:border-slate-700 transition-all">
       {/* Banner image */}
-      <div className="relative h-28 bg-slate-800 overflow-hidden">
+      <div className="relative h-40 bg-slate-800 overflow-hidden">
         <TournamentImage
           reg={reg}
           className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
