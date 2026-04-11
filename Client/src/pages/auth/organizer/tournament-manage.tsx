@@ -18,6 +18,9 @@ import {
   Wallet,
   Circle,
   RefreshCw,
+  Play,
+  Gavel,
+  List,
 } from "lucide-react";
 import {
   organizerService,
@@ -30,8 +33,14 @@ import {
   tournamentService,
   type Tournament,
 } from "../../../services/tournament.service";
+import { LeagueView } from "../../../components/league/LeagueView";
 import { apiGet } from "../../../utils/api.utils";
 import { TOURNAMENT_ENDPOINTS } from "../../../config/api.config";
+import {
+  BracketView,
+  extractBracketRounds,
+  type BracketRound,
+} from "../../../components/tournament-detail";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -101,8 +110,19 @@ interface EscrowStageItem {
 }
 
 interface OrganizerBracketMatch {
+  id: string;
   round: number;
+  roundName?: string;
+  matchNumber: number;
   status: string;
+  participants: Array<{
+    userId?: string;
+    inGameId: string;
+    score: number;
+    result: string;
+    isReady: boolean;
+  }>;
+  scheduledTime?: string;
 }
 
 function toFlatBracketMatchRecords(
@@ -147,13 +167,28 @@ function extractOrganizerBracketMatches(
 
   return rawMatches.map((raw) => {
     const roundCandidate = Number(raw.round ?? raw.round_number ?? 1);
+    const schedule = (raw.schedule ?? {}) as Record<string, unknown>;
+    const participants = Array.isArray(raw.participants)
+      ? (raw.participants as Record<string, unknown>[]).map((p) => ({
+          userId: p.user_id as string | undefined,
+          inGameId: String(p.in_game_id ?? ""),
+          score: Number(p.score ?? 0),
+          result: String(p.result ?? "pending"),
+          isReady: Boolean(p.is_ready ?? false),
+        }))
+      : [];
 
     return {
+      id: String(raw._id ?? raw.id ?? ""),
       round:
         Number.isFinite(roundCandidate) && roundCandidate > 0
           ? roundCandidate
           : 1,
+      roundName: raw.round_name as string | undefined,
+      matchNumber: Number(raw.match_number ?? 0),
       status: String(raw.status ?? "pending"),
+      participants,
+      scheduledTime: schedule.scheduled_time as string | undefined,
     };
   });
 }
@@ -453,9 +488,20 @@ const TournamentManage = () => {
   );
   const [isRefreshingBracketProgress, setIsRefreshingBracketProgress] =
     useState(false);
+  const [bracketRounds, setBracketRounds] = useState<BracketRound[]>([]);
+  const [showBracketView, setShowBracketView] = useState(false);
   const [escrowFlowView, setEscrowFlowView] = useState<"single" | "all">(
     "single",
   );
+  const [matchActionLoading, setMatchActionLoading] = useState<string | null>(null);
+  const [showDisputeModal, setShowDisputeModal] = useState(false);
+  const [disputeMatchId, setDisputeMatchId] = useState<string | null>(null);
+  const [disputeWinnerId, setDisputeWinnerId] = useState("");
+  const [disputeResolution, setDisputeResolution] = useState("");
+  const [tournamentResults, setTournamentResults] = useState<Array<Record<string, unknown>> | null>(null);
+  const [isLoadingResults, setIsLoadingResults] = useState(false);
+  const [isGeneratingFixtures, setIsGeneratingFixtures] = useState(false);
+  const [isAdvancingMatchweek, setIsAdvancingMatchweek] = useState(false);
 
   const hasFetched = useRef(false);
 
@@ -495,8 +541,10 @@ const TournamentManage = () => {
 
         if (response.success) {
           setBracketMatches(extractOrganizerBracketMatches(response.data));
+          setBracketRounds(extractBracketRounds(response.data));
         } else if (!options?.silent) {
           setBracketMatches([]);
+          setBracketRounds([]);
         }
       } catch {
         if (!options?.silent) {
@@ -536,12 +584,28 @@ const TournamentManage = () => {
         await loadBracketProgress(tournamentId, { silent: true });
       } else {
         setBracketMatches([]);
+        setBracketRounds([]);
       }
 
       if (t && !t.isFree) {
         await refreshEscrowSummary();
       } else {
         setEscrowSummary(null);
+      }
+
+      if (t && t.status === "completed") {
+        try {
+          setIsLoadingResults(true);
+          const results = await organizerService.getTournamentResults(tournamentId);
+          const standings = Array.isArray(results)
+            ? (results as Array<Record<string, unknown>>)
+            : ((results.standings ?? results.data ?? []) as Array<Record<string, unknown>>);
+          setTournamentResults(standings);
+        } catch {
+          setTournamentResults(null);
+        } finally {
+          setIsLoadingResults(false);
+        }
       }
     } catch {
       // silently fail
@@ -700,6 +764,34 @@ const TournamentManage = () => {
     }
   };
 
+  const handleGenerateLeagueFixtures = async () => {
+    if (!tournamentId) return;
+    setIsGeneratingFixtures(true);
+    try {
+      await tournamentService.generateLeagueFixtures(tournamentId);
+      showToast("success", "League fixtures generated successfully.");
+      await loadData();
+    } catch (err) {
+      showToast("error", err instanceof Error ? err.message : "Failed to generate fixtures.");
+    } finally {
+      setIsGeneratingFixtures(false);
+    }
+  };
+
+  const handleAdvanceLeagueMatchweek = async () => {
+    if (!tournamentId) return;
+    setIsAdvancingMatchweek(true);
+    try {
+      const newWeek = await tournamentService.advanceLeagueMatchweek(tournamentId);
+      showToast("success", `Advanced to matchweek ${newWeek}.`);
+      await loadData();
+    } catch (err) {
+      showToast("error", err instanceof Error ? err.message : "Failed to advance matchweek.");
+    } finally {
+      setIsAdvancingMatchweek(false);
+    }
+  };
+
   const handleCancel = async () => {
     if (!tournamentId) return;
     const reason = cancelReason.trim();
@@ -732,6 +824,70 @@ const TournamentManage = () => {
       navigate("/auth/organizer/tournaments");
     } catch (err) {
       showToast("error", err instanceof Error ? err.message : "Delete failed.");
+    }
+  };
+
+  const handleStartMatch = async (matchId: string) => {
+    setMatchActionLoading(matchId);
+    try {
+      await organizerService.startMatch(matchId);
+      showToast("success", "Match started.");
+      if (tournamentId) await loadBracketProgress(tournamentId, { silent: true });
+    } catch (err) {
+      showToast("error", err instanceof Error ? err.message : "Failed to start match.");
+    } finally {
+      setMatchActionLoading(null);
+    }
+  };
+
+  const handleCancelMatchById = async (matchId: string) => {
+    setMatchActionLoading(matchId);
+    try {
+      await organizerService.cancelMatchById(matchId);
+      showToast("success", "Match cancelled.");
+      if (tournamentId) await loadBracketProgress(tournamentId, { silent: true });
+    } catch (err) {
+      showToast("error", err instanceof Error ? err.message : "Failed to cancel match.");
+    } finally {
+      setMatchActionLoading(null);
+    }
+  };
+
+  const handleForfeitMatch = async (matchId: string, noShowUserId: string, inGameId: string) => {
+    setMatchActionLoading(`${matchId}-forfeit`);
+    try {
+      await organizerService.forfeitMatch(matchId, noShowUserId);
+      showToast("success", `Forfeit recorded for ${inGameId}.`);
+      if (tournamentId) await loadBracketProgress(tournamentId, { silent: true });
+    } catch (err) {
+      showToast("error", err instanceof Error ? err.message : "Failed to forfeit match.");
+    } finally {
+      setMatchActionLoading(null);
+    }
+  };
+
+  const handleOpenDisputeModal = (matchId: string) => {
+    setDisputeMatchId(matchId);
+    setDisputeWinnerId("");
+    setDisputeResolution("");
+    setShowDisputeModal(true);
+  };
+
+  const handleResolveDispute = async () => {
+    if (!disputeMatchId || !disputeWinnerId.trim() || !disputeResolution.trim()) {
+      showToast("error", "Winner in-game ID and resolution are required.");
+      return;
+    }
+    setMatchActionLoading(disputeMatchId);
+    try {
+      await organizerService.resolveDispute(disputeMatchId, disputeWinnerId.trim(), disputeResolution.trim());
+      setShowDisputeModal(false);
+      showToast("success", "Dispute resolved.");
+      if (tournamentId) await loadBracketProgress(tournamentId, { silent: true });
+    } catch (err) {
+      showToast("error", err instanceof Error ? err.message : "Failed to resolve dispute.");
+    } finally {
+      setMatchActionLoading(null);
     }
   };
 
@@ -989,10 +1145,16 @@ const TournamentManage = () => {
     );
   }
 
+  const isLeague = tournament.tournamentType === 'league';
+  const leagueSettings = tournament.leagueSettings;
   const canPublish = tournament.status === "draft";
-  const canGenerateBracket = ["locked", "ready_to_start"].includes(
+  const canGenerateBracket = !isLeague && ["locked", "ready_to_start"].includes(
     tournament.status,
   );
+  const canGenerateLeagueFixtures = isLeague && !leagueSettings?.fixturesGenerated &&
+    ["locked", "ready_to_start", "active", "in_progress"].includes(tournament.status);
+  const canAdvanceMatchweek = isLeague && leagueSettings?.fixturesGenerated &&
+    leagueSettings.currentMatchweek < leagueSettings.totalMatchweeks;
   const canCancel = !["completed", "cancelled"].includes(tournament.status);
   const canDepositPrizePool =
     tournament.status === "awaiting_deposit" && !tournament.isFree;
@@ -1109,6 +1271,32 @@ const TournamentManage = () => {
               Publish
             </button>
           )}
+          {/* League actions */}
+          {canGenerateLeagueFixtures && (
+            <button
+              onClick={() => { void handleGenerateLeagueFixtures(); }}
+              disabled={isGeneratingFixtures}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-500 text-white text-sm font-semibold hover:bg-indigo-400 disabled:opacity-60 transition-colors"
+            >
+              {isGeneratingFixtures ? <Loader2 className="w-4 h-4 animate-spin" /> : <List className="w-4 h-4" />}
+              {isGeneratingFixtures ? "Generating..." : "Generate Fixtures"}
+            </button>
+          )}
+          {leagueSettings?.fixturesGenerated && !canGenerateLeagueFixtures && (
+            <span className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500/15 border border-emerald-500/35 text-emerald-300 text-sm font-semibold">
+              <CheckCircle2 className="w-4 h-4" /> Fixtures Generated
+            </span>
+          )}
+          {canAdvanceMatchweek && (
+            <button
+              onClick={() => { void handleAdvanceLeagueMatchweek(); }}
+              disabled={isAdvancingMatchweek}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-500 text-slate-950 text-sm font-semibold hover:bg-cyan-400 disabled:opacity-60 transition-colors"
+            >
+              {isAdvancingMatchweek ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+              {isAdvancingMatchweek ? "Advancing..." : `Advance to Week ${(leagueSettings?.currentMatchweek ?? 0) + 1}`}
+            </button>
+          )}
           {(canGenerateBracket || hasBracketGenerated) && (
             <button
               onClick={() => {
@@ -1222,6 +1410,35 @@ const TournamentManage = () => {
         ))}
       </div>
 
+      {/* League View (organizer) */}
+      {isLeague && leagueSettings?.fixturesGenerated && tournament.id && (
+        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 space-y-4">
+          <h2 className="font-display text-base font-semibold text-white flex items-center gap-2">
+            <Trophy className="w-4 h-4 text-cyan-400" />
+            League Overview
+          </h2>
+          <div className="grid grid-cols-3 gap-3 mb-2">
+            <div className="rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-2 text-center">
+              <p className="text-[11px] text-slate-500 mb-1">Current Week</p>
+              <p className="text-base font-semibold text-cyan-300">{leagueSettings.currentMatchweek}</p>
+            </div>
+            <div className="rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-2 text-center">
+              <p className="text-[11px] text-slate-500 mb-1">Total Weeks</p>
+              <p className="text-base font-semibold text-white">{leagueSettings.totalMatchweeks}</p>
+            </div>
+            <div className="rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-2 text-center">
+              <p className="text-[11px] text-slate-500 mb-1">Legs</p>
+              <p className="text-base font-semibold text-white">{leagueSettings.legs}</p>
+            </div>
+          </div>
+          <LeagueView
+            tournamentId={tournament.id}
+            currentMatchweek={leagueSettings.currentMatchweek}
+            totalMatchweeks={leagueSettings.totalMatchweeks}
+          />
+        </div>
+      )}
+
       {(hasBracketGenerated || canGenerateBracket) && (
         <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 space-y-3">
           <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -1237,21 +1454,34 @@ const TournamentManage = () => {
               </p>
             </div>
 
-            {hasBracketGenerated && tournamentId && (
-              <button
-                onClick={() => {
-                  void loadBracketProgress(tournamentId);
-                }}
-                disabled={isRefreshingBracketProgress}
-                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300 text-xs font-medium hover:bg-white/5 disabled:opacity-50 transition-colors"
-              >
-                <RefreshCw
-                  className={`w-3.5 h-3.5 ${
-                    isRefreshingBracketProgress ? "animate-spin" : ""
-                  }`}
-                />
-                Refresh Progress
-              </button>
+            {hasBracketGenerated && (
+              <div className="flex items-center gap-2">
+                {bracketRounds.length > 0 && (
+                  <button
+                    onClick={() => setShowBracketView((v) => !v)}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300 text-xs font-medium hover:bg-white/5 transition-colors"
+                  >
+                    <Trophy className="w-3.5 h-3.5" />
+                    {showBracketView ? "Hide Bracket" : "View Bracket"}
+                  </button>
+                )}
+                {tournamentId && (
+                  <button
+                    onClick={() => {
+                      void loadBracketProgress(tournamentId);
+                    }}
+                    disabled={isRefreshingBracketProgress}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300 text-xs font-medium hover:bg-white/5 disabled:opacity-50 transition-colors"
+                  >
+                    <RefreshCw
+                      className={`w-3.5 h-3.5 ${
+                        isRefreshingBracketProgress ? "animate-spin" : ""
+                      }`}
+                    />
+                    Refresh
+                  </button>
+                )}
+              </div>
             )}
           </div>
 
@@ -1319,10 +1549,216 @@ const TournamentManage = () => {
                   ))}
                 </div>
               )}
+
+              {showBracketView && bracketRounds.length > 0 && (
+                <div className="mt-2 border-t border-slate-800 pt-4">
+                  <BracketView rounds={bracketRounds} />
+                </div>
+              )}
             </>
           ) : (
             <div className="rounded-lg border border-slate-800 bg-slate-900/70 px-3 py-2 text-sm text-slate-400">
               Bracket is not generated yet.
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Match Management */}
+      {bracketMatches.some((m) => m.id) &&
+        ["ongoing", "awaiting_results"].includes(tournament.status) && (
+          <div className="rounded-xl border border-slate-800 bg-slate-900/60 overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800">
+              <h2 className="font-display text-base font-semibold text-white flex items-center gap-2">
+                <List className="w-4 h-4 text-cyan-400" />
+                Match Management
+              </h2>
+              <span className="text-xs text-slate-500">
+                {bracketMatches.length} match{bracketMatches.length !== 1 ? "es" : ""}
+              </span>
+            </div>
+
+            <div className="divide-y divide-slate-800">
+              {bracketMatches.map((match) => {
+                const isActioning =
+                  matchActionLoading === match.id ||
+                  matchActionLoading === `${match.id}-forfeit`;
+                const roundLabel = match.roundName
+                  ? match.roundName.replace(/_/g, " ")
+                  : `Round ${match.round}`;
+                const matchLabel = match.matchNumber
+                  ? `Match #${match.matchNumber}`
+                  : "";
+
+                const MATCH_STATUS_COLORS: Record<string, string> = {
+                  pending: "bg-slate-600/20 text-slate-400",
+                  scheduled: "bg-amber-500/20 text-amber-300",
+                  ongoing: "bg-cyan-500/20 text-cyan-300",
+                  completed: "bg-green-500/20 text-green-300",
+                  disputed: "bg-red-500/20 text-red-300",
+                  cancelled: "bg-slate-600/20 text-slate-400",
+                };
+
+                return (
+                  <div
+                    key={match.id || `${match.round}-${match.matchNumber}`}
+                    className="px-5 py-3 flex flex-wrap items-center gap-3"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs text-slate-500 capitalize">
+                          {roundLabel}
+                          {matchLabel ? ` · ${matchLabel}` : ""}
+                        </span>
+                        <span
+                          className={`text-xs px-2 py-0.5 rounded-full capitalize ${
+                            MATCH_STATUS_COLORS[match.status] ??
+                            "bg-slate-700/50 text-slate-400"
+                          }`}
+                        >
+                          {match.status}
+                        </span>
+                      </div>
+                      <p className="text-sm text-white mt-0.5">
+                        {match.participants.length === 2
+                          ? `${match.participants[0].inGameId || "TBD"} vs ${match.participants[1].inGameId || "TBD"}`
+                          : match.participants.length === 1
+                            ? match.participants[0].inGameId || "TBD"
+                            : "No participants"}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {/* Start match */}
+                      {["pending", "scheduled"].includes(match.status) && match.id && (
+                        <button
+                          onClick={() => void handleStartMatch(match.id)}
+                          disabled={isActioning}
+                          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500 hover:text-slate-950 disabled:opacity-50 transition-colors"
+                        >
+                          {isActioning ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Play className="w-3.5 h-3.5" />
+                          )}
+                          Start
+                        </button>
+                      )}
+
+                      {/* Forfeit buttons — one per participant */}
+                      {match.status === "ongoing" &&
+                        match.participants.map((p) =>
+                          p.userId ? (
+                            <button
+                              key={p.userId}
+                              onClick={() =>
+                                void handleForfeitMatch(match.id, p.userId!, p.inGameId)
+                              }
+                              disabled={isActioning}
+                              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-slate-950 disabled:opacity-50 transition-colors"
+                            >
+                              {isActioning ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <XCircle className="w-3.5 h-3.5" />
+                              )}
+                              Forfeit {p.inGameId}
+                            </button>
+                          ) : null,
+                        )}
+
+                      {/* Resolve dispute */}
+                      {match.status === "disputed" && match.id && (
+                        <button
+                          onClick={() => handleOpenDisputeModal(match.id)}
+                          disabled={isActioning}
+                          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white disabled:opacity-50 transition-colors"
+                        >
+                          <Gavel className="w-3.5 h-3.5" />
+                          Resolve Dispute
+                        </button>
+                      )}
+
+                      {/* Cancel match */}
+                      {["pending", "scheduled", "ongoing"].includes(match.status) &&
+                        match.id && (
+                          <button
+                            onClick={() => void handleCancelMatchById(match.id)}
+                            disabled={isActioning}
+                            title="Cancel match"
+                            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-slate-700 text-slate-400 hover:bg-red-500/10 hover:text-red-300 hover:border-red-500/30 disabled:opacity-50 transition-colors"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                            Cancel
+                          </button>
+                        )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+      {/* Tournament Results */}
+      {tournament.status === "completed" && (
+        <div className="rounded-xl border border-slate-800 bg-slate-900/60 overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800">
+            <h2 className="font-display text-base font-semibold text-white flex items-center gap-2">
+              <Trophy className="w-4 h-4 text-amber-400" />
+              Final Standings
+            </h2>
+          </div>
+
+          {isLoadingResults ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-5 h-5 text-slate-400 animate-spin" />
+            </div>
+          ) : tournamentResults && tournamentResults.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-800">
+                    {["Position", "Player", "Prize"].map((h) => (
+                      <th
+                        key={h}
+                        className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide"
+                      >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {tournamentResults.map((entry, idx) => (
+                    <tr
+                      key={idx}
+                      className="border-b border-slate-800 last:border-b-0 hover:bg-white/2 transition-colors"
+                    >
+                      <td className="px-4 py-3 text-sm font-bold text-amber-300">
+                        #{String(entry.position ?? entry.final_placement ?? idx + 1)}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-white">
+                        {String(
+                          entry.in_game_id ?? entry.inGameId ?? entry.username ?? "—",
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-300">
+                        {entry.prize_amount_ghs
+                          ? String(entry.prize_amount_ghs)
+                          : entry.prize_percentage
+                            ? `${String(entry.prize_percentage)}%`
+                            : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-10 text-center">
+              <Trophy className="w-8 h-8 text-slate-700 mb-2" />
+              <p className="text-sm text-slate-500">No results recorded yet.</p>
             </div>
           )}
         </div>
@@ -1865,6 +2301,87 @@ const TournamentManage = () => {
                 className="flex-1 py-2.5 rounded-lg bg-red-500 text-white text-sm font-semibold hover:bg-red-400 transition-colors"
               >
                 Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Resolve Dispute Modal */}
+      {showDisputeModal && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-sm p-6 space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center">
+                  <Gavel className="w-5 h-5 text-red-400" />
+                </div>
+                <div>
+                  <h3 className="font-display text-lg font-bold text-white">
+                    Resolve Dispute
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Enter the winning player's in-game ID and your resolution.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowDisputeModal(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                  Winner in-game ID
+                </label>
+                <input
+                  type="text"
+                  value={disputeWinnerId}
+                  onChange={(e) => setDisputeWinnerId(e.target.value)}
+                  placeholder="Winning player's in-game ID"
+                  className="w-full bg-slate-800/60 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                  Resolution notes
+                </label>
+                <textarea
+                  value={disputeResolution}
+                  onChange={(e) => setDisputeResolution(e.target.value)}
+                  rows={3}
+                  placeholder="Explain the reason for your decision..."
+                  className="w-full bg-slate-800/60 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500 transition-colors resize-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDisputeModal(false)}
+                className="flex-1 py-2.5 rounded-lg border border-slate-700 text-slate-300 text-sm font-medium hover:bg-white/5 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => void handleResolveDispute()}
+                disabled={
+                  matchActionLoading === disputeMatchId ||
+                  !disputeWinnerId.trim() ||
+                  !disputeResolution.trim()
+                }
+                className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 rounded-lg bg-red-500 text-white text-sm font-semibold hover:bg-red-400 disabled:opacity-60 transition-colors"
+              >
+                {matchActionLoading === disputeMatchId ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Gavel className="w-4 h-4" />
+                )}
+                Resolve
               </button>
             </div>
           </div>

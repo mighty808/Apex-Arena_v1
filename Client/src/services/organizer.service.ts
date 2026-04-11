@@ -60,6 +60,12 @@ export interface CreateTournamentPayload {
   inGameIdRequired?: boolean;
   allowedRegions?: string[];
   verifiedEmailRequired?: boolean;
+  leagueSettings?: {
+    legs?: number;
+    pointsPerWin?: number;
+    pointsPerDraw?: number;
+    pointsPerLoss?: number;
+  };
 }
 
 export interface PayoutRequest {
@@ -441,6 +447,14 @@ export const organizerService = {
       body.communication = {
         ...(body.communication as Record<string, unknown> | undefined),
         contact_email: payload.contactEmail,
+      };
+    }
+    if (payload.tournamentType === 'league' && payload.leagueSettings) {
+      body.league_settings = {
+        legs: payload.leagueSettings.legs ?? 1,
+        points_per_win: payload.leagueSettings.pointsPerWin ?? 3,
+        points_per_draw: payload.leagueSettings.pointsPerDraw ?? 1,
+        points_per_loss: payload.leagueSettings.pointsPerLoss ?? 0,
       };
     }
 
