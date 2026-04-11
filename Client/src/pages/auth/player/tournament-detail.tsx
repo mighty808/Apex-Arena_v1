@@ -42,6 +42,7 @@ import {
   type BracketMatch,
   type BracketRound,
 } from "../../../components/tournament-detail";
+import { LeagueView } from "../../../components/league/LeagueView";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -116,9 +117,8 @@ const TournamentDetail = () => {
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [withdrawReason, setWithdrawReason] = useState("");
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isConfirmingMatch, setIsConfirmingMatch] = useState<string | null>(
-    null,
-  );
+  const [isConfirmingMatch, setIsConfirmingMatch] = useState<string | null>(null);
+  const [isMarkingReady, setIsMarkingReady] = useState<string | null>(null);
   const [activeSubmitMatch, setActiveSubmitMatch] =
     useState<BracketMatch | null>(null);
   const [submitWinnerId, setSubmitWinnerId] = useState("");
@@ -430,6 +430,26 @@ const TournamentDetail = () => {
     [handleRefresh],
   );
 
+  const handleMarkReady = useCallback(
+    async (matchId: string) => {
+      setIsMarkingReady(matchId);
+      setErrorMsg(null);
+      try {
+        await tournamentService.markMatchReady(matchId);
+        setSuccessMsg("You are marked as ready for this match.");
+        await handleRefresh();
+        setTimeout(() => setSuccessMsg(null), 5000);
+      } catch (err) {
+        setErrorMsg(
+          err instanceof Error ? err.message : "Failed to mark ready.",
+        );
+      } finally {
+        setIsMarkingReady(null);
+      }
+    },
+    [handleRefresh],
+  );
+
   const openDisputeModal = useCallback((match: BracketMatch) => {
     setActiveDisputeMatch(match);
     setDisputeReason("");
@@ -538,7 +558,8 @@ const TournamentDetail = () => {
   const checkInStart = checkInStatus?.check_in_start as string | undefined;
   const checkInEnd = checkInStatus?.check_in_end as string | undefined;
 
-  const showBracketSection = BRACKET_VISIBLE_STATUSES.has(tournament.status);
+  const isLeague = tournament.tournamentType === 'league';
+  const showBracketSection = !isLeague && BRACKET_VISIBLE_STATUSES.has(tournament.status);
   const canRegister = tournament.status === "open" && !isRegistered;
   const registrationClosed =
     !["open"].includes(tournament.status) && !isRegistered;
@@ -1019,6 +1040,24 @@ const TournamentDetail = () => {
         </section>
       )}
 
+      {/* League View */}
+      {isLeague && BRACKET_VISIBLE_STATUSES.has(tournament.status) && (
+        <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
+          <div className="mb-4">
+            <h2 className="font-display text-base font-semibold text-white flex items-center gap-2">
+              <Trophy className="w-4 h-4 text-cyan-400" />
+              League
+            </h2>
+          </div>
+          <LeagueView
+            tournamentId={tournament.id}
+            currentMatchweek={tournament.leagueSettings?.currentMatchweek ?? 0}
+            totalMatchweeks={tournament.leagueSettings?.totalMatchweeks ?? 0}
+            highlightUserId={currentUserId}
+          />
+        </section>
+      )}
+
       {/* Bracket */}
       {showBracketSection && (
         <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
@@ -1078,6 +1117,16 @@ const TournamentDetail = () => {
                   currentUserId && reporterId === currentUserId,
                 );
                 const isConfirmLoading = isConfirmingMatch === matchId;
+                const isReadyLoading = isMarkingReady === matchId;
+
+                const myParticipant = (match.participants ?? []).find(
+                  (p) => currentUserId && getParticipantEntityId(p) === currentUserId,
+                );
+                const alreadyReady = Boolean(myParticipant?.is_ready);
+                const canMarkReady =
+                  Boolean(matchId) &&
+                  match.status === "ready_check" &&
+                  !alreadyReady;
 
                 const canSubmitResult =
                   Boolean(matchId) &&
@@ -1153,6 +1202,27 @@ const TournamentDetail = () => {
                     </div>
 
                     <div className="flex flex-wrap gap-2">
+                      {canMarkReady && (
+                        <button
+                          onClick={() => void handleMarkReady(matchId)}
+                          disabled={isReadyLoading}
+                          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-indigo-500 text-white hover:bg-indigo-400 disabled:opacity-60 transition-colors"
+                        >
+                          {isReadyLoading ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                          )}
+                          {isReadyLoading ? "Marking..." : "Mark Ready"}
+                        </button>
+                      )}
+                      {alreadyReady && match.status === "ready_check" && (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          Ready
+                        </span>
+                      )}
+
                       {canSubmitResult && (
                         <button
                           onClick={() => openSubmitResultModal(match)}

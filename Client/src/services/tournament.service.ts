@@ -25,6 +25,17 @@ export interface PrizeDistribution {
   amount?: number;
 }
 
+export interface LeagueSettings {
+  pointsPerWin: number;
+  pointsPerDraw: number;
+  pointsPerLoss: number;
+  legs: number;
+  currentMatchweek: number;
+  totalMatchweeks: number;
+  fixturesGenerated: boolean;
+  fixturesGeneratedAt?: string;
+}
+
 export interface Tournament {
   id: string;
   title: string;
@@ -51,6 +62,56 @@ export interface Tournament {
   region?: string;
   visibility: string;
   isRegistered?: boolean;
+  leagueSettings?: LeagueSettings;
+}
+
+export interface LeagueTableRow {
+  userId?: string;
+  teamId?: string;
+  displayName: string;
+  inGameId?: string;
+  avatarUrl?: string;
+  position: number;
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDifference: number;
+  points: number;
+  form: string[];
+  positionChange: number;
+}
+
+export interface LeagueMatch {
+  matchId: string;
+  matchweek: number;
+  player1Id?: string;
+  player1Name: string;
+  player1Avatar?: string;
+  player2Id?: string;
+  player2Name: string;
+  player2Avatar?: string;
+  status: string;
+  score1?: number;
+  score2?: number;
+  winnerId?: string;
+  scheduledAt?: string;
+}
+
+export interface LeagueMatchweek {
+  week: number;
+  matches: LeagueMatch[];
+}
+
+export interface LeagueOverview {
+  tournamentId: string;
+  currentMatchweek: number;
+  totalMatchweeks: number;
+  fixturesGenerated: boolean;
+  table: LeagueTableRow[];
+  currentWeekMatches: LeagueMatch[];
 }
 
 export interface TournamentFilters {
@@ -290,7 +351,44 @@ export function mapTournament(
     rules: (raw.rules as Record<string, unknown>)?.description as string | undefined,
     region: raw.region as string | undefined,
     visibility: String(raw.visibility ?? 'public'),
+    leagueSettings: raw.league_settings
+      ? (() => {
+          const ls = raw.league_settings as Record<string, unknown>;
+          return {
+            pointsPerWin: Number(ls.points_per_win ?? 3),
+            pointsPerDraw: Number(ls.points_per_draw ?? 1),
+            pointsPerLoss: Number(ls.points_per_loss ?? 0),
+            legs: Number(ls.legs ?? 1),
+            currentMatchweek: Number(ls.current_matchweek ?? 0),
+            totalMatchweeks: Number(ls.total_matchweeks ?? 0),
+            fixturesGenerated: Boolean(ls.fixtures_generated ?? false),
+            fixturesGeneratedAt: ls.fixtures_generated_at as string | undefined,
+          };
+        })()
+      : undefined,
   };
+}
+
+function mapLeagueMatches(list: Record<string, unknown>[]): LeagueMatch[] {
+  return list.map((m) => {
+    const p1 = (m.player1 ?? m.participant1 ?? {}) as Record<string, unknown>;
+    const p2 = (m.player2 ?? m.participant2 ?? {}) as Record<string, unknown>;
+    return {
+      matchId: String(m._id ?? m.id ?? m.match_id ?? ''),
+      matchweek: Number(m.matchweek ?? 0),
+      player1Id: String(p1._id ?? p1.id ?? m.player1_id ?? m.participant1_id ?? ''),
+      player1Name: String(p1.username ?? p1.display_name ?? p1.name ?? m.player1_name ?? ''),
+      player1Avatar: (p1.avatar_url ?? m.player1_avatar) as string | undefined,
+      player2Id: String(p2._id ?? p2.id ?? m.player2_id ?? m.participant2_id ?? ''),
+      player2Name: String(p2.username ?? p2.display_name ?? p2.name ?? m.player2_name ?? ''),
+      player2Avatar: (p2.avatar_url ?? m.player2_avatar) as string | undefined,
+      status: String(m.status ?? 'scheduled'),
+      score1: m.score1 !== undefined ? Number(m.score1) : undefined,
+      score2: m.score2 !== undefined ? Number(m.score2) : undefined,
+      winnerId: m.winner_id as string | undefined,
+      scheduledAt: m.scheduled_at as string | undefined,
+    };
+  });
 }
 
 // ─── Service ────────────────────────────────────────────────────────────────
@@ -825,5 +923,103 @@ export const tournamentService = {
       throw new Error(msg);
     }
     return response.data as Record<string, unknown>;
+  },
+
+  // ─── League ────────────────────────────────────────────────────────────────
+
+  async getLeagueTable(tournamentId: string): Promise<LeagueTableRow[]> {
+    const response = await apiGet(`${TOURNAMENT_ENDPOINTS.LEAGUE}/${tournamentId}/table`, { skipCache: true });
+    if (!response.success) return [];
+    const data = response.data as Record<string, unknown>;
+    const list = (Array.isArray(data) ? data : (data.table ?? [])) as Record<string, unknown>[];
+    return list.map((r) => ({
+      userId: r.user_id as string | undefined,
+      teamId: r.team_id as string | undefined,
+      displayName: String(r.display_name ?? ''),
+      inGameId: r.in_game_id as string | undefined,
+      avatarUrl: r.avatar_url as string | undefined,
+      position: Number(r.position ?? 0),
+      played: Number(r.played ?? 0),
+      won: Number(r.won ?? 0),
+      drawn: Number(r.drawn ?? 0),
+      lost: Number(r.lost ?? 0),
+      goalsFor: Number(r.goals_for ?? 0),
+      goalsAgainst: Number(r.goals_against ?? 0),
+      goalDifference: Number(r.goal_difference ?? 0),
+      points: Number(r.points ?? 0),
+      form: Array.isArray(r.form) ? (r.form as string[]) : [],
+      positionChange: Number(r.position_change ?? 0),
+    }));
+  },
+
+  async getLeagueMatchweeks(tournamentId: string): Promise<LeagueMatchweek[]> {
+    const response = await apiGet(`${TOURNAMENT_ENDPOINTS.LEAGUE}/${tournamentId}/matchweeks`, { skipCache: true });
+    if (!response.success) return [];
+    const data = response.data as Record<string, unknown>;
+    const list = (Array.isArray(data) ? data : (data.matchweeks ?? [])) as Record<string, unknown>[];
+    return list.map((mw) => ({
+      week: Number(mw.week ?? 0),
+      matches: mapLeagueMatches((mw.matches ?? []) as Record<string, unknown>[]),
+    }));
+  },
+
+  async getLeagueMatchweek(tournamentId: string, week: number): Promise<LeagueMatchweek | null> {
+    const response = await apiGet(`${TOURNAMENT_ENDPOINTS.LEAGUE}/${tournamentId}/matchweeks/${week}`, { skipCache: true });
+    if (!response.success) return null;
+    const data = response.data as Record<string, unknown>;
+    return {
+      week: Number(data.week ?? week),
+      matches: mapLeagueMatches((data.matches ?? []) as Record<string, unknown>[]),
+    };
+  },
+
+  async getLeagueOverview(tournamentId: string): Promise<LeagueOverview | null> {
+    const response = await apiGet(`${TOURNAMENT_ENDPOINTS.LEAGUE}/${tournamentId}/overview`, { skipCache: true });
+    if (!response.success) return null;
+    const data = response.data as Record<string, unknown>;
+    const tableRaw = (Array.isArray(data.table) ? data.table : []) as Record<string, unknown>[];
+    return {
+      tournamentId: String(data.tournament_id ?? tournamentId),
+      currentMatchweek: Number(data.current_matchweek ?? 0),
+      totalMatchweeks: Number(data.total_matchweeks ?? 0),
+      fixturesGenerated: Boolean(data.fixtures_generated ?? false),
+      table: tableRaw.map((r) => ({
+        userId: r.user_id as string | undefined,
+        teamId: r.team_id as string | undefined,
+        displayName: String(r.display_name ?? ''),
+        inGameId: r.in_game_id as string | undefined,
+        avatarUrl: r.avatar_url as string | undefined,
+        position: Number(r.position ?? 0),
+        played: Number(r.played ?? 0),
+        won: Number(r.won ?? 0),
+        drawn: Number(r.drawn ?? 0),
+        lost: Number(r.lost ?? 0),
+        goalsFor: Number(r.goals_for ?? 0),
+        goalsAgainst: Number(r.goals_against ?? 0),
+        goalDifference: Number(r.goal_difference ?? 0),
+        points: Number(r.points ?? 0),
+        form: Array.isArray(r.form) ? (r.form as string[]) : [],
+        positionChange: Number(r.position_change ?? 0),
+      })),
+      currentWeekMatches: mapLeagueMatches((data.current_week_matches ?? data.currentWeekMatches ?? []) as Record<string, unknown>[]),
+    };
+  },
+
+  async generateLeagueFixtures(tournamentId: string): Promise<void> {
+    const response = await apiPost(`${TOURNAMENT_ENDPOINTS.LEAGUE}/${tournamentId}/generate`, {});
+    if (!response.success) {
+      const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to generate fixtures';
+      throw new Error(msg);
+    }
+  },
+
+  async advanceLeagueMatchweek(tournamentId: string): Promise<number> {
+    const response = await apiPost(`${TOURNAMENT_ENDPOINTS.LEAGUE}/${tournamentId}/advance`, {});
+    if (!response.success) {
+      const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to advance matchweek';
+      throw new Error(msg);
+    }
+    const data = response.data as Record<string, unknown>;
+    return Number(data.currentMatchweek ?? data.current_matchweek ?? 0);
   },
 };

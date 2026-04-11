@@ -136,6 +136,7 @@ const CreateTournament = () => {
   const [description, setDescription] = useState("");
   const [gameId, setGameId] = useState("");
   const [tournamentType, setTournamentType] = useState("single_elimination");
+  const [leagueLegs, setLeagueLegs] = useState<"1" | "2">("1");
   const [format, setFormat] = useState("1v1");
   const [maxParticipants, setMaxParticipants] = useState("16");
   const [minParticipants, setMinParticipants] = useState("4");
@@ -727,6 +728,9 @@ const CreateTournament = () => {
               ? [trimmedRegion]
               : undefined,
         verifiedEmailRequired,
+        leagueSettings: tournamentType === 'league'
+          ? { legs: Number(leagueLegs) }
+          : undefined,
       };
 
       if (isEditMode && tournamentId) {
@@ -941,8 +945,22 @@ const CreateTournament = () => {
                   <option value="round_robin">Round Robin</option>
                   <option value="swiss">Swiss</option>
                   <option value="battle_royale">Battle Royale</option>
+                  <option value="league">League (Premier League style)</option>
                 </select>
               </Field>
+
+              {tournamentType === "league" && (
+                <Field label="League Legs" required>
+                  <select
+                    value={leagueLegs}
+                    onChange={(e) => setLeagueLegs(e.target.value as "1" | "2")}
+                    className={selectCls}
+                  >
+                    <option value="1">Single Leg (home only)</option>
+                    <option value="2">Double Leg (home & away)</option>
+                  </select>
+                </Field>
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
