@@ -4,12 +4,16 @@ import { tournamentService } from '../../services/tournament.service';
 import type { LeagueTableRow, LeagueMatchweek } from '../../services/tournament.service';
 import { LeagueTable } from './LeagueTable';
 import { MatchweekFixtures } from './MatchweekFixtures';
+import { MatchActionModal } from './MatchActionModal';
+import { OrganizerMatchModal } from './OrganizerMatchModal';
 
 interface LeagueViewProps {
   tournamentId: string;
   currentMatchweek: number;
   totalMatchweeks: number;
+  legs?: number;
   highlightUserId?: string;
+  isOrganizer?: boolean;
 }
 
 type ActiveTab = 'table' | 'fixtures';
@@ -18,7 +22,9 @@ export function LeagueView({
   tournamentId,
   currentMatchweek,
   totalMatchweeks,
+  legs = 1,
   highlightUserId,
+  isOrganizer = false,
 }: LeagueViewProps) {
   const [activeTab, setActiveTab] = useState<ActiveTab>('table');
   const [table, setTable] = useState<LeagueTableRow[]>([]);
@@ -27,6 +33,7 @@ export function LeagueView({
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeMatchId, setActiveMatchId] = useState<string | null>(null);
 
   async function loadData(showRefresh = false) {
     if (showRefresh) setRefreshing(true);
@@ -81,10 +88,14 @@ export function LeagueView({
         </div>
 
         <div className="flex items-center gap-3">
-          {totalMatchweeks > 0 && (
+          {totalMatchweeks > 0 && currentMatchweek > 0 && (
             <span className="text-xs text-slate-500 hidden sm:block">
               Week{' '}
-              <span className="text-slate-300 font-semibold">{currentMatchweek}</span>
+              {legs >= 2 ? (
+                <span className="text-slate-300 font-semibold">{currentMatchweek - 1} - {currentMatchweek}</span>
+              ) : (
+                <span className="text-slate-300 font-semibold">{currentMatchweek}</span>
+              )}
               {' / '}{totalMatchweeks}
             </span>
           )}
@@ -123,6 +134,32 @@ export function LeagueView({
           currentWeek={selectedWeek}
           onWeekChange={setSelectedWeek}
           highlightUserId={highlightUserId}
+          onMatchClick={(id) => setActiveMatchId(id)}
+        />
+      )}
+
+      {/* Player match action modal */}
+      {activeMatchId && highlightUserId && !isOrganizer && (
+        <MatchActionModal
+          matchId={activeMatchId}
+          currentUserId={highlightUserId}
+          onClose={() => setActiveMatchId(null)}
+          onActionComplete={() => {
+            setActiveMatchId(null);
+            loadData(true);
+          }}
+        />
+      )}
+
+      {/* Organizer match modal */}
+      {activeMatchId && isOrganizer && (
+        <OrganizerMatchModal
+          matchId={activeMatchId}
+          onClose={() => setActiveMatchId(null)}
+          onActionComplete={() => {
+            setActiveMatchId(null);
+            loadData(true);
+          }}
         />
       )}
     </div>
