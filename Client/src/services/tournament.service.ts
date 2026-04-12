@@ -1048,6 +1048,14 @@ export const tournamentService = {
     return Number(data.currentMatchweek ?? data.current_matchweek ?? 0);
   },
 
+  async recalculateLeagueStandings(tournamentId: string): Promise<void> {
+    const response = await apiPost(`${TOURNAMENT_ENDPOINTS.LEAGUE}/${tournamentId}/standings/recalculate`, {});
+    if (!response.success) {
+      const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to recalculate standings';
+      throw new Error(msg);
+    }
+  },
+
   // ─── Match Actions ─────────────────────────────────────────────────────────
 
   async getMatch(matchId: string): Promise<FullMatch | null> {
