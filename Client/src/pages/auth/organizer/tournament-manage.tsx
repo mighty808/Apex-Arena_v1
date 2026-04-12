@@ -502,6 +502,7 @@ const TournamentManage = () => {
   const [isLoadingResults, setIsLoadingResults] = useState(false);
   const [isGeneratingFixtures, setIsGeneratingFixtures] = useState(false);
   const [isAdvancingMatchweek, setIsAdvancingMatchweek] = useState(false);
+  const [isRecalculating, setIsRecalculating] = useState(false);
 
   const hasFetched = useRef(false);
 
@@ -789,6 +790,20 @@ const TournamentManage = () => {
       showToast("error", err instanceof Error ? err.message : "Failed to advance matchweek.");
     } finally {
       setIsAdvancingMatchweek(false);
+    }
+  };
+
+  const handleRecalculateStandings = async () => {
+    if (!tournamentId) return;
+    setIsRecalculating(true);
+    try {
+      await tournamentService.recalculateLeagueStandings(tournamentId);
+      showToast("success", "Standings recalculated.");
+      await loadData();
+    } catch (err) {
+      showToast("error", err instanceof Error ? err.message : "Failed to recalculate.");
+    } finally {
+      setIsRecalculating(false);
     }
   };
 
@@ -1286,6 +1301,17 @@ const TournamentManage = () => {
             <span className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500/15 border border-emerald-500/35 text-emerald-300 text-sm font-semibold">
               <CheckCircle2 className="w-4 h-4" /> Fixtures Generated
             </span>
+          )}
+          {leagueSettings?.fixturesGenerated && (
+            <button
+              onClick={() => { void handleRecalculateStandings(); }}
+              disabled={isRecalculating}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-700 text-slate-300 text-sm font-semibold hover:border-slate-500 hover:text-white disabled:opacity-60 transition-colors"
+              title="Force-recalculate the league table from all completed matches"
+            >
+              {isRecalculating ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+              {isRecalculating ? "Recalculating..." : "Recalculate Table"}
+            </button>
           )}
           {canAdvanceMatchweek && (
             <button
