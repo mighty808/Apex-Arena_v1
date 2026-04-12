@@ -1152,9 +1152,9 @@ const TournamentManage = () => {
     tournament.status,
   );
   const canGenerateLeagueFixtures = isLeague && !leagueSettings?.fixturesGenerated &&
-    ["locked", "ready_to_start", "active", "in_progress"].includes(tournament.status);
+    !["draft", "cancelled", "completed"].includes(tournament.status);
   const canAdvanceMatchweek = isLeague && leagueSettings?.fixturesGenerated &&
-    leagueSettings.currentMatchweek < leagueSettings.totalMatchweeks;
+    (leagueSettings.currentMatchweek < leagueSettings.totalMatchweeks);
   const canCancel = !["completed", "cancelled"].includes(tournament.status);
   const canDepositPrizePool =
     tournament.status === "awaiting_deposit" && !tournament.isFree;
@@ -1294,7 +1294,12 @@ const TournamentManage = () => {
               className="flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-500 text-slate-950 text-sm font-semibold hover:bg-cyan-400 disabled:opacity-60 transition-colors"
             >
               {isAdvancingMatchweek ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
-              {isAdvancingMatchweek ? "Advancing..." : `Advance to Week ${(leagueSettings?.currentMatchweek ?? 0) + 1}`}
+              {isAdvancingMatchweek
+                ? "Advancing..."
+                : leagueSettings?.legs === 2
+                  ? `Advance to Week ${(leagueSettings?.currentMatchweek ?? 0) + 1} - ${(leagueSettings?.currentMatchweek ?? 0) + 2}`
+                  : `Advance to Week ${(leagueSettings?.currentMatchweek ?? 0) + 1}`
+              }
             </button>
           )}
           {(canGenerateBracket || hasBracketGenerated) && (
@@ -1410,32 +1415,62 @@ const TournamentManage = () => {
         ))}
       </div>
 
-      {/* League View (organizer) */}
-      {isLeague && leagueSettings?.fixturesGenerated && tournament.id && (
+      {/* League Section (organizer) */}
+      {isLeague && !["draft", "cancelled"].includes(tournament.status) && tournament.id && (
         <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 space-y-4">
-          <h2 className="font-display text-base font-semibold text-white flex items-center gap-2">
-            <Trophy className="w-4 h-4 text-cyan-400" />
-            League Overview
-          </h2>
-          <div className="grid grid-cols-3 gap-3 mb-2">
-            <div className="rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-2 text-center">
-              <p className="text-[11px] text-slate-500 mb-1">Current Week</p>
-              <p className="text-base font-semibold text-cyan-300">{leagueSettings.currentMatchweek}</p>
-            </div>
-            <div className="rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-2 text-center">
-              <p className="text-[11px] text-slate-500 mb-1">Total Weeks</p>
-              <p className="text-base font-semibold text-white">{leagueSettings.totalMatchweeks}</p>
-            </div>
-            <div className="rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-2 text-center">
-              <p className="text-[11px] text-slate-500 mb-1">Legs</p>
-              <p className="text-base font-semibold text-white">{leagueSettings.legs}</p>
-            </div>
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <h2 className="font-display text-base font-semibold text-white flex items-center gap-2">
+              <Trophy className="w-4 h-4 text-cyan-400" />
+              League Management
+            </h2>
+            {leagueSettings?.fixturesGenerated && (
+              <div className="flex items-center gap-2 text-xs text-slate-400">
+                <span>Week</span>
+                <span className="text-cyan-300 font-bold">{leagueSettings.currentMatchweek}</span>
+                <span>/</span>
+                <span className="text-white font-semibold">{leagueSettings.totalMatchweeks}</span>
+                <span className="ml-2">·</span>
+                <span className="ml-2">{leagueSettings.legs === 2 ? 'Double Leg' : 'Single Leg'}</span>
+              </div>
+            )}
           </div>
-          <LeagueView
-            tournamentId={tournament.id}
-            currentMatchweek={leagueSettings.currentMatchweek}
-            totalMatchweeks={leagueSettings.totalMatchweeks}
-          />
+
+          {!leagueSettings?.fixturesGenerated ? (
+            <div className="rounded-xl border border-dashed border-slate-700 bg-slate-900/40 p-8 text-center space-y-3">
+              <Trophy className="w-8 h-8 text-slate-600 mx-auto" />
+              <p className="text-slate-400 text-sm font-medium">Fixtures not generated yet</p>
+              <p className="text-slate-500 text-xs">
+                {registrants.length} player{registrants.length !== 1 ? 's' : ''} registered.
+                {canGenerateLeagueFixtures
+                  ? ' Click "Generate Fixtures" above to create the full round-robin schedule.'
+                  : ' Complete registration phase before generating fixtures.'}
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-2.5 text-center">
+                  <p className="text-[11px] text-slate-500 mb-1">Current Week</p>
+                  <p className="text-lg font-bold text-cyan-300">{leagueSettings.currentMatchweek}</p>
+                </div>
+                <div className="rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-2.5 text-center">
+                  <p className="text-[11px] text-slate-500 mb-1">Total Weeks</p>
+                  <p className="text-lg font-bold text-white">{leagueSettings.totalMatchweeks}</p>
+                </div>
+                <div className="rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-2.5 text-center">
+                  <p className="text-[11px] text-slate-500 mb-1">Legs</p>
+                  <p className="text-lg font-bold text-white">{leagueSettings.legs}</p>
+                </div>
+              </div>
+              <LeagueView
+                tournamentId={tournament.id}
+                currentMatchweek={leagueSettings.currentMatchweek}
+                totalMatchweeks={leagueSettings.totalMatchweeks}
+                legs={leagueSettings.legs}
+                isOrganizer
+              />
+            </>
+          )}
         </div>
       )}
 

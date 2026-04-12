@@ -1041,7 +1041,7 @@ const TournamentDetail = () => {
       )}
 
       {/* League View */}
-      {isLeague && BRACKET_VISIBLE_STATUSES.has(tournament.status) && (
+      {isLeague && !['draft', 'cancelled'].includes(tournament.status) && (
         <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
           <div className="mb-4">
             <h2 className="font-display text-base font-semibold text-white flex items-center gap-2">
@@ -1053,6 +1053,7 @@ const TournamentDetail = () => {
             tournamentId={tournament.id}
             currentMatchweek={tournament.leagueSettings?.currentMatchweek ?? 0}
             totalMatchweeks={tournament.leagueSettings?.totalMatchweeks ?? 0}
+            legs={tournament.leagueSettings?.legs ?? 1}
             highlightUserId={currentUserId}
           />
         </section>
