@@ -29,7 +29,8 @@ export function LeagueView({
   const [activeTab, setActiveTab] = useState<ActiveTab>('table');
   const [table, setTable] = useState<LeagueTableRow[]>([]);
   const [matchweeks, setMatchweeks] = useState<LeagueMatchweek[]>([]);
-  const [selectedWeek, setSelectedWeek] = useState(currentMatchweek || 1);
+  const defaultWeek = legs >= 2 && currentMatchweek > 0 ? currentMatchweek - 1 : currentMatchweek || 1;
+  const [selectedWeek, setSelectedWeek] = useState(defaultWeek);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +48,7 @@ export function LeagueView({
       setTable(tableData);
       setMatchweeks(mwData);
       if (mwData.length > 0 && selectedWeek === 0) {
-        setSelectedWeek(currentMatchweek || mwData[0].week);
+        setSelectedWeek(legs >= 2 && currentMatchweek > 0 ? currentMatchweek - 1 : currentMatchweek || mwData[0].week);
       }
     } catch {
       setError('Failed to load league data.');
@@ -143,6 +144,7 @@ export function LeagueView({
         <MatchActionModal
           matchId={activeMatchId}
           currentUserId={highlightUserId}
+          currentMatchweek={currentMatchweek}
           onClose={() => setActiveMatchId(null)}
           onActionComplete={() => {
             setActiveMatchId(null);
