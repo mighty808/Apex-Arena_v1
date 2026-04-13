@@ -185,20 +185,6 @@ export interface MyTournamentRegistration {
   registeredAt?: string;
 }
 
-export interface MatchResultProofPayload {
-  screenshots?: string[];
-  videoUrl?: string;
-}
-
-export interface SubmitMatchResultPayload {
-  winnerId: string;
-  proof?: MatchResultProofPayload;
-}
-
-export interface DisputeMatchResultPayload {
-  reason: string;
-  evidence?: string[];
-}
 
 function extractId(value: unknown): string {
   if (typeof value === 'string' || typeof value === 'number') {
@@ -597,73 +583,6 @@ export const tournamentService = {
         };
       })
       .filter((item) => item.tournamentId.length > 0);
-  },
-
-  async submitMatchResult(
-    matchId: string,
-    payload: SubmitMatchResultPayload,
-  ): Promise<void> {
-    const body: Record<string, unknown> = {
-      winnerId: payload.winnerId,
-    };
-
-    if (payload.proof) {
-      body.proof = {
-        screenshots: payload.proof.screenshots ?? [],
-        video_url: payload.proof.videoUrl,
-      };
-    }
-
-    const response = await apiPost(
-      `${TOURNAMENT_ENDPOINTS.MATCH_RESULT}/${matchId}/result`,
-      body,
-    );
-
-    if (!response.success) {
-      const msg = response.error?.message ?? 'Failed to submit match result';
-      throw new Error(msg);
-    }
-  },
-
-  async confirmMatchResult(matchId: string): Promise<void> {
-    const response = await apiPost(
-      `${TOURNAMENT_ENDPOINTS.MATCH_CONFIRM}/${matchId}/confirm`,
-      {},
-    );
-
-    if (!response.success) {
-      const msg = response.error?.message ?? 'Failed to confirm match result';
-      throw new Error(msg);
-    }
-  },
-
-  async disputeMatchResult(
-    matchId: string,
-    payload: DisputeMatchResultPayload,
-  ): Promise<void> {
-    const response = await apiPost(
-      `${TOURNAMENT_ENDPOINTS.MATCH_DISPUTE}/${matchId}/dispute`,
-      {
-        reason: payload.reason,
-        evidence: payload.evidence ?? [],
-      },
-    );
-
-    if (!response.success) {
-      const msg = response.error?.message ?? 'Failed to dispute match result';
-      throw new Error(msg);
-    }
-  },
-
-  async markMatchReady(matchId: string): Promise<void> {
-    const response = await apiPost(
-      `${TOURNAMENT_ENDPOINTS.MATCH_READY}/${matchId}/ready`,
-      {},
-    );
-    if (!response.success) {
-      const msg = response.error?.message ?? 'Failed to mark ready';
-      throw new Error(msg);
-    }
   },
 
   // ─── Check-in ──────────────────────────────────────────────────────────────
@@ -1071,12 +990,12 @@ export const tournamentService = {
       matchweek: m.matchweek !== undefined ? Number(m.matchweek) : undefined,
       status: String(m.status ?? 'pending'),
       player1Id: String(p1.user_id ?? p1.team_id ?? ''),
-      player1Name: String(p1.in_game_id ?? p1.display_name ?? p1.username ?? ''),
+      player1Name: String(p1.in_game_id ?? p1.display_name ?? p1.username ?? '') || 'TBD',
       player1Score: Number(p1.score ?? 0),
       player1Result: String(p1.result ?? 'pending'),
       player1IsReady: Boolean(p1.is_ready),
       player2Id: String(p2.user_id ?? p2.team_id ?? ''),
-      player2Name: String(p2.in_game_id ?? p2.display_name ?? p2.username ?? ''),
+      player2Name: String(p2.in_game_id ?? p2.display_name ?? p2.username ?? '') || 'TBD',
       player2Score: Number(p2.score ?? 0),
       player2Result: String(p2.result ?? 'pending'),
       player2IsReady: Boolean(p2.is_ready),
