@@ -849,7 +849,7 @@ export const organizerService = {
   async bulkCheckIn(tournamentId: string, userIds: string[]): Promise<void> {
     const response = await apiPost(
       `${TOURNAMENT_ENDPOINTS.ADMIN_CHECK_IN_BULK}/${tournamentId}/check-in/bulk`,
-      { user_ids: userIds },
+      { userIds },
     );
     if (!response.success) {
       const msg = (response as { error?: { message?: string } }).error?.message ?? 'Bulk check-in failed';
