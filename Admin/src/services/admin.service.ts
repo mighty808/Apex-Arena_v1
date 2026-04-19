@@ -912,4 +912,24 @@ export const adminService = {
     );
     return response.success;
   },
+
+  async fetchMatchForAdmin(matchId: string): Promise<Record<string, unknown> | null> {
+    const response = await apiGet(
+      `${TOURNAMENT_ENDPOINTS.MATCHES}/${matchId}`,
+      adminHeaders(),
+    );
+    if (!response.success) return null;
+    const data = response.data as Record<string, unknown>;
+    return (data.match ?? data) as Record<string, unknown>;
+  },
+
+  async fetchDisputedMatches(limit = 20): Promise<Record<string, unknown>[]> {
+    const response = await apiGet(
+      `${TOURNAMENT_ENDPOINTS.MATCH_ADMIN_DISPUTES}?limit=${limit}`,
+      adminHeaders(),
+    );
+    if (!response.success) return [];
+    const data = response.data as Record<string, unknown>;
+    return (Array.isArray(data) ? data : (data.disputes ?? [])) as Record<string, unknown>[];
+  },
 };
