@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Clock, CheckCircle2, Swords, AlertCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, CheckCircle2, Swords, AlertCircle, CalendarClock } from 'lucide-react';
 import type { LeagueMatchweek, LeagueMatch } from '../../services/tournament.service';
 
 interface MatchweekFixturesProps {
@@ -22,7 +22,7 @@ function MatchStatusBadge({ status }: { status: string }) {
         <AlertCircle className="w-3 h-3" /> Disputed
       </span>
     );
-  if (status === 'ongoing' || status === 'ready_check')
+  if (status === 'ongoing' || status === 'ready_check') // ready_check treated as ongoing
     return (
       <span className="flex items-center gap-1 text-[11px] text-cyan-400 animate-pulse">
         <Swords className="w-3 h-3" /> Live
@@ -35,11 +35,22 @@ function MatchStatusBadge({ status }: { status: string }) {
   );
 }
 
+function formatDeadline(iso: string): string {
+  const date = new Date(iso);
+  const now = new Date();
+  const diffMs = date.getTime() - now.getTime();
+  const diffH = Math.floor(diffMs / (1000 * 60 * 60));
+  if (diffMs <= 0) return 'Deadline passed';
+  if (diffH < 24) return `${diffH}h left`;
+  const diffD = Math.floor(diffH / 24);
+  return `${diffD}d left · ${date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`;
+}
+
 function needsAction(match: LeagueMatch, userId?: string): boolean {
   if (!userId) return false;
   const involved = match.player1Id === userId || match.player2Id === userId;
   if (!involved) return false;
-  return match.status === 'ready_check' || match.status === 'ongoing';
+  return match.status === 'ongoing' || match.status === 'ready_check';
 }
 
 function MatchCard({
@@ -136,6 +147,13 @@ function MatchCard({
       <div className="mt-1.5 flex items-center justify-center">
         <MatchStatusBadge status={match.status} />
       </div>
+
+      {match.playDeadline && match.status !== 'completed' && match.status !== 'cancelled' && (
+        <div className="mt-1.5 flex items-center justify-center gap-1 text-[10px] text-slate-500">
+          <CalendarClock className="w-3 h-3" />
+          <span>{formatDeadline(match.playDeadline)}</span>
+        </div>
+      )}
     </div>
   );
 }
