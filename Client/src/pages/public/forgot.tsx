@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Mail, Trophy } from "lucide-react";
+import { Mail } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion, useReducedMotion } from "framer-motion";
 import { ApiRequestError, authService } from "../../services/auth.service";
@@ -42,19 +42,23 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center bg-transparent py-12 px-4 text-white">
+    <div className="relative min-h-screen bg-slate-950 flex items-center justify-center py-12 px-4 text-white overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none" style={{background:"radial-gradient(ellipse 60% 50% at -10% 0%, rgba(249,115,22,0.12), transparent)"}} />
+      <div className="absolute inset-0 pointer-events-none" style={{background:"radial-gradient(ellipse 50% 60% at 110% 100%, rgba(139,92,246,0.10), transparent)"}} />
+      <div className="absolute inset-0 pointer-events-none" style={{backgroundImage:"linear-gradient(rgba(148,163,184,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(148,163,184,0.03) 1px, transparent 1px)",backgroundSize:"48px 48px"}} />
+      <div className="relative w-full max-w-md">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-md rounded-3xl shadow-2xl p-8 border border-slate-800 bg-slate-900/60"
+        className="rounded-2xl border border-slate-800 bg-slate-900/75 backdrop-blur-sm shadow-2xl shadow-black/50 p-8"
         autoComplete="off"
       >
         {/* Logo */}
         <div className="flex items-center justify-center mb-8">
           <Link to="/" className="flex items-center space-x-2">
-            <div className="bg-linear-to-r from-blue-600 to-blue-400 w-10 h-10 rounded-lg flex items-center justify-center">
-              <Trophy className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 rounded-lg overflow-hidden bg-white p-0.5 shrink-0">
+              <img src="/apex-logo.png" alt="Apex Arenas" className="w-full h-full object-contain" />
             </div>
-            <span className="font-bold text-lg text-white">APEX ARENAS</span>
+            <span className="font-display font-bold text-lg text-white">APEX ARENAS</span>
           </Link>
         </div>
 
@@ -79,7 +83,7 @@ const ForgotPassword = () => {
             >
               <Link
                 to="/login"
-                className="w-full inline-flex items-center justify-center py-3 rounded-lg bg-linear-to-r from-blue-600 to-blue-400 text-white font-semibold text-lg shadow hover:shadow-lg hover:shadow-blue-500/30 transition-all"
+                className="w-full inline-flex items-center justify-center py-3 rounded-lg bg-gradient-to-r from-orange-400 to-amber-400 text-slate-950 font-semibold text-base shadow hover:shadow-lg hover:shadow-orange-500/25 transition-all"
               >
                 Back to Sign In
               </Link>
@@ -119,7 +123,7 @@ const ForgotPassword = () => {
             <motion.button
               type="submit"
               disabled={isLoading}
-              className="mt-2 w-full py-3 rounded-lg bg-linear-to-r from-blue-600 to-blue-400 text-white font-semibold text-lg shadow hover:shadow-lg hover:shadow-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="mt-2 w-full py-3 rounded-lg bg-gradient-to-r from-orange-400 to-amber-400 text-slate-950 font-semibold text-base shadow hover:shadow-lg hover:shadow-orange-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               whileHover={reduceMotion || isLoading ? undefined : { y: -1 }}
               whileTap={reduceMotion || isLoading ? undefined : { scale: 0.98 }}
             >
@@ -144,6 +148,7 @@ const ForgotPassword = () => {
           </div>
         )}
       </form>
+      </div>
     </div>
   );
 };
