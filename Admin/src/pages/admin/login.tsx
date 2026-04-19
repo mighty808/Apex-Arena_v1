@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Mail, Lock, Eye, EyeOff, Shield, KeyRound, Trophy, Copy, Check } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Shield, KeyRound, Copy, Check } from 'lucide-react';
 import QRCode from 'react-qr-code';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
@@ -141,8 +141,8 @@ const AdminLogin = () => {
         {/* Logo */}
         <div className="flex items-center justify-center mb-8">
           <Link to="/" className="flex items-center space-x-2">
-            <div className="bg-linear-to-r from-cyan-300 via-sky-400 to-indigo-400 w-10 h-10 rounded-lg flex items-center justify-center text-slate-950">
-              <Trophy className="w-6 h-6" />
+            <div className="w-10 h-10 rounded-lg overflow-hidden bg-white p-0.5 shrink-0">
+              <img src="/apex-logo.png" alt="Apex Arenas" className="w-full h-full object-contain" />
             </div>
             <span className="font-display font-bold text-lg text-white">
               APEX ARENAS
@@ -153,7 +153,6 @@ const AdminLogin = () => {
         <div className="bg-slate-900/60 rounded-3xl shadow-2xl p-8 border border-slate-800 font-body">
           {/* Header */}
           <div className="flex items-center justify-center gap-2 mb-2">
-            <Shield className="w-6 h-6 text-amber-400" />
             <h1 className="font-display text-2xl font-bold text-white">Admin Portal</h1>
           </div>
           <p className="text-center text-slate-400 text-sm mb-8">
