@@ -1,5 +1,6 @@
-import { apiGet, apiPost, apiDelete } from '../utils/api.utils';
-import { TOURNAMENT_ENDPOINTS } from '../config/api.config';
+import { apiGet, apiPost, apiPut, apiPatch, apiDelete } from '../utils/api.utils';
+import { TOURNAMENT_ENDPOINTS, FINANCE_ENDPOINTS } from '../config/api.config';
+import { generateUniqueIdempotencyKey } from '../utils/idempotency.utils';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -22,6 +23,17 @@ export interface PrizeDistribution {
   position: number;
   percentage: number;
   amount?: number;
+}
+
+export interface LeagueSettings {
+  pointsPerWin: number;
+  pointsPerDraw: number;
+  pointsPerLoss: number;
+  legs: number;
+  currentMatchweek: number;
+  totalMatchweeks: number;
+  fixturesGenerated: boolean;
+  fixturesGeneratedAt?: string;
 }
 
 export interface Tournament {
@@ -50,6 +62,78 @@ export interface Tournament {
   region?: string;
   visibility: string;
   isRegistered?: boolean;
+  leagueSettings?: LeagueSettings;
+}
+
+export interface LeagueTableRow {
+  userId?: string;
+  teamId?: string;
+  displayName: string;
+  inGameId?: string;
+  avatarUrl?: string;
+  position: number;
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDifference: number;
+  points: number;
+  form: string[];
+  positionChange: number;
+}
+
+export interface LeagueMatch {
+  matchId: string;
+  matchweek: number;
+  player1Id?: string;
+  player1Name: string;
+  player1Avatar?: string;
+  player2Id?: string;
+  player2Name: string;
+  player2Avatar?: string;
+  status: string;
+  score1?: number;
+  score2?: number;
+  winnerId?: string;
+  scheduledAt?: string;
+}
+
+export interface LeagueMatchweek {
+  week: number;
+  matches: LeagueMatch[];
+}
+
+export interface LeagueOverview {
+  tournamentId: string;
+  currentMatchweek: number;
+  totalMatchweeks: number;
+  fixturesGenerated: boolean;
+  table: LeagueTableRow[];
+  currentWeekMatches: LeagueMatch[];
+}
+
+export interface FullMatch {
+  matchId: string;
+  matchweek?: number;
+  status: string;
+  player1Id: string;
+  player1Name: string;
+  player1Score: number;
+  player1Result: string;
+  player1IsReady: boolean;
+  player2Id: string;
+  player2Name: string;
+  player2Score: number;
+  player2Result: string;
+  player2IsReady: boolean;
+  winnerId?: string;
+  resultReportedBy?: string;
+  resultConfirmationDeadline?: string;
+  isDisputed: boolean;
+  scheduledAt?: string;
+  screenshotUrl?: string;
 }
 
 export interface TournamentFilters {
@@ -101,20 +185,6 @@ export interface MyTournamentRegistration {
   registeredAt?: string;
 }
 
-export interface MatchResultProofPayload {
-  screenshots?: string[];
-  videoUrl?: string;
-}
-
-export interface SubmitMatchResultPayload {
-  winnerId: string;
-  proof?: MatchResultProofPayload;
-}
-
-export interface DisputeMatchResultPayload {
-  reason: string;
-  evidence?: string[];
-}
 
 function extractId(value: unknown): string {
   if (typeof value === 'string' || typeof value === 'number') {
@@ -289,7 +359,48 @@ export function mapTournament(
     rules: (raw.rules as Record<string, unknown>)?.description as string | undefined,
     region: raw.region as string | undefined,
     visibility: String(raw.visibility ?? 'public'),
+    leagueSettings: raw.league_settings
+      ? (() => {
+          const ls = raw.league_settings as Record<string, unknown>;
+          return {
+            pointsPerWin: Number(ls.points_per_win ?? 3),
+            pointsPerDraw: Number(ls.points_per_draw ?? 1),
+            pointsPerLoss: Number(ls.points_per_loss ?? 0),
+            legs: Number(ls.legs ?? 1),
+            currentMatchweek: Number(ls.current_matchweek ?? 0),
+            totalMatchweeks: Number(ls.total_matchweeks ?? 0),
+            fixturesGenerated: Boolean(ls.fixtures_generated ?? false),
+            fixturesGeneratedAt: ls.fixtures_generated_at as string | undefined,
+          };
+        })()
+      : undefined,
   };
+}
+
+function mapLeagueMatches(list: Record<string, unknown>[]): LeagueMatch[] {
+  return list.map((m) => {
+    const parts = (Array.isArray(m.participants) ? m.participants : []) as Record<string, unknown>[];
+    const p1 = (parts[0] ?? {}) as Record<string, unknown>;
+    const p2 = (parts[1] ?? {}) as Record<string, unknown>;
+    const scheduledTime =
+      (m.schedule as Record<string, unknown> | undefined)?.scheduled_time ??
+      m.scheduled_at ?? m.scheduledAt;
+    return {
+      matchId: String(m._id ?? m.id ?? ''),
+      matchweek: Number(m.matchweek ?? 0),
+      player1Id: String(p1.user_id ?? p1.team_id ?? p1._id ?? ''),
+      player1Name: String(p1.in_game_id ?? p1.display_name ?? p1.username ?? ''),
+      player1Avatar: p1.avatar_url as string | undefined,
+      player2Id: String(p2.user_id ?? p2.team_id ?? p2._id ?? ''),
+      player2Name: String(p2.in_game_id ?? p2.display_name ?? p2.username ?? ''),
+      player2Avatar: p2.avatar_url as string | undefined,
+      status: String(m.status ?? 'scheduled'),
+      score1: p1.score !== undefined ? Number(p1.score) : undefined,
+      score2: p2.score !== undefined ? Number(p2.score) : undefined,
+      winnerId: m.winner_id as string | undefined,
+      scheduledAt: scheduledTime as string | undefined,
+    };
+  });
 }
 
 // ─── Service ────────────────────────────────────────────────────────────────
@@ -474,58 +585,488 @@ export const tournamentService = {
       .filter((item) => item.tournamentId.length > 0);
   },
 
+  // ─── Check-in ──────────────────────────────────────────────────────────────
+
+  async checkIn(tournamentId: string): Promise<void> {
+    const response = await apiPost(
+      `${TOURNAMENT_ENDPOINTS.CHECK_IN}/${tournamentId}/check-in`,
+      {},
+    );
+    if (!response.success) {
+      const msg = (response as { error?: { message?: string } }).error?.message ?? 'Check-in failed';
+      throw new Error(msg);
+    }
+  },
+
+  async getCheckInStatus(tournamentId: string): Promise<Record<string, unknown>> {
+    const response = await apiGet(
+      `${TOURNAMENT_ENDPOINTS.CHECK_IN_STATUS}/${tournamentId}/check-in/status`,
+    );
+    if (!response.success) {
+      const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to fetch check-in status';
+      throw new Error(msg);
+    }
+    return response.data as Record<string, unknown>;
+  },
+
+  // ─── Bracket & Results ─────────────────────────────────────────────────────
+
+  async getBracket(tournamentId: string): Promise<Record<string, unknown>> {
+    const response = await apiGet(`${TOURNAMENT_ENDPOINTS.BRACKET}/${tournamentId}`);
+    if (!response.success) {
+      const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to fetch bracket';
+      throw new Error(msg);
+    }
+    return response.data as Record<string, unknown>;
+  },
+
+  async getCurrentRound(tournamentId: string): Promise<Record<string, unknown>> {
+    const response = await apiGet(
+      `${TOURNAMENT_ENDPOINTS.BRACKET_CURRENT_ROUND}/${tournamentId}/current-round`,
+    );
+    if (!response.success) {
+      const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to fetch current round';
+      throw new Error(msg);
+    }
+    return response.data as Record<string, unknown>;
+  },
+
+  async getTournamentResults(tournamentId: string): Promise<Record<string, unknown>> {
+    const response = await apiGet(`${TOURNAMENT_ENDPOINTS.RESULTS}/${tournamentId}`);
+    if (!response.success) {
+      const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to fetch results';
+      throw new Error(msg);
+    }
+    return response.data as Record<string, unknown>;
+  },
+
+  // ─── Registration ──────────────────────────────────────────────────────────
+
+  async updateInGameId(registrationId: string, inGameId: string): Promise<void> {
+    const response = await apiPatch(
+      `${TOURNAMENT_ENDPOINTS.UPDATE_IN_GAME_ID}/${registrationId}/in-game-id`,
+      { in_game_id: inGameId },
+    );
+    if (!response.success) {
+      const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to update in-game ID';
+      throw new Error(msg);
+    }
+  },
+
+  // ─── Match Detail & Sessions ───────────────────────────────────────────────
+
+  async getMatchDetail(matchId: string): Promise<Record<string, unknown>> {
+    const response = await apiGet(`${TOURNAMENT_ENDPOINTS.MATCHES}/${matchId}`);
+    if (!response.success) {
+      const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to fetch match';
+      throw new Error(msg);
+    }
+    return response.data as Record<string, unknown>;
+  },
+
+  async getMatchSession(matchId: string): Promise<Record<string, unknown>> {
+    const response = await apiGet(`${TOURNAMENT_ENDPOINTS.MATCH_SESSION}/${matchId}/session`);
+    if (!response.success) {
+      const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to fetch match session';
+      throw new Error(msg);
+    }
+    return response.data as Record<string, unknown>;
+  },
+
+  async getMatchSessionMessages(matchId: string): Promise<Record<string, unknown>[]> {
+    const response = await apiGet(
+      `${TOURNAMENT_ENDPOINTS.MATCH_SESSION_MESSAGES}/${matchId}/session/messages`,
+    );
+    if (!response.success) return [];
+    const data = response.data as Record<string, unknown>;
+    return (Array.isArray(data) ? data : (data.messages ?? data.data ?? [])) as Record<string, unknown>[];
+  },
+
+  async sendMatchSessionMessage(matchId: string, content: string): Promise<void> {
+    const response = await apiPost(
+      `${TOURNAMENT_ENDPOINTS.MATCH_SESSION_MESSAGES}/${matchId}/session/messages`,
+      { content },
+    );
+    if (!response.success) {
+      const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to send message';
+      throw new Error(msg);
+    }
+  },
+
+  async submitMatchEvidence(matchId: string, evidence: string[]): Promise<void> {
+    const response = await apiPost(
+      `${TOURNAMENT_ENDPOINTS.MATCH_SESSION_EVIDENCE}/${matchId}/session/evidence`,
+      { evidence },
+    );
+    if (!response.success) {
+      const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to submit evidence';
+      throw new Error(msg);
+    }
+  },
+
+  // ─── Game Profiles ─────────────────────────────────────────────────────────
+
+  async getGameProfiles(): Promise<Record<string, unknown>[]> {
+    const response = await apiGet(TOURNAMENT_ENDPOINTS.GAME_PROFILES);
+    if (!response.success) return [];
+    const data = response.data as Record<string, unknown>;
+    return (Array.isArray(data) ? data : (data.profiles ?? data.game_profiles ?? data.data ?? [])) as Record<string, unknown>[];
+  },
+
+  async getGameProfile(gameId: string): Promise<Record<string, unknown> | null> {
+    const response = await apiGet(`${TOURNAMENT_ENDPOINTS.GAME_PROFILE_DETAIL}/${gameId}`);
+    if (!response.success) return null;
+    const data = response.data as Record<string, unknown>;
+    return (data.profile ?? data) as Record<string, unknown>;
+  },
+
+  async upsertGameProfile(
+    gameId: string,
+    payload: { inGameId: string; skillLevel?: string },
+  ): Promise<void> {
+    const response = await apiPut(
+      `${TOURNAMENT_ENDPOINTS.GAME_PROFILE_DETAIL}/${gameId}`,
+      { in_game_id: payload.inGameId, skill_level: payload.skillLevel },
+    );
+    if (!response.success) {
+      const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to save game profile';
+      throw new Error(msg);
+    }
+  },
+
+  async deleteGameProfile(gameId: string): Promise<void> {
+    const response = await apiDelete(`${TOURNAMENT_ENDPOINTS.GAME_PROFILE_DETAIL}/${gameId}`);
+    if (!response.success) {
+      const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to delete game profile';
+      throw new Error(msg);
+    }
+  },
+
+  // ─── Game Requests ─────────────────────────────────────────────────────────
+
+  async getGameRequests(filters: { status?: string; page?: number; limit?: number } = {}): Promise<Record<string, unknown>[]> {
+    const query = new URLSearchParams();
+    if (filters.status) query.set('status', filters.status);
+    if (filters.page) query.set('page', String(filters.page));
+    if (filters.limit) query.set('limit', String(filters.limit));
+    const url = query.toString()
+      ? `${TOURNAMENT_ENDPOINTS.GAME_REQUESTS}?${query}`
+      : TOURNAMENT_ENDPOINTS.GAME_REQUESTS;
+    const response = await apiGet(url);
+    if (!response.success) return [];
+    const data = response.data as Record<string, unknown>;
+    return (Array.isArray(data) ? data : (data.requests ?? data.data ?? [])) as Record<string, unknown>[];
+  },
+
+  async submitGameRequest(payload: {
+    gameName: string;
+    genre?: string;
+    platform?: string[];
+    description?: string;
+  }): Promise<void> {
+    const response = await apiPost(TOURNAMENT_ENDPOINTS.GAME_REQUESTS, {
+      game_name: payload.gameName,
+      genre: payload.genre,
+      platform: payload.platform,
+      description: payload.description,
+    });
+    if (!response.success) {
+      const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to submit game request';
+      throw new Error(msg);
+    }
+  },
+
+  async upvoteGameRequest(requestId: string): Promise<void> {
+    const response = await apiPost(
+      `${TOURNAMENT_ENDPOINTS.GAME_REQUEST_UPVOTE}/${requestId}/upvote`,
+      {},
+    );
+    if (!response.success) {
+      const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to upvote';
+      throw new Error(msg);
+    }
+  },
+
+  // ─── Finance (Player Wallet) ───────────────────────────────────────────────
+
+  async getWalletBalance(): Promise<{
+    availableBalance: number;
+    pendingBalance: number;
+    totalBalance: number;
+    currency: string;
+  }> {
+    const response = await apiGet(FINANCE_ENDPOINTS.WALLET);
+    if (!response.success) {
+      const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to fetch wallet';
+      throw new Error(msg);
+    }
+    const data = response.data as Record<string, unknown>;
+    return {
+      availableBalance: Number(data.available_balance ?? 0),
+      pendingBalance: Number(data.pending_balance ?? 0),
+      totalBalance: Number(data.total_balance ?? 0),
+      currency: String(data.currency ?? 'GHS'),
+    };
+  },
+
+  async initiateTopUp(amountGhs: number): Promise<{ authorizationUrl?: string; reference?: string }> {
+    const callbackUrl = `${window.location.origin}/payment/callback`;
+    const response = await apiPost(FINANCE_ENDPOINTS.DEPOSIT, {
+      amount_ghs: amountGhs,
+      callback_url: callbackUrl,
+      idempotency_key: generateUniqueIdempotencyKey(),
+    });
+    if (!response.success) {
+      const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to initiate top-up';
+      throw new Error(msg);
+    }
+    const data = response.data as Record<string, unknown>;
+    return {
+      authorizationUrl: data.authorization_url as string | undefined,
+      reference: data.reference as string | undefined,
+    };
+  },
+
+  async getMatchSessionHistory(matchId: string): Promise<Record<string, unknown>[]> {
+    const response = await apiGet(
+      `${TOURNAMENT_ENDPOINTS.MATCH_SESSION_HISTORY}/${matchId}/session/history`,
+    );
+    if (!response.success) return [];
+    const data = response.data as Record<string, unknown>;
+    return (Array.isArray(data) ? data : (data.history ?? data.events ?? data.data ?? [])) as Record<string, unknown>[];
+  },
+
+  async archiveMatchSession(matchId: string): Promise<void> {
+    const response = await apiPost(
+      `${TOURNAMENT_ENDPOINTS.MATCH_SESSION_ARCHIVE}/${matchId}/session/archive`,
+      {},
+    );
+    if (!response.success) {
+      const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to archive session';
+      throw new Error(msg);
+    }
+  },
+
+  async getGameRequestDetail(requestId: string): Promise<Record<string, unknown> | null> {
+    const response = await apiGet(`${TOURNAMENT_ENDPOINTS.GAME_REQUEST_DETAIL}/${requestId}`);
+    if (!response.success) return null;
+    const data = response.data as Record<string, unknown>;
+    return (data.request ?? data) as Record<string, unknown>;
+  },
+
+  async getTransactionHistory(params: { page?: number; limit?: number; type?: string } = {}): Promise<Record<string, unknown>> {
+    const query = new URLSearchParams();
+    if (params.page) query.set('page', String(params.page));
+    if (params.limit) query.set('limit', String(params.limit));
+    if (params.type) query.set('type', params.type);
+    const url = query.toString()
+      ? `${FINANCE_ENDPOINTS.TRANSACTIONS}?${query}`
+      : FINANCE_ENDPOINTS.TRANSACTIONS;
+    const response = await apiGet(url, { skipCache: true });
+    if (!response.success) {
+      const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to fetch transactions';
+      throw new Error(msg);
+    }
+    return response.data as Record<string, unknown>;
+  },
+
+  // ─── League ────────────────────────────────────────────────────────────────
+
+  async getLeagueTable(tournamentId: string): Promise<LeagueTableRow[]> {
+    const response = await apiGet(`${TOURNAMENT_ENDPOINTS.LEAGUE}/${tournamentId}/table`, { skipCache: true });
+    if (!response.success) return [];
+    const data = response.data as Record<string, unknown>;
+    const list = (Array.isArray(data) ? data : (data.table ?? [])) as Record<string, unknown>[];
+    return list.map((r) => ({
+      userId: (r.userId ?? r.user_id) as string | undefined,
+      teamId: (r.teamId ?? r.team_id) as string | undefined,
+      displayName: String(r.displayName ?? r.display_name ?? ''),
+      inGameId: (r.inGameId ?? r.in_game_id) as string | undefined,
+      avatarUrl: (r.avatarUrl ?? r.avatar_url) as string | undefined,
+      position: Number(r.position ?? 0),
+      played: Number(r.played ?? 0),
+      won: Number(r.won ?? 0),
+      drawn: Number(r.drawn ?? 0),
+      lost: Number(r.lost ?? 0),
+      goalsFor: Number(r.goalsFor ?? r.goals_for ?? 0),
+      goalsAgainst: Number(r.goalsAgainst ?? r.goals_against ?? 0),
+      goalDifference: Number(r.goalDifference ?? r.goal_difference ?? 0),
+      points: Number(r.points ?? 0),
+      form: Array.isArray(r.form) ? (r.form as string[]) : [],
+      positionChange: Number(r.positionChange ?? r.position_change ?? 0),
+    }));
+  },
+
+  async getLeagueMatchweeks(tournamentId: string): Promise<LeagueMatchweek[]> {
+    const response = await apiGet(`${TOURNAMENT_ENDPOINTS.LEAGUE}/${tournamentId}/matchweeks`, { skipCache: true });
+    if (!response.success) return [];
+    const data = response.data as Record<string, unknown>;
+    const list = (Array.isArray(data) ? data : (data.matchweeks ?? [])) as Record<string, unknown>[];
+    return list.map((mw) => ({
+      week: Number(mw.matchweek ?? mw.week ?? 0),
+      matches: mapLeagueMatches((mw.matches ?? []) as Record<string, unknown>[]),
+    }));
+  },
+
+  async getLeagueMatchweek(tournamentId: string, week: number): Promise<LeagueMatchweek | null> {
+    const response = await apiGet(`${TOURNAMENT_ENDPOINTS.LEAGUE}/${tournamentId}/matchweeks/${week}`, { skipCache: true });
+    if (!response.success) return null;
+    const data = response.data as Record<string, unknown>;
+    return {
+      week: Number(data.week ?? week),
+      matches: mapLeagueMatches((data.matches ?? []) as Record<string, unknown>[]),
+    };
+  },
+
+  async getLeagueOverview(tournamentId: string): Promise<LeagueOverview | null> {
+    const response = await apiGet(`${TOURNAMENT_ENDPOINTS.LEAGUE}/${tournamentId}/overview`, { skipCache: true });
+    if (!response.success) return null;
+    const data = response.data as Record<string, unknown>;
+    const tableRaw = (Array.isArray(data.table) ? data.table : []) as Record<string, unknown>[];
+    return {
+      tournamentId: String(data.tournament_id ?? tournamentId),
+      currentMatchweek: Number(data.current_matchweek ?? 0),
+      totalMatchweeks: Number(data.total_matchweeks ?? 0),
+      fixturesGenerated: Boolean(data.fixtures_generated ?? false),
+      table: tableRaw.map((r) => ({
+        userId: (r.userId ?? r.user_id) as string | undefined,
+        teamId: (r.teamId ?? r.team_id) as string | undefined,
+        displayName: String(r.displayName ?? r.display_name ?? ''),
+        inGameId: (r.inGameId ?? r.in_game_id) as string | undefined,
+        avatarUrl: (r.avatarUrl ?? r.avatar_url) as string | undefined,
+        position: Number(r.position ?? 0),
+        played: Number(r.played ?? 0),
+        won: Number(r.won ?? 0),
+        drawn: Number(r.drawn ?? 0),
+        lost: Number(r.lost ?? 0),
+        goalsFor: Number(r.goalsFor ?? r.goals_for ?? 0),
+        goalsAgainst: Number(r.goalsAgainst ?? r.goals_against ?? 0),
+        goalDifference: Number(r.goalDifference ?? r.goal_difference ?? 0),
+        points: Number(r.points ?? 0),
+        form: Array.isArray(r.form) ? (r.form as string[]) : [],
+        positionChange: Number(r.positionChange ?? r.position_change ?? 0),
+      })),
+      currentWeekMatches: mapLeagueMatches((data.current_week_matches ?? data.currentWeekMatches ?? []) as Record<string, unknown>[]),
+    };
+  },
+
+  async generateLeagueFixtures(tournamentId: string): Promise<void> {
+    const response = await apiPost(`${TOURNAMENT_ENDPOINTS.LEAGUE}/${tournamentId}/generate`, {});
+    if (!response.success) {
+      const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to generate fixtures';
+      throw new Error(msg);
+    }
+  },
+
+  async advanceLeagueMatchweek(tournamentId: string): Promise<number> {
+    const response = await apiPost(`${TOURNAMENT_ENDPOINTS.LEAGUE}/${tournamentId}/advance`, {});
+    if (!response.success) {
+      const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to advance matchweek';
+      throw new Error(msg);
+    }
+    const data = response.data as Record<string, unknown>;
+    return Number(data.currentMatchweek ?? data.current_matchweek ?? 0);
+  },
+
+  async recalculateLeagueStandings(tournamentId: string): Promise<void> {
+    const response = await apiPost(`${TOURNAMENT_ENDPOINTS.LEAGUE}/${tournamentId}/standings/recalculate`, {});
+    if (!response.success) {
+      const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to recalculate standings';
+      throw new Error(msg);
+    }
+  },
+
+  // ─── Match Actions ─────────────────────────────────────────────────────────
+
+  async getMatch(matchId: string): Promise<FullMatch | null> {
+    const response = await apiGet(`${TOURNAMENT_ENDPOINTS.MATCHES}/${matchId}`, { skipCache: true });
+    if (!response.success) return null;
+    const m = (response.data as Record<string, unknown>);
+    const parts = (Array.isArray(m.participants) ? m.participants : []) as Record<string, unknown>[];
+    const p1 = (parts[0] ?? {}) as Record<string, unknown>;
+    const p2 = (parts[1] ?? {}) as Record<string, unknown>;
+    return {
+      matchId: String(m._id ?? m.id ?? ''),
+      matchweek: m.matchweek !== undefined ? Number(m.matchweek) : undefined,
+      status: String(m.status ?? 'pending'),
+      player1Id: String(p1.user_id ?? p1.team_id ?? ''),
+      player1Name: String(p1.in_game_id ?? p1.display_name ?? p1.username ?? '') || 'TBD',
+      player1Score: Number(p1.score ?? 0),
+      player1Result: String(p1.result ?? 'pending'),
+      player1IsReady: Boolean(p1.is_ready),
+      player2Id: String(p2.user_id ?? p2.team_id ?? ''),
+      player2Name: String(p2.in_game_id ?? p2.display_name ?? p2.username ?? '') || 'TBD',
+      player2Score: Number(p2.score ?? 0),
+      player2Result: String(p2.result ?? 'pending'),
+      player2IsReady: Boolean(p2.is_ready),
+      winnerId: m.winner_id as string | undefined,
+      resultReportedBy: m.result_reported_by as string | undefined,
+      resultConfirmationDeadline: m.result_confirmation_deadline as string | undefined,
+      isDisputed: Boolean((m.dispute as Record<string, unknown> | undefined)?.is_disputed ?? false),
+      scheduledAt: (m.schedule as Record<string, unknown> | undefined)?.scheduled_time as string | undefined,
+      screenshotUrl: ((m.proof as Record<string, unknown> | undefined)?.screenshots as string[] | undefined)?.[0],
+    };
+  },
+
+  async markReady(matchId: string): Promise<void> {
+    const response = await apiPost(`${TOURNAMENT_ENDPOINTS.MATCH_READY}/${matchId}/ready`, {});
+    if (!response.success) {
+      const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to mark ready';
+      throw new Error(msg);
+    }
+  },
+
   async submitMatchResult(
     matchId: string,
-    payload: SubmitMatchResultPayload,
+    winnerId: string | null, // null = draw
+    proof?: { screenshots?: string[]; videoUrl?: string },
+    scores?: { player1: number; player2: number },
   ): Promise<void> {
-    const body: Record<string, unknown> = {
-      winnerId: payload.winnerId,
-    };
-
-    if (payload.proof) {
+    const body: Record<string, unknown> = winnerId ? { winnerId } : { isDraw: true };
+    if (proof) {
       body.proof = {
-        screenshots: payload.proof.screenshots ?? [],
-        video_url: payload.proof.videoUrl,
+        ...(proof.screenshots?.length ? { screenshots: proof.screenshots } : {}),
+        ...(proof.videoUrl ? { video_url: proof.videoUrl } : {}),
       };
     }
-
-    const response = await apiPost(
-      `${TOURNAMENT_ENDPOINTS.MATCH_RESULT}/${matchId}/result`,
-      body,
-    );
-
+    if (scores) body.scores = scores;
+    const response = await apiPost(`${TOURNAMENT_ENDPOINTS.MATCH_RESULT}/${matchId}/result`, body);
     if (!response.success) {
-      const msg = response.error?.message ?? 'Failed to submit match result';
+      const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to submit result';
       throw new Error(msg);
     }
   },
 
   async confirmMatchResult(matchId: string): Promise<void> {
-    const response = await apiPost(
-      `${TOURNAMENT_ENDPOINTS.MATCH_CONFIRM}/${matchId}/confirm`,
-      {},
-    );
-
+    const response = await apiPost(`${TOURNAMENT_ENDPOINTS.MATCH_CONFIRM}/${matchId}/confirm`, {});
     if (!response.success) {
-      const msg = response.error?.message ?? 'Failed to confirm match result';
+      const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to confirm result';
       throw new Error(msg);
     }
   },
 
-  async disputeMatchResult(
-    matchId: string,
-    payload: DisputeMatchResultPayload,
-  ): Promise<void> {
-    const response = await apiPost(
-      `${TOURNAMENT_ENDPOINTS.MATCH_DISPUTE}/${matchId}/dispute`,
-      {
-        reason: payload.reason,
-        evidence: payload.evidence ?? [],
-      },
-    );
-
+  async resolveMatchDispute(matchId: string, winnerId: string, resolution: string): Promise<void> {
+    const response = await apiPost(`${TOURNAMENT_ENDPOINTS.MATCH_DISPUTE_RESOLVE}/${matchId}/dispute/resolve`, { winnerId, resolution });
     if (!response.success) {
-      const msg = response.error?.message ?? 'Failed to dispute match result';
+      const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to resolve dispute';
+      throw new Error(msg);
+    }
+  },
+
+  async disputeMatchResult(matchId: string, reason: string, evidence?: string[]): Promise<void> {
+    const body: Record<string, unknown> = { reason };
+    if (evidence?.length) body.evidence = evidence;
+    const response = await apiPost(`${TOURNAMENT_ENDPOINTS.MATCH_DISPUTE}/${matchId}/dispute`, body);
+    if (!response.success) {
+      const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to dispute result';
+      throw new Error(msg);
+    }
+  },
+
+  async autoConfirmMatch(matchId: string): Promise<void> {
+    const response = await apiPost(`${TOURNAMENT_ENDPOINTS.MATCHES}/${matchId}/auto-confirm`, {});
+    if (!response.success) {
+      const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to auto-confirm';
       throw new Error(msg);
     }
   },
