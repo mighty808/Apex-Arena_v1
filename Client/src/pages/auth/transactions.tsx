@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AlertCircle, Clock3, Loader2, RefreshCcw, Wallet } from "lucide-react";
+import { AlertCircle, Clock3, Loader2, RefreshCcw, Wallet, ArrowUpRight } from "lucide-react";
 import {
   organizerService,
   type WalletBalance,
+  type PayoutRequest,
 } from "../../services/organizer.service";
 import { apiGet } from "../../utils/api.utils";
 import { FINANCE_ENDPOINTS } from "../../config/api.config";
@@ -73,6 +74,28 @@ const TransactionsPage = () => {
   const [isDepositing, setIsDepositing] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [infoMsg, setInfoMsg] = useState<string | null>(null);
+  const [payoutRequests, setPayoutRequests] = useState<PayoutRequest[]>([]);
+  const [isLoadingPayouts, setIsLoadingPayouts] = useState(false);
+  const [showPayoutForm, setShowPayoutForm] = useState(false);
+  const [isSubmittingPayout, setIsSubmittingPayout] = useState(false);
+  const [payoutAmount, setPayoutAmount] = useState("");
+  const [payoutType, setPayoutType] = useState<"wallet_withdrawal" | "tournament_winnings">("wallet_withdrawal");
+  const [payoutMomo, setPayoutMomo] = useState("");
+  const [payoutNetwork, setPayoutNetwork] = useState<"MTN" | "Vodafone" | "AirtelTigo">("MTN");
+  const [payoutAccountName, setPayoutAccountName] = useState("");
+  const [cancellingPayoutId, setCancellingPayoutId] = useState<string | null>(null);
+
+  const fetchPayouts = useCallback(async () => {
+    setIsLoadingPayouts(true);
+    try {
+      const requests = await organizerService.getMyPayoutRequests();
+      setPayoutRequests(requests);
+    } catch {
+      // silently fail
+    } finally {
+      setIsLoadingPayouts(false);
+    }
+  }, []);
 
   const fetchWalletAndTransactions = useCallback(async () => {
     setIsLoading(true);
@@ -108,7 +131,8 @@ const TransactionsPage = () => {
 
   useEffect(() => {
     void fetchWalletAndTransactions();
-  }, [fetchWalletAndTransactions]);
+    void fetchPayouts();
+  }, [fetchWalletAndTransactions, fetchPayouts]);
 
   const sortedTransactions = useMemo(() => {
     return [...transactions].sort((a, b) => {
@@ -117,6 +141,58 @@ const TransactionsPage = () => {
       return bTime - aTime;
     });
   }, [transactions]);
+
+  const handleWithdraw = async () => {
+    const amount = Number(payoutAmount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setErrorMsg("Enter a valid withdrawal amount greater than 0.");
+      return;
+    }
+    if (!payoutMomo.trim()) {
+      setErrorMsg("Mobile Money number is required.");
+      return;
+    }
+    if (!payoutAccountName.trim()) {
+      setErrorMsg("Account name is required.");
+      return;
+    }
+
+    setIsSubmittingPayout(true);
+    setErrorMsg(null);
+    try {
+      await organizerService.requestPayout({
+        amountGhs: amount,
+        requestType: payoutType,
+        momoNumber: payoutMomo.trim(),
+        network: payoutNetwork,
+        accountName: payoutAccountName.trim(),
+      });
+      setShowPayoutForm(false);
+      setPayoutAmount("");
+      setPayoutMomo("");
+      setPayoutAccountName("");
+      setInfoMsg("Withdrawal request submitted. It will be reviewed and processed shortly.");
+      await fetchPayouts();
+    } catch (error) {
+      setErrorMsg(error instanceof Error ? error.message : "Failed to submit withdrawal request.");
+    } finally {
+      setIsSubmittingPayout(false);
+    }
+  };
+
+  const handleCancelPayout = async (id: string) => {
+    setCancellingPayoutId(id);
+    setErrorMsg(null);
+    try {
+      await organizerService.cancelPayoutRequest(id);
+      setPayoutRequests((prev) => prev.filter((r) => r.id !== id));
+      setInfoMsg("Withdrawal request cancelled.");
+    } catch (error) {
+      setErrorMsg(error instanceof Error ? error.message : "Failed to cancel withdrawal request.");
+    } finally {
+      setCancellingPayoutId(null);
+    }
+  };
 
   const handleDeposit = async () => {
     const amount = Number(walletAmountInput);
@@ -341,6 +417,187 @@ const TransactionsPage = () => {
           )}
         </section>
       </div>
+
+      {/* Withdrawals */}
+      <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 space-y-4">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+            <ArrowUpRight className="w-4 h-4 text-amber-400" />
+            Withdrawals
+          </h2>
+          {!showPayoutForm && (
+            <button
+              type="button"
+              onClick={() => setShowPayoutForm(true)}
+              className="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-semibold text-slate-950 hover:bg-amber-400 transition-colors"
+            >
+              <ArrowUpRight className="w-3.5 h-3.5" />
+              Withdraw Funds
+            </button>
+          )}
+        </div>
+
+        {showPayoutForm && (
+          <div className="rounded-lg border border-slate-700 bg-slate-900/80 p-4 space-y-3">
+            <p className="text-xs text-slate-400">
+              Funds will be sent via Mobile Money to your registered number.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs text-slate-400 mb-1">Amount (GHS)</label>
+                <input
+                  type="number"
+                  min="1"
+                  step="0.01"
+                  value={payoutAmount}
+                  onChange={(e) => setPayoutAmount(e.target.value)}
+                  placeholder="e.g. 50"
+                  className="w-full rounded-lg border border-slate-700 bg-slate-800/70 px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs text-slate-400 mb-1">Withdrawal Type</label>
+                <select
+                  value={payoutType}
+                  onChange={(e) => setPayoutType(e.target.value as typeof payoutType)}
+                  className="w-full rounded-lg border border-slate-700 bg-slate-800/70 px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none"
+                >
+                  <option value="wallet_withdrawal">Wallet Withdrawal</option>
+                  <option value="tournament_winnings">Tournament Winnings</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs text-slate-400 mb-1">MoMo Number</label>
+                <input
+                  type="text"
+                  value={payoutMomo}
+                  onChange={(e) => setPayoutMomo(e.target.value)}
+                  placeholder="e.g. 0241234567"
+                  className="w-full rounded-lg border border-slate-700 bg-slate-800/70 px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs text-slate-400 mb-1">Network</label>
+                <select
+                  value={payoutNetwork}
+                  onChange={(e) => setPayoutNetwork(e.target.value as typeof payoutNetwork)}
+                  className="w-full rounded-lg border border-slate-700 bg-slate-800/70 px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none"
+                >
+                  <option value="MTN">MTN</option>
+                  <option value="Vodafone">Vodafone</option>
+                  <option value="AirtelTigo">AirtelTigo</option>
+                </select>
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-xs text-slate-400 mb-1">Account Name</label>
+                <input
+                  type="text"
+                  value={payoutAccountName}
+                  onChange={(e) => setPayoutAccountName(e.target.value)}
+                  placeholder="Name registered on the MoMo account"
+                  className="w-full rounded-lg border border-slate-700 bg-slate-800/70 px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 pt-1">
+              <button
+                type="button"
+                onClick={() => void handleWithdraw()}
+                disabled={isSubmittingPayout}
+                className="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-amber-400 disabled:opacity-60 transition-colors"
+              >
+                {isSubmittingPayout ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <ArrowUpRight className="w-4 h-4" />
+                )}
+                {isSubmittingPayout ? "Submitting..." : "Submit Request"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowPayoutForm(false)}
+                className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:bg-white/5 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {isLoadingPayouts ? (
+          <div className="flex items-center justify-center py-6">
+            <Loader2 className="w-5 h-5 text-slate-400 animate-spin" />
+          </div>
+        ) : payoutRequests.length === 0 ? (
+          <p className="text-sm text-slate-500 py-2">No withdrawal requests yet.</p>
+        ) : (
+          <div className="space-y-2">
+            {payoutRequests.map((req) => {
+              const statusColors: Record<string, string> = {
+                pending: "bg-amber-500/15 text-amber-300 border-amber-500/30",
+                approved: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
+                processing: "bg-cyan-500/15 text-cyan-300 border-cyan-500/30",
+                paid: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
+                rejected: "bg-red-500/15 text-red-300 border-red-500/30",
+                cancelled: "bg-slate-600/20 text-slate-300 border-slate-600/30",
+              };
+              const statusClass = statusColors[req.status] ?? "bg-slate-700/30 text-slate-300 border-slate-700";
+
+              return (
+                <div
+                  key={req.id}
+                  className="rounded-lg border border-slate-800 bg-slate-800/40 px-3 py-2.5"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-white capitalize">
+                        {req.requestType.replace(/_/g, " ")}
+                      </p>
+                      <p className="text-xs text-slate-400">
+                        {req.network} · {req.momoNumber} · {req.accountName}
+                      </p>
+                      {req.rejectionReason && (
+                        <p className="text-xs text-red-400 mt-1">
+                          Rejected: {req.rejectionReason}
+                        </p>
+                      )}
+                    </div>
+                    <div className="text-right shrink-0 space-y-1">
+                      <p className="text-sm font-semibold text-amber-300">
+                        GHS {req.amountGhs.toFixed(2)}
+                      </p>
+                      <span className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] capitalize ${statusClass}`}>
+                        {req.status}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between mt-2">
+                    <p className="text-[11px] text-slate-500">
+                      {req.createdAt ? new Date(req.createdAt).toLocaleString() : "-"}
+                    </p>
+                    {req.status === "pending" && (
+                      <button
+                        type="button"
+                        onClick={() => void handleCancelPayout(req.id)}
+                        disabled={cancellingPayoutId === req.id}
+                        className="text-[11px] text-red-400 hover:text-red-300 disabled:opacity-50 transition-colors"
+                      >
+                        {cancellingPayoutId === req.id ? "Cancelling..." : "Cancel"}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
     </div>
   );
 };

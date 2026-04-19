@@ -1,4 +1,4 @@
-import { apiPost, apiGet, apiPut } from '../utils/api.utils';
+import { apiPost, apiGet, apiPut, apiDelete } from '../utils/api.utils';
 import { AUTH_ENDPOINTS } from '../config/api.config';
 import type { ApiSuccessResponse } from '../config/api.config';
 import type {
@@ -274,6 +274,25 @@ export const authService = {
     return { message: response.data.message };
   },
 
+  async twoFactorLogin(email: string, twoFactorCode: string): Promise<AuthResult> {
+    const response = await apiPost(
+      AUTH_ENDPOINTS.LOGIN_2FA,
+      { email, two_factor_code: twoFactorCode },
+      { skipAuth: true },
+    );
+    assertSuccess<Record<string, unknown>>(response);
+
+    const data = response.data;
+    const accessToken = String(data.access_token ?? data.accessToken ?? '');
+    const refreshToken = (data.refresh_token ?? data.refreshToken) as string | undefined;
+    const rawUser = (data.user ?? {}) as Record<string, unknown>;
+
+    return {
+      tokens: { accessToken, refreshToken: refreshToken ? String(refreshToken) : undefined },
+      user: mapUser(rawUser),
+    };
+  },
+
   async googleAuth(idToken: string, role?: 'player' | 'organizer'): Promise<AuthResult> {
     const body: Record<string, string> = { id_token: idToken };
     if (role) body.role = role;
@@ -374,6 +393,98 @@ export const authService = {
 
     const data = raw.data as Record<string, unknown> | undefined;
     return { message: data?.message as string | undefined };
+  },
+
+  // ─── Sessions ────────────────────────────────────────────────────────────────
+
+  async getSessions(): Promise<Record<string, unknown>[]> {
+    const response = await apiGet(AUTH_ENDPOINTS.SESSIONS);
+    if (!response.success) return [];
+    const data = response.data as Record<string, unknown>;
+    return (Array.isArray(data) ? data : (data.sessions ?? data.data ?? [])) as Record<string, unknown>[];
+  },
+
+  async revokeSession(sessionId: string): Promise<void> {
+    const response = await apiDelete(`${AUTH_ENDPOINTS.SESSION_REVOKE_SPECIFIC}/${sessionId}`);
+    if (!response.success) {
+      const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to revoke session';
+      throw new ApiRequestError(msg, 400);
+    }
+  },
+
+  async revokeOtherSessions(): Promise<void> {
+    const response = await apiPost(AUTH_ENDPOINTS.SESSIONS_REVOKE_OTHERS, {});
+    if (!response.success) {
+      const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to revoke sessions';
+      throw new ApiRequestError(msg, 400);
+    }
+  },
+
+  // ─── Password ─────────────────────────────────────────────────────────────
+
+  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    const response = await apiPost(AUTH_ENDPOINTS.PASSWORD_CHANGE, {
+      current_password: currentPassword,
+      new_password: newPassword,
+    });
+    if (!response.success) {
+      const code = (response as { error?: { code?: string } }).error?.code ?? 'REQUEST_FAILED';
+      const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to change password';
+      throw new ApiRequestError(msg, codeToStatus(code), code);
+    }
+  },
+
+  async addPassword(password: string): Promise<void> {
+    const response = await apiPost(AUTH_ENDPOINTS.ADD_PASSWORD, { password });
+    if (!response.success) {
+      const code = (response as { error?: { code?: string } }).error?.code ?? 'REQUEST_FAILED';
+      const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to add password';
+      throw new ApiRequestError(msg, codeToStatus(code), code);
+    }
+  },
+
+  // ─── Auth Methods ──────────────────────────────────────────────────────────
+
+  async getAuthMethods(): Promise<{ hasPassword: boolean; hasGoogle: boolean; methods: string[] }> {
+    const response = await apiGet(AUTH_ENDPOINTS.AUTH_METHODS);
+    if (!response.success) return { hasPassword: false, hasGoogle: false, methods: [] };
+    const data = response.data as Record<string, unknown>;
+    const methods = (data.methods ?? data.auth_methods ?? []) as string[];
+    return {
+      hasPassword: Boolean(data.has_password ?? data.hasPassword ?? methods.includes('password')),
+      hasGoogle: Boolean(data.has_google ?? data.hasGoogle ?? methods.includes('google')),
+      methods,
+    };
+  },
+
+  async logoutAll(): Promise<void> {
+    try {
+      await apiPost(AUTH_ENDPOINTS.LOGOUT_ALL, {});
+    } catch {
+      // non-critical
+    }
+  },
+
+  async deactivateAccount(): Promise<void> {
+    const response = await apiPost(AUTH_ENDPOINTS.DEACTIVATE_ACCOUNT, {});
+    if (!response.success) {
+      const code = (response as { error?: { code?: string } }).error?.code ?? 'REQUEST_FAILED';
+      const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to deactivate account';
+      throw new ApiRequestError(msg, codeToStatus(code), code);
+    }
+  },
+
+  async confirmPasswordReset(token: string, newPassword: string): Promise<void> {
+    const response = await apiPost(
+      AUTH_ENDPOINTS.PASSWORD_RESET_CONFIRM,
+      { token, new_password: newPassword },
+      { skipAuth: true },
+    );
+    if (!response.success) {
+      const code = (response as { error?: { code?: string } }).error?.code ?? 'REQUEST_FAILED';
+      const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to reset password';
+      throw new ApiRequestError(msg, codeToStatus(code), code);
+    }
   },
 
   async getVerificationStatus(): Promise<OrganizerVerificationInfo | null> {

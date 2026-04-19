@@ -41,7 +41,7 @@ const roleBadge: Record<string, string> = {
   super_admin: "bg-red-500/15 text-red-300 border-red-500/30",
 };
 
-const statusBadge = (user: ManagedUser) => {
+const emailStatusBadge = (user: ManagedUser) => {
   if (!user.isEmailVerified) {
     return {
       label: "Email Not Verified",
@@ -52,6 +52,25 @@ const statusBadge = (user: ManagedUser) => {
     label: "Email Verified",
     cls: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
   };
+};
+
+type StatusTag = { label: string; cls: string };
+
+const accountStatusTags = (user: ManagedUser): StatusTag[] => {
+  const tags: StatusTag[] = [];
+  if (user.isBanned) {
+    tags.push({ label: "Banned", cls: "bg-red-500/15 text-red-300 border-red-500/30" });
+  }
+  if (!user.isActive && !user.isBanned) {
+    tags.push({ label: "Deactivated", cls: "bg-slate-500/20 text-slate-400 border-slate-500/30" });
+  }
+  if (user.isLocked) {
+    tags.push({ label: "Locked", cls: "bg-orange-500/15 text-orange-300 border-orange-500/30" });
+  }
+  if (!user.isBanned && user.isActive && !user.isLocked) {
+    tags.push({ label: "Active", cls: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30" });
+  }
+  return tags;
 };
 
 const UserManagement = () => {
@@ -452,6 +471,7 @@ const UserManagement = () => {
               <tr className="border-b border-slate-800 text-left">
                 <th className="px-4 py-3 font-medium text-slate-400">User</th>
                 <th className="px-4 py-3 font-medium text-slate-400">Role</th>
+                <th className="px-4 py-3 font-medium text-slate-400">Status</th>
                 <th className="px-4 py-3 font-medium text-slate-400">
                   Email Status
                 </th>
@@ -465,7 +485,7 @@ const UserManagement = () => {
               {loading && data.users.length === 0 ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i} className="border-b border-slate-800/50">
-                    <td className="px-4 py-4" colSpan={5}>
+                    <td className="px-4 py-4" colSpan={6}>
                       <div className="h-5 w-full bg-slate-800 rounded animate-pulse" />
                     </td>
                   </tr>
@@ -474,14 +494,15 @@ const UserManagement = () => {
                 <tr>
                   <td
                     className="px-4 py-8 text-center text-slate-500"
-                    colSpan={5}
+                    colSpan={6}
                   >
                     No users found.
                   </td>
                 </tr>
               ) : (
                 data.users.map((user) => {
-                  const status = statusBadge(user);
+                  const emailStatus = emailStatusBadge(user);
+                  const acctTags = accountStatusTags(user);
                   const initials =
                     `${(user.firstName?.[0] ?? "").toUpperCase()}${(user.lastName?.[0] ?? "").toUpperCase()}` ||
                     "?";
@@ -514,10 +535,22 @@ const UserManagement = () => {
                         </span>
                       </td>
                       <td className="px-4 py-3">
+                        <div className="flex flex-wrap gap-1">
+                          {acctTags.map((t) => (
+                            <span
+                              key={t.label}
+                              className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full border ${t.cls}`}
+                            >
+                              {t.label}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
                         <span
-                          className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full border ${status.cls}`}
+                          className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full border ${emailStatus.cls}`}
                         >
-                          {status.label}
+                          {emailStatus.label}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-slate-400 text-xs whitespace-nowrap">

@@ -200,6 +200,9 @@ export const TOURNAMENT_ENDPOINTS = {
   ADMIN_CHECK_IN_BULK: `${API_BASE_URLS.TOURNAMENT}/admin/checkin/tournaments`, // + /:tournamentId/check-in/bulk
   ADMIN_CHECK_IN_FORCE: `${API_BASE_URLS.TOURNAMENT}/admin/checkin/tournaments`, // + /:tournamentId/check-in/force/:userId
   ADMIN_CHECK_IN_UNDO: `${API_BASE_URLS.TOURNAMENT}/admin/checkin/tournaments`, // + /:tournamentId/check-in/undo/:userId
+
+  // League
+  LEAGUE: `${API_BASE_URLS.TOURNAMENT}/league`, // + /:tournamentId/table | /overview | /matchweeks | /matchweeks/:week | /generate | /advance
 } as const;
 
 
