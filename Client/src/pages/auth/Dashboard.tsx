@@ -4,13 +4,11 @@ import {
   Trophy,
   Medal,
   Target,
-  Clock,
-  Users,
   Gamepad2,
   CheckCircle2,
-  Zap,
   PlusCircle,
   ListTodo,
+  Users,
   Wallet,
   Activity,
   ArrowRight,
@@ -36,7 +34,7 @@ import {
   TournamentCard,
 } from "../../components/dashboard";
 
-// ─── Dashboard Page ─────────────────────────────────────────────────────────
+// ─── Dashboard ───────────────────────────────────────────────────────────────
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -81,7 +79,7 @@ const Dashboard = () => {
         setPlayerWallet(wallet);
       }
     } catch {
-      // Silently fail — show empty states
+      // silently fail — show empty states
     } finally {
       setIsLoading(false);
     }
@@ -92,6 +90,11 @@ const Dashboard = () => {
     hasFetched.current = true;
     void fetchData();
   }, [fetchData]);
+
+  const greeting = useMemo(() => {
+    const h = new Date().getHours();
+    return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+  }, []);
 
   const displayName = useMemo(() => {
     if (data?.profile) {
@@ -232,7 +235,7 @@ const Dashboard = () => {
     return events;
   }, [organizerTournaments]);
 
-  // ─── Loading ───────────────────────────────────────────────────────────────
+  // ─── Loading ─────────────────────────────────────────────────────────────
 
   if (isLoading) {
     return (
@@ -245,53 +248,49 @@ const Dashboard = () => {
     );
   }
 
-  // ─── Organizer Dashboard ───────────────────────────────────────────────────
+  // ─── Organizer Dashboard ──────────────────────────────────────────────────
 
   if (isOrganizer) {
     return (
       <div className="px-4 sm:px-6 py-6 max-w-7xl mx-auto space-y-6">
 
         {/* Hero */}
-        <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 p-6 sm:p-8">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_0%_0%,rgba(6,182,212,0.1),transparent)]" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_50%_at_100%_100%,rgba(16,185,129,0.07),transparent)]" />
-          <div className="absolute inset-0 bg-[linear-gradient(rgba(148,163,184,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.025)_1px,transparent_1px)] bg-[size:40px_40px]" />
+        <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 px-6 py-7 sm:px-8 sm:py-8">
+          <div className="absolute -top-24 -left-24 w-80 h-80 rounded-full bg-cyan-500/[0.07] blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-16 -right-16 w-64 h-64 rounded-full bg-emerald-500/[0.05] blur-3xl pointer-events-none" />
 
-          <div className="relative flex items-center justify-between flex-wrap gap-6">
-            <div className="flex items-center gap-5">
+          <div className="relative flex items-center justify-between flex-wrap gap-5">
+            <div className="flex items-center gap-4">
               <div className="relative shrink-0">
-                <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-cyan-500/30 to-emerald-500/20 blur-sm" />
-                <div className="relative w-16 h-16 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center text-xl font-bold text-white overflow-hidden">
+                <div className="w-[60px] h-[60px] rounded-full ring-2 ring-slate-700 ring-offset-2 ring-offset-slate-900 bg-slate-800 flex items-center justify-center text-xl font-bold text-white overflow-hidden">
                   {profile?.avatarUrl
                     ? <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover" />
                     : initials}
                 </div>
-                <div className="absolute bottom-0.5 right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-slate-900" />
+                <div className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-slate-900" />
               </div>
               <div>
-                <p className="text-[11px] text-slate-500 uppercase tracking-widest font-medium mb-0.5">
-                  Organizer Command Center
-                </p>
-                <h1 className="font-display text-2xl sm:text-3xl font-bold text-white leading-tight">
-                  {displayName}
-                </h1>
-                <p className="text-sm text-slate-400 mt-1">
-                  Manage tournaments, track entrants, and monitor earnings.
+                <p className="text-xs text-slate-500 font-medium mb-0.5">{greeting} — Organizer</p>
+                <h1 className="font-display text-2xl font-bold text-white">{displayName}</h1>
+                <p className="text-sm text-slate-400 mt-0.5">
+                  {organizerTournaments.length > 0
+                    ? `${organizerTournaments.length} tournament${organizerTournaments.length !== 1 ? "s" : ""} · ${organizerLiveCount} live`
+                    : "No tournaments yet — create your first one"}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap">
               <Link
                 to="/auth/organizer/create-tournament"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cyan-500 text-slate-950 text-sm font-bold hover:bg-cyan-400 transition-all shadow-lg shadow-cyan-500/20"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-500 text-slate-950 text-sm font-bold hover:bg-cyan-400 transition-colors shadow-lg shadow-cyan-500/20"
               >
                 <PlusCircle className="w-4 h-4" />
                 Create Tournament
               </Link>
               <Link
                 to="/auth/organizer/tournaments"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-700 text-slate-300 text-sm font-medium hover:bg-slate-800/60 hover:border-slate-600 transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-700 text-slate-300 text-sm font-medium hover:border-slate-600 hover:bg-slate-800/50 transition-colors"
               >
                 <ListTodo className="w-4 h-4" />
                 Manage
@@ -308,11 +307,7 @@ const Dashboard = () => {
           <StatCard
             icon={Wallet}
             label="Wallet Balance"
-            value={
-              organizerWalletBalance === null
-                ? "GHS —"
-                : `GHS ${(organizerWalletBalance / 100).toFixed(2)}`
-            }
+            value={organizerWalletBalance === null ? "GHS —" : `GHS ${(organizerWalletBalance / 100).toFixed(2)}`}
             accentColor="amber"
           />
         </div>
@@ -323,8 +318,8 @@ const Dashboard = () => {
 
             {/* Active Tournaments */}
             <section>
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="font-display text-lg font-semibold text-white">Active Tournaments</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-display text-base font-semibold text-white">Active Tournaments</h2>
                 {organizerActiveHiddenCount > 0 && (
                   <Link
                     to="/auth/organizer/tournaments"
@@ -345,7 +340,7 @@ const Dashboard = () => {
                   <EmptyState
                     icon={Trophy}
                     title="No Active Tournaments"
-                    description="Create or publish a tournament to start receiving player registrations."
+                    description="Create or publish a tournament to start receiving registrations."
                     actionLabel="Create Tournament"
                     actionTo="/auth/organizer/create-tournament"
                   />
@@ -354,28 +349,18 @@ const Dashboard = () => {
             </section>
 
             {/* Drafts */}
-            <section>
-              <h2 className="font-display text-lg font-semibold text-white mb-3">
-                Drafts & Pending Deposit
-              </h2>
-              {organizerDrafts.length > 0 ? (
-                <div className="space-y-3">
+            {organizerDrafts.length > 0 && (
+              <section>
+                <h2 className="font-display text-base font-semibold text-white mb-4">
+                  Drafts & Pending Deposit
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {organizerDrafts.slice(0, 4).map((t) => (
                     <OrganizerTournamentCard key={`draft-${t.id}`} tournament={t} />
                   ))}
                 </div>
-              ) : (
-                <div className="rounded-xl border border-slate-800 bg-slate-900/60">
-                  <EmptyState
-                    icon={CheckCircle2}
-                    title="No Pending Drafts"
-                    description="Great. You have no draft or deposit-pending tournaments right now."
-                    actionLabel="View All Tournaments"
-                    actionTo="/auth/organizer/tournaments"
-                  />
-                </div>
-              )}
-            </section>
+              </section>
+            )}
           </div>
 
           {/* Right Sidebar */}
@@ -383,42 +368,43 @@ const Dashboard = () => {
             <CalendarWidget events={organizerCalendarEvents} />
 
             {/* Snapshot */}
-            <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-              <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">
-                Organizer Snapshot
+            <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
+              <h3 className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest mb-3">
+                Snapshot
               </h3>
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {[
-                  { label: "Completed",         value: organizerCompletedCount, color: "text-emerald-300" },
-                  { label: "Draft / Pending",   value: organizerDrafts.length,  color: "text-amber-300"   },
-                  { label: "Open / Published",  value: organizerLiveCount,      color: "text-cyan-300"    },
+                  { label: "Open / Live",      value: organizerLiveCount,      color: "text-cyan-300" },
+                  { label: "Draft / Pending",  value: organizerDrafts.length,  color: "text-amber-300" },
+                  { label: "Completed",        value: organizerCompletedCount, color: "text-emerald-300" },
                 ].map((row) => (
-                  <div key={row.label} className="flex items-center justify-between text-xs">
-                    <span className="text-slate-400">{row.label}</span>
-                    <span className={`font-bold ${row.color}`}>{row.value}</span>
+                  <div key={row.label} className="flex items-center justify-between">
+                    <span className="text-xs text-slate-400">{row.label}</span>
+                    <span className={`text-sm font-bold tabular-nums ${row.color}`}>{row.value}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Quick Actions */}
-            <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-              <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">
-                Quick Actions
+            {/* Quick Links */}
+            <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
+              <h3 className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest mb-3">
+                Quick Links
               </h3>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {[
-                  { label: "Create a new tournament",    to: "/auth/organizer/create-tournament" },
-                  { label: "Open tournament management", to: "/auth/organizer/tournaments"       },
-                  { label: "Update organizer profile",   to: "/auth/organizer/profile"           },
+                  { label: "Create a tournament",   to: "/auth/organizer/create-tournament" },
+                  { label: "Tournament management", to: "/auth/organizer/tournaments" },
+                  { label: "Organizer profile",     to: "/auth/organizer/profile" },
+                  { label: "Analytics",             to: "/auth/organizer/analytics" },
                 ].map((a) => (
                   <Link
                     key={a.to}
                     to={a.to}
-                    className="flex items-center justify-between text-xs rounded-lg border border-slate-800 px-3 py-2.5 text-slate-400 hover:border-cyan-500/30 hover:text-cyan-300 hover:bg-cyan-500/5 transition-all"
+                    className="flex items-center justify-between text-xs rounded-lg border border-slate-800 px-3 py-2.5 text-slate-400 hover:border-slate-700 hover:text-white hover:bg-slate-800/40 transition-all"
                   >
                     {a.label}
-                    <ArrowRight className="w-3 h-3 opacity-50" />
+                    <ArrowRight className="w-3 h-3 opacity-40" />
                   </Link>
                 ))}
               </div>
@@ -429,62 +415,48 @@ const Dashboard = () => {
     );
   }
 
-  // ─── Player Dashboard ──────────────────────────────────────────────────────
+  // ─── Player Dashboard ─────────────────────────────────────────────────────
 
   return (
     <div className="px-4 sm:px-6 py-6 max-w-7xl mx-auto space-y-6">
 
-      {/* Hero Banner */}
-      <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 p-6 sm:p-8">
-        {/* Radial glows */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_60%_at_0%_0%,rgba(6,182,212,0.1),transparent)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_50%_at_100%_100%,rgba(99,102,241,0.08),transparent)]" />
-        {/* Subtle grid */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(148,163,184,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.025)_1px,transparent_1px)] bg-[size:40px_40px]" />
+      {/* Hero */}
+      <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 px-6 py-7 sm:px-8 sm:py-8">
+        <div className="absolute -top-24 -left-24 w-80 h-80 rounded-full bg-cyan-500/[0.07] blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-16 -right-16 w-64 h-64 rounded-full bg-indigo-500/[0.05] blur-3xl pointer-events-none" />
 
-        <div className="relative flex items-center justify-between flex-wrap gap-6">
-          {/* Left: Avatar + Name */}
-          <div className="flex items-center gap-5">
+        <div className="relative flex items-center justify-between flex-wrap gap-5">
+          <div className="flex items-center gap-4">
             <div className="relative shrink-0">
-              <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-cyan-500/35 to-indigo-500/20 blur-sm" />
-              <div className="relative w-16 h-16 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center text-xl font-bold text-white overflow-hidden">
+              <div className="w-[60px] h-[60px] rounded-full ring-2 ring-slate-700 ring-offset-2 ring-offset-slate-900 bg-slate-800 flex items-center justify-center text-xl font-bold text-white overflow-hidden">
                 {profile?.avatarUrl
                   ? <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover" />
                   : initials}
               </div>
-              <div className="absolute bottom-0.5 right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-slate-900 ring-1 ring-emerald-500/30" />
+              <div className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-slate-900" />
             </div>
-
             <div>
-              <p className="text-[11px] text-slate-500 uppercase tracking-widest font-medium mb-0.5">
-                Player Dashboard
+              <p className="text-xs text-slate-500 font-medium mb-0.5">{greeting}</p>
+              <h1 className="font-display text-2xl font-bold text-white">{displayName}</h1>
+              <p className="text-sm text-slate-400 mt-0.5">
+                {activeRegistrations.length > 0
+                  ? `${activeRegistrations.length} active tournament${activeRegistrations.length !== 1 ? "s" : ""}`
+                  : "No active tournaments · browse to join one"}
               </p>
-              <h1 className="font-display text-2xl sm:text-3xl font-bold text-white leading-tight">
-                {displayName}
-              </h1>
-              <div className="flex items-center gap-2 mt-2 flex-wrap">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-xs font-medium text-cyan-300">
-                  <Medal className="w-3 h-3" /> Average
-                </span>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-xs font-medium text-amber-300">
-                  <Zap className="w-3 h-3" /> 1000 ELO
-                </span>
-              </div>
             </div>
           </div>
 
-          {/* Right: CTAs */}
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
             <Link
               to="/auth/player/join-tournament"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cyan-500 text-slate-950 text-sm font-bold hover:bg-cyan-400 transition-all shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/30"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-500 text-slate-950 text-sm font-bold hover:bg-cyan-400 transition-colors shadow-lg shadow-cyan-500/20"
             >
               <Swords className="w-4 h-4" />
-              Browse
+              Find Tournaments
             </Link>
             <Link
               to="/auth/player/profile"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-700 text-slate-300 text-sm font-medium hover:bg-slate-800/60 hover:border-slate-600 transition-colors"
+              className="inline-flex items-center px-4 py-2 rounded-lg border border-slate-700 text-slate-300 text-sm font-medium hover:border-slate-600 hover:bg-slate-800/50 transition-colors"
             >
               Profile
             </Link>
@@ -492,91 +464,88 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Stat Cards */}
+      {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard icon={Trophy}       label="Tournaments"   value={stats.joinedTournaments}                                               accentColor="cyan"    />
-        <StatCard icon={Target}       label="Total Wins"    value={stats.totalWins}                                                       accentColor="emerald" />
-        <StatCard icon={Medal}        label="Prize Won"     value={stats.totalPrizeWon > 0 ? `$${stats.totalPrizeWon.toLocaleString()}` : "$0"} accentColor="amber"   />
-        <StatCard icon={CheckCircle2} label="Checked In"    value={stats.checkedInCount}                                                  accentColor="indigo"  />
+        <StatCard icon={Trophy}       label="Tournaments"  value={stats.joinedTournaments}  accentColor="cyan" />
+        <StatCard icon={Target}       label="Total Wins"   value={stats.totalWins}           accentColor="emerald" />
+        <StatCard
+          icon={Medal}
+          label="Prize Won"
+          value={stats.totalPrizeWon > 0 ? `$${stats.totalPrizeWon.toLocaleString()}` : "$0"}
+          accentColor="amber"
+        />
+        <StatCard icon={CheckCircle2} label="Checked In"   value={stats.checkedInCount}      accentColor="indigo" />
       </div>
 
       {/* Main Grid */}
       <div className="grid lg:grid-cols-[1fr_300px] gap-6">
 
-        {/* ── Left Column ── */}
-        <div className="space-y-4 min-w-0">
-
-          {/* Tournaments section with tabs */}
-          <section>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-display text-lg font-semibold text-white">My Tournaments</h2>
-              <div className="flex items-center rounded-lg bg-slate-800/60 border border-slate-700/60 p-0.5 gap-0.5">
-                <button
-                  onClick={() => setTournamentTab("active")}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                    tournamentTab === "active"
-                      ? "bg-slate-700 text-white shadow-sm"
-                      : "text-slate-400 hover:text-slate-300"
-                  }`}
-                >
-                  Active&nbsp;
-                  <span className={`${tournamentTab === "active" ? "text-cyan-400" : "text-slate-500"}`}>
-                    ({activeRegistrations.length})
-                  </span>
-                </button>
-                <button
-                  onClick={() => setTournamentTab("history")}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                    tournamentTab === "history"
-                      ? "bg-slate-700 text-white shadow-sm"
-                      : "text-slate-400 hover:text-slate-300"
-                  }`}
-                >
-                  History&nbsp;
-                  <span className={`${tournamentTab === "history" ? "text-cyan-400" : "text-slate-500"}`}>
-                    ({completedRegistrations.length})
-                  </span>
-                </button>
-              </div>
+        {/* Left: My Tournaments */}
+        <section className="min-w-0">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-display text-base font-semibold text-white">My Tournaments</h2>
+            <div className="flex items-center rounded-lg bg-slate-800/60 border border-slate-700/60 p-0.5">
+              <button
+                onClick={() => setTournamentTab("active")}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                  tournamentTab === "active"
+                    ? "bg-slate-700 text-white"
+                    : "text-slate-400 hover:text-slate-300"
+                }`}
+              >
+                Active ({activeRegistrations.length})
+              </button>
+              <button
+                onClick={() => setTournamentTab("history")}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                  tournamentTab === "history"
+                    ? "bg-slate-700 text-white"
+                    : "text-slate-400 hover:text-slate-300"
+                }`}
+              >
+                History ({completedRegistrations.length})
+              </button>
             </div>
+          </div>
 
-            {tournamentTab === "active" ? (
-              activeRegistrations.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {activeRegistrations.map((reg) => (
-                    <JoinedTournamentDetailsCard key={reg.id} reg={reg} />
-                  ))}
-                </div>
-              ) : (
-                <div className="rounded-xl border border-slate-800 bg-slate-900/60">
-                  <EmptyState
-                    icon={Trophy}
-                    title="No Active Tournaments"
-                    description="Browse and join tournaments to compete with other players."
-                    actionLabel="Browse Tournaments"
-                    actionTo="/auth/player/join-tournament"
-                  />
-                </div>
-              )
-            ) : completedRegistrations.length > 0 ? (
-              <div className="space-y-2">
-                {completedRegistrations.map((reg) => (
-                  <TournamentCard key={reg.id} reg={reg} />
+          {tournamentTab === "active" ? (
+            activeRegistrations.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {activeRegistrations.map((reg) => (
+                  <JoinedTournamentDetailsCard key={reg.id} reg={reg} />
                 ))}
               </div>
             ) : (
               <div className="rounded-xl border border-slate-800 bg-slate-900/60">
                 <EmptyState
-                  icon={Gamepad2}
-                  title="No Tournament History"
-                  description="Completed tournaments will appear here."
+                  icon={Trophy}
+                  title="No Active Tournaments"
+                  description="Browse and join tournaments to compete with other players."
+                  actionLabel="Browse Tournaments"
+                  actionTo="/auth/player/join-tournament"
                 />
               </div>
-            )}
-          </section>
-        </div>
+            )
+          ) : completedRegistrations.length > 0 ? (
+            <div className="space-y-2">
+              {completedRegistrations.map((reg) => (
+                <TournamentCard key={reg.id} reg={reg} />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-xl border border-slate-800 bg-slate-900/60">
+              <EmptyState
+                icon={Gamepad2}
+                title="No Tournament History"
+                description="Completed tournaments will appear here."
+                actionLabel="Browse Tournaments"
+                actionTo="/auth/player/join-tournament"
+              />
+            </div>
+          )}
+        </section>
 
-        {/* ── Right Sidebar ── */}
+        {/* Right Sidebar */}
         <div className="space-y-4">
 
           {/* Calendar */}
@@ -584,7 +553,7 @@ const Dashboard = () => {
 
           {/* Wallet */}
           <div className="rounded-xl border border-slate-800 overflow-hidden">
-            <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-800 bg-gradient-to-r from-cyan-950/60 to-slate-900">
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-800 bg-slate-900">
               <Wallet className="w-4 h-4 text-cyan-400" />
               <h3 className="text-sm font-semibold text-white">Wallet</h3>
               <Link
@@ -595,37 +564,29 @@ const Dashboard = () => {
               </Link>
             </div>
 
-            <div className="bg-slate-900/60 p-4 space-y-3">
-              {/* Total balance — hero number */}
-              <div className="rounded-xl bg-gradient-to-br from-cyan-500/8 to-indigo-500/5 border border-cyan-500/10 p-4 text-center">
-                <p className="text-[11px] text-slate-500 uppercase tracking-widest mb-1">
-                  Total Balance
-                </p>
-                <p className="text-2xl font-bold text-cyan-300">
-                  {formatGhs(playerWallet?.totalBalance)}
-                </p>
+            <div className="bg-slate-900 p-4 space-y-3">
+              {/* Balance */}
+              <div className="text-center py-1">
+                <p className="text-[11px] text-slate-500 uppercase tracking-widest mb-1">Total Balance</p>
+                <p className="text-2xl font-bold text-white">{formatGhs(playerWallet?.totalBalance)}</p>
               </div>
 
-              {/* Available / Pending split */}
+              {/* Available / Pending */}
               <div className="grid grid-cols-2 gap-2">
-                <div className="rounded-lg bg-emerald-500/5 border border-emerald-500/10 px-3 py-2.5 text-center">
-                  <p className="text-[11px] text-slate-500 mb-0.5">Available</p>
-                  <p className="text-sm font-bold text-emerald-300">
-                    {formatGhs(playerWallet?.availableBalance)}
-                  </p>
+                <div className="rounded-lg border border-slate-800 px-3 py-2.5 text-center">
+                  <p className="text-[10px] text-slate-500 uppercase tracking-wide mb-0.5">Available</p>
+                  <p className="text-sm font-semibold text-emerald-300">{formatGhs(playerWallet?.availableBalance)}</p>
                 </div>
-                <div className="rounded-lg bg-amber-500/5 border border-amber-500/10 px-3 py-2.5 text-center">
-                  <p className="text-[11px] text-slate-500 mb-0.5">Pending</p>
-                  <p className="text-sm font-bold text-amber-300">
-                    {formatGhs(playerWallet?.pendingBalance)}
-                  </p>
+                <div className="rounded-lg border border-slate-800 px-3 py-2.5 text-center">
+                  <p className="text-[10px] text-slate-500 uppercase tracking-wide mb-0.5">Pending</p>
+                  <p className="text-sm font-semibold text-amber-300">{formatGhs(playerWallet?.pendingBalance)}</p>
                 </div>
               </div>
 
-              {/* Deposit input */}
+              {/* Deposit */}
               <div className="space-y-1.5 pt-1">
                 <label className="text-xs text-slate-400" htmlFor="wallet-amount">
-                  Deposit Amount (GHS)
+                  Deposit (GHS)
                 </label>
                 <div className="flex gap-2">
                   <input
@@ -635,7 +596,7 @@ const Dashboard = () => {
                     step="0.01"
                     value={walletAmountInput}
                     onChange={(e) => setWalletAmountInput(e.target.value)}
-                    className="flex-1 min-w-0 rounded-lg border border-slate-700 bg-slate-800/70 px-3 py-2 text-sm text-white focus:border-cyan-500 focus:outline-none"
+                    className="flex-1 min-w-0 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white focus:border-cyan-500 focus:outline-none"
                     placeholder="e.g. 20"
                   />
                   <button
@@ -650,71 +611,64 @@ const Dashboard = () => {
               </div>
 
               {walletError && (
-                <p className="text-xs text-red-300 rounded-lg border border-red-500/30 bg-red-500/10 px-2.5 py-2">
+                <p className="text-xs text-red-300 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2">
                   {walletError}
                 </p>
               )}
               {walletInfo && (
-                <p className="text-xs text-cyan-300 rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-2">
+                <p className="text-xs text-cyan-300 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 py-2">
                   {walletInfo}
                 </p>
               )}
             </div>
           </div>
 
-          {/* Quick Stats */}
-          <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">
-              Quick Stats
-            </h3>
-            <div className="space-y-3">
+          {/* Quick Actions */}
+          <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
+            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest mb-3">Quick actions</p>
+            <div className="grid grid-cols-2 gap-2">
               {[
-                { label: "Total Matches",        value: "0",                                icon: Gamepad2,    color: "text-slate-300"   },
-                { label: "Win Rate",             value: "0%",                               icon: Target,      color: "text-emerald-300" },
-                { label: "Tournaments Played",   value: String(stats.joinedTournaments),    icon: Trophy,      color: "text-cyan-300"    },
-              ].map((s) => (
-                <div key={s.label} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <s.icon className="w-3.5 h-3.5 text-slate-600" />
-                    <span className="text-xs text-slate-400">{s.label}</span>
-                  </div>
-                  <span className={`text-xs font-bold ${s.color}`}>{s.value}</span>
-                </div>
+                { icon: Swords,       label: "Browse tournaments", to: "/auth/player/join-tournament" },
+                { icon: Target,       label: "Leaderboard",        to: "/auth/leaderboard" },
+                { icon: Gamepad2,     label: "My profile",         to: "/auth/player/profile" },
+                { icon: ArrowRight,   label: "Transactions",       to: "/auth/transactions" },
+              ].map(({ icon: Icon, label, to }) => (
+                <Link
+                  key={label}
+                  to={to}
+                  className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-slate-800 hover:border-slate-700 hover:bg-slate-800/40 transition-all text-xs text-slate-300"
+                >
+                  <Icon className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                  <span className="truncate">{label}</span>
+                </Link>
               ))}
             </div>
           </div>
 
-          {/* Score Confirmations */}
-          <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Clock className="w-3.5 h-3.5 text-slate-500" />
-              <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
-                Score Confirmations
-              </h3>
-            </div>
-            <div className="flex items-center justify-center gap-2 py-3 text-slate-600">
-              <CheckCircle2 className="w-4 h-4" />
-              <p className="text-xs">No pending confirmations</p>
-            </div>
-          </div>
-
-          {/* Connections */}
-          <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+          {/* Live Now */}
+          <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
             <div className="flex items-center gap-2 mb-3">
-              <Users className="w-3.5 h-3.5 text-slate-500" />
-              <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
-                Connections
-              </h3>
+              <Activity className="w-4 h-4 text-orange-400" />
+              <p className="text-sm font-semibold text-white">Live now</p>
             </div>
-            <div className="flex rounded-lg bg-slate-800/50 border border-slate-700/40 p-0.5 mb-3">
-              <button className="flex-1 py-1.5 text-xs font-medium rounded-md bg-slate-700 text-white">
-                Followers 0
-              </button>
-              <button className="flex-1 py-1.5 text-xs font-medium rounded-md text-slate-400 hover:text-slate-300 transition-colors">
-                Following 0
-              </button>
+            <div className="space-y-2">
+              {[
+                { title: "Arena Showdown · CODM",  count: "48 players" },
+                { title: "Lunchbreak Cup · FIFA",  count: "16 players" },
+                { title: "MLBB Weekly Finals",     count: "32 players" },
+              ].map((t) => (
+                <div key={t.title} className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="relative flex h-2 w-2 shrink-0">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
+                    </span>
+                    <span className="text-slate-300 truncate text-xs">{t.title}</span>
+                  </div>
+                  <span className="text-xs text-slate-500 shrink-0 ml-2">{t.count}</span>
+                </div>
+              ))}
             </div>
-            <p className="text-xs text-slate-600 text-center py-1">No followers yet</p>
           </div>
 
         </div>
