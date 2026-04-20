@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import {
-  X, Loader2, CheckCircle2, AlertTriangle, Swords, Clock,
+  X, Loader2, AlertTriangle, Swords, Clock,
   Shield, Trophy, CheckCheck, Flag, Timer,
 } from 'lucide-react';
 import { tournamentService } from '../../services/tournament.service';
@@ -127,6 +127,7 @@ export function MatchActionModal({ matchId, currentUserId, currentMatchweek, onC
   const scoresEqual = score1 !== '' && score2 !== '' && Number(score1) === Number(score2);
 
   const countdown = useCountdown(match?.resultConfirmationDeadline);
+  const playDeadlineCountdown = useCountdown(match?.playDeadline);
 
   async function load() {
     setLoading(true);
@@ -180,10 +181,7 @@ export function MatchActionModal({ matchId, currentUserId, currentMatchweek, onC
   const isP1 = match?.player1Id === currentUserId;
   const isP2 = match?.player2Id === currentUserId;
   const iParticipant = isP1 || isP2;
-  const myName = isP1 ? match?.player1Name : match?.player2Name;
   const opponentName = isP1 ? match?.player2Name : match?.player1Name;
-  const myIsReady = isP1 ? match?.player1IsReady : match?.player2IsReady;
-  const opponentIsReady = isP1 ? match?.player2IsReady : match?.player1IsReady;
   const iSubmitted = match?.resultReportedBy === currentUserId;
   const opponentSubmitted = !!match?.resultReportedBy && !iSubmitted;
   const reportedWinner = match?.winnerId;
@@ -249,54 +247,7 @@ export function MatchActionModal({ matchId, currentUserId, currentMatchweek, onC
       );
     }
 
-    // ── READY CHECK ───────────────────────────────────────────────────────
-    if (match.status === 'ready_check') {
-      if (!iParticipant) {
-        return (
-          <div className="flex flex-col items-center gap-2 py-4 text-center">
-            <Clock className="w-8 h-8 text-slate-500" />
-            <p className="text-sm text-slate-400">Players are checking in for this match.</p>
-          </div>
-        );
-      }
-      return (
-        <div className="space-y-4">
-          <div className="flex gap-3">
-            <div className={`flex-1 flex items-center gap-2 p-3 rounded-xl border
-              ${myIsReady ? 'border-emerald-600/50 bg-emerald-950/20' : 'border-slate-700 bg-slate-900/40'}`}>
-              <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${myIsReady ? 'bg-emerald-400' : 'bg-slate-600'}`} />
-              <span className="text-xs text-slate-300 font-medium truncate">{myName} (you)</span>
-              <span className={`ml-auto text-[10px] font-bold ${myIsReady ? 'text-emerald-400' : 'text-slate-500'}`}>
-                {myIsReady ? 'READY' : 'NOT READY'}
-              </span>
-            </div>
-            <div className={`flex-1 flex items-center gap-2 p-3 rounded-xl border
-              ${opponentIsReady ? 'border-emerald-600/50 bg-emerald-950/20' : 'border-slate-700 bg-slate-900/40'}`}>
-              <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${opponentIsReady ? 'bg-emerald-400' : 'bg-slate-600'}`} />
-              <span className="text-xs text-slate-300 font-medium truncate">{opponentName}</span>
-              <span className={`ml-auto text-[10px] font-bold ${opponentIsReady ? 'text-emerald-400' : 'text-slate-500'}`}>
-                {opponentIsReady ? 'READY' : 'WAITING'}
-              </span>
-            </div>
-          </div>
-          {!myIsReady ? (
-            <button
-              onClick={() => doAction(() => tournamentService.markReady(matchId))}
-              disabled={submitting}
-              className="w-full py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-              Mark as Ready
-            </button>
-          ) : (
-            <div className="flex items-center justify-center gap-2 py-2 text-emerald-400 text-sm">
-              <CheckCircle2 className="w-4 h-4" />
-              <span>You're ready! Waiting for opponent…</span>
-            </div>
-          )}
-        </div>
-      );
-    }
+    // ready_check status no longer used — treat same as ongoing
 
     // ── ONGOING / SCHEDULED / PENDING ─────────────────────────────────────
     if (match.status === 'ongoing' || match.status === 'scheduled' || match.status === 'pending') {
@@ -632,6 +583,31 @@ export function MatchActionModal({ matchId, currentUserId, currentMatchweek, onC
             <X className="w-4 h-4" />
           </button>
         </div>
+
+        {/* Play deadline banner */}
+        {!loading && match?.playDeadline && match.status !== 'completed' && match.status !== 'cancelled' && match.status !== 'disputed' && (
+          <div className={`px-5 py-2 flex items-center justify-center gap-1.5 text-xs font-medium border-b
+            ${playDeadlineCountdown !== null && playDeadlineCountdown <= 0
+              ? 'bg-red-950/40 border-red-900/50 text-red-400'
+              : playDeadlineCountdown !== null && playDeadlineCountdown < 3600
+                ? 'bg-amber-950/30 border-amber-900/40 text-amber-400'
+                : 'bg-slate-800/40 border-slate-800 text-slate-400'
+            }`}>
+            <Clock className="w-3.5 h-3.5 shrink-0" />
+            {playDeadlineCountdown !== null && playDeadlineCountdown <= 0
+              ? 'Play deadline has passed'
+              : playDeadlineCountdown !== null
+                ? (() => {
+                    const h = Math.floor(playDeadlineCountdown / 3600);
+                    const m = Math.floor((playDeadlineCountdown % 3600) / 60);
+                    return h >= 24
+                      ? `Play by ${new Date(match.playDeadline!).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+                      : `Play deadline: ${h}h ${m}m remaining`;
+                  })()
+                : `Play by ${new Date(match.playDeadline).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+            }
+          </div>
+        )}
 
         {/* Body */}
         <div className="px-5 py-5">

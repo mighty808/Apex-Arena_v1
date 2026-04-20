@@ -13,6 +13,7 @@ import SchedulerManagement from "./pages/admin/SchedulerManagement";
 import AuditLogs from "./pages/admin/AuditLogs";
 import AdminManagement from "./pages/admin/AdminManagement";
 import GameRequests from "./pages/admin/GameRequests";
+import DisputeManagement from "./pages/admin/DisputeManagement";
 
 const App = () => {
   return (
@@ -34,6 +35,7 @@ const App = () => {
           <Route path="audit-logs" element={<AuditLogs />} />
           <Route path="admins" element={<AdminManagement />} />
           <Route path="game-requests" element={<GameRequests />} />
+          <Route path="disputes" element={<DisputeManagement />} />
         </Route>
       </Route>
 

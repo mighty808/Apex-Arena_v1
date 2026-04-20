@@ -1,10 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AlertCircle, Clock3, Loader2, RefreshCcw, Wallet, ArrowUpRight } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowDownLeft,
+  ArrowUpRight,
+  Clock3,
+  Loader2,
+  RefreshCcw,
+  Wallet,
+} from "lucide-react";
 import {
   organizerService,
   type WalletBalance,
   type PayoutRequest,
 } from "../../services/organizer.service";
+import { useAuth } from "../../lib/auth-context";
 import { apiGet } from "../../utils/api.utils";
 import { FINANCE_ENDPOINTS } from "../../config/api.config";
 
@@ -35,6 +44,15 @@ interface TransactionRaw {
   description?: string;
 }
 
+const CREDIT_TYPES = new Set([
+  "deposit", "wallet_topup", "topup", "winnings", "prize", "refund",
+  "credit", "reward", "bonus", "cashback",
+]);
+
+function isCredit(type: string) {
+  return CREDIT_TYPES.has(type.toLowerCase().replace(/\s+/g, "_"));
+}
+
 function formatMoney(amountMinorUnits: number, currency: string) {
   const major = amountMinorUnits / 100;
   return `${currency} ${major.toFixed(2)}`;
@@ -42,11 +60,8 @@ function formatMoney(amountMinorUnits: number, currency: string) {
 
 function mapTransaction(raw: TransactionRaw): WalletTransaction {
   const amount = Number(raw.amount_minor ?? raw.amount_ghs ?? raw.amount ?? 0);
-
   return {
-    id: String(
-      raw._id ?? raw.id ?? raw.gateway_transaction_id ?? crypto.randomUUID(),
-    ),
+    id: String(raw._id ?? raw.id ?? raw.gateway_transaction_id ?? crypto.randomUUID()),
     reference: String(raw.gateway_transaction_id ?? raw.reference ?? "-"),
     type: String(raw.type ?? "transaction"),
     status: String(raw.status ?? "pending"),
@@ -57,16 +72,40 @@ function mapTransaction(raw: TransactionRaw): WalletTransaction {
   };
 }
 
-const statusClassByValue: Record<string, string> = {
-  completed: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
+const statusColors: Record<string, string> = {
+  completed:  "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
   successful: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
-  pending: "bg-amber-500/15 text-amber-300 border-amber-500/30",
+  pending:    "bg-amber-500/15 text-amber-300 border-amber-500/30",
   processing: "bg-amber-500/15 text-amber-300 border-amber-500/30",
-  failed: "bg-red-500/15 text-red-300 border-red-500/30",
-  cancelled: "bg-slate-600/20 text-slate-300 border-slate-600/30",
+  failed:     "bg-red-500/15 text-red-300 border-red-500/30",
+  cancelled:  "bg-slate-600/20 text-slate-300 border-slate-600/30",
 };
 
+const payoutStatusColors: Record<string, string> = {
+  pending:    "bg-amber-500/15 text-amber-300 border-amber-500/30",
+  approved:   "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
+  processing: "bg-cyan-500/15 text-cyan-300 border-cyan-500/30",
+  paid:       "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
+  rejected:   "bg-red-500/15 text-red-300 border-red-500/30",
+  cancelled:  "bg-slate-600/20 text-slate-300 border-slate-600/30",
+};
+
+// ─── Balance card ─────────────────────────────────────────────────────────────
+
+function BalanceCard({ label, value, color }: { label: string; value: string; color: string }) {
+  return (
+    <div className="rounded-lg border border-slate-800 bg-slate-800/40 px-3 py-2.5">
+      <p className="text-xs text-slate-400 mb-0.5">{label}</p>
+      <p className={`font-semibold text-sm ${color}`}>{value}</p>
+    </div>
+  );
+}
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
+
 const TransactionsPage = () => {
+  const { user } = useAuth();
+
   const [wallet, setWallet] = useState<WalletBalance | null>(null);
   const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
   const [walletAmountInput, setWalletAmountInput] = useState("10");
@@ -74,6 +113,7 @@ const TransactionsPage = () => {
   const [isDepositing, setIsDepositing] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [infoMsg, setInfoMsg] = useState<string | null>(null);
+
   const [payoutRequests, setPayoutRequests] = useState<PayoutRequest[]>([]);
   const [isLoadingPayouts, setIsLoadingPayouts] = useState(false);
   const [showPayoutForm, setShowPayoutForm] = useState(false);
@@ -91,7 +131,7 @@ const TransactionsPage = () => {
       const requests = await organizerService.getMyPayoutRequests();
       setPayoutRequests(requests);
     } catch {
-      // silently fail
+      // silently fail — players may not have payout access
     } finally {
       setIsLoadingPayouts(false);
     }
@@ -113,17 +153,12 @@ const TransactionsPage = () => {
         const list = Array.isArray(data)
           ? (data as TransactionRaw[])
           : ((data.transactions ?? data.data ?? []) as TransactionRaw[]);
-
         setTransactions(list.map(mapTransaction));
       } else {
         setTransactions([]);
       }
     } catch (error) {
-      setErrorMsg(
-        error instanceof Error
-          ? error.message
-          : "Failed to load wallet and transactions.",
-      );
+      setErrorMsg(error instanceof Error ? error.message : "Failed to load wallet.");
     } finally {
       setIsLoading(false);
     }
@@ -134,28 +169,40 @@ const TransactionsPage = () => {
     void fetchPayouts();
   }, [fetchWalletAndTransactions, fetchPayouts]);
 
-  const sortedTransactions = useMemo(() => {
-    return [...transactions].sort((a, b) => {
-      const aTime = new Date(a.createdAt).getTime();
-      const bTime = new Date(b.createdAt).getTime();
-      return bTime - aTime;
-    });
-  }, [transactions]);
+  const sortedTransactions = useMemo(
+    () => [...transactions].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+    [transactions],
+  );
+
+  const handleDeposit = async () => {
+    const amount = Number(walletAmountInput);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setErrorMsg("Enter a valid deposit amount greater than 0.");
+      return;
+    }
+    setIsDepositing(true);
+    setErrorMsg(null);
+    setInfoMsg(null);
+    try {
+      const result = await organizerService.initiateWalletTopUp(amount);
+      if (result.authorizationUrl) {
+        window.location.href = result.authorizationUrl;
+        return;
+      }
+      setInfoMsg("Deposit initiated. Check your payment app or recent transactions.");
+      await fetchWalletAndTransactions();
+    } catch (error) {
+      setErrorMsg(error instanceof Error ? error.message : "Failed to initiate deposit.");
+    } finally {
+      setIsDepositing(false);
+    }
+  };
 
   const handleWithdraw = async () => {
     const amount = Number(payoutAmount);
-    if (!Number.isFinite(amount) || amount <= 0) {
-      setErrorMsg("Enter a valid withdrawal amount greater than 0.");
-      return;
-    }
-    if (!payoutMomo.trim()) {
-      setErrorMsg("Mobile Money number is required.");
-      return;
-    }
-    if (!payoutAccountName.trim()) {
-      setErrorMsg("Account name is required.");
-      return;
-    }
+    if (!Number.isFinite(amount) || amount <= 0) { setErrorMsg("Enter a valid withdrawal amount."); return; }
+    if (!payoutMomo.trim()) { setErrorMsg("Mobile Money number is required."); return; }
+    if (!payoutAccountName.trim()) { setErrorMsg("Account name is required."); return; }
 
     setIsSubmittingPayout(true);
     setErrorMsg(null);
@@ -168,9 +215,7 @@ const TransactionsPage = () => {
         accountName: payoutAccountName.trim(),
       });
       setShowPayoutForm(false);
-      setPayoutAmount("");
-      setPayoutMomo("");
-      setPayoutAccountName("");
+      setPayoutAmount(""); setPayoutMomo(""); setPayoutAccountName("");
       setInfoMsg("Withdrawal request submitted. It will be reviewed and processed shortly.");
       await fetchPayouts();
     } catch (error) {
@@ -194,77 +239,45 @@ const TransactionsPage = () => {
     }
   };
 
-  const handleDeposit = async () => {
-    const amount = Number(walletAmountInput);
-    if (!Number.isFinite(amount) || amount <= 0) {
-      setErrorMsg("Enter a valid deposit amount greater than 0.");
-      return;
-    }
-
-    setIsDepositing(true);
-    setErrorMsg(null);
-    setInfoMsg(null);
-    try {
-      const result = await organizerService.initiateWalletTopUp(amount);
-      if (result.authorizationUrl) {
-        window.location.href = result.authorizationUrl;
-        return;
-      }
-
-      setInfoMsg(
-        "Deposit initiated. Check your payment app or recent transactions for updates.",
-      );
-      await fetchWalletAndTransactions();
-    } catch (error) {
-      setErrorMsg(
-        error instanceof Error ? error.message : "Failed to initiate deposit.",
-      );
-    } finally {
-      setIsDepositing(false);
-    }
-  };
+  const currency = wallet?.currency ?? "GHS";
 
   return (
-    <div className="px-6 py-6 max-w-7xl mx-auto space-y-6">
+    <div className="px-4 sm:px-6 py-6 max-w-7xl mx-auto space-y-6">
+      {/* Header */}
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="font-display text-2xl font-bold text-white">
-            Wallet & Transactions
-          </h1>
-          <p className="text-sm text-slate-400 mt-1">
-            Track your balance, deposit funds, and monitor payment activity.
-          </p>
+          <h1 className="font-display text-2xl font-bold text-white">Wallet & Transactions</h1>
+          <p className="text-sm text-slate-400 mt-1">Track your balance, deposit funds, and monitor payment activity.</p>
         </div>
         <button
           type="button"
-          onClick={() => {
-            void fetchWalletAndTransactions();
-          }}
-          className="inline-flex items-center gap-2 rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-300 hover:bg-white/5"
+          onClick={() => { void fetchWalletAndTransactions(); }}
+          className="inline-flex items-center gap-2 rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-300 hover:bg-white/5 transition-colors"
         >
           <RefreshCcw className="w-4 h-4" />
           Refresh
         </button>
       </div>
 
+      {/* Banners */}
       {errorMsg && (
         <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300 flex items-start gap-2">
           <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
           <span>{errorMsg}</span>
         </div>
       )}
-
       {infoMsg && (
         <div className="rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-4 py-3 text-sm text-cyan-300">
           {infoMsg}
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-6">
+      {/* Balance + transactions */}
+      <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6">
+        {/* Left: wallet overview */}
         <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 space-y-4 h-fit">
           <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-            <Wallet className="w-4 h-4 text-cyan-300" />
-            Wallet Overview
+            <Wallet className="w-4 h-4 text-cyan-300" /> Wallet Overview
           </h2>
 
           {isLoading ? (
@@ -273,50 +286,15 @@ const TransactionsPage = () => {
             </div>
           ) : (
             <>
-              <div className="space-y-2 text-sm">
-                <div className="rounded-lg border border-slate-800 bg-slate-800/40 px-3 py-2">
-                  <p className="text-xs text-slate-400">Available Balance</p>
-                  <p className="font-semibold text-emerald-300">
-                    {formatMoney(
-                      wallet?.availableBalance ?? 0,
-                      wallet?.currency ?? "GHS",
-                    )}
-                  </p>
-                </div>
-                <div className="rounded-lg border border-slate-800 bg-slate-800/40 px-3 py-2">
-                  <p className="text-xs text-slate-400">Pending Balance</p>
-                  <p className="font-semibold text-amber-300">
-                    {formatMoney(
-                      wallet?.pendingBalance ?? 0,
-                      wallet?.currency ?? "GHS",
-                    )}
-                  </p>
-                </div>
-                <div className="rounded-lg border border-slate-800 bg-slate-800/40 px-3 py-2">
-                  <p className="text-xs text-slate-400">Escrow Locked</p>
-                  <p className="font-semibold text-slate-200">
-                    {formatMoney(
-                      wallet?.escrowLocked ?? 0,
-                      wallet?.currency ?? "GHS",
-                    )}
-                  </p>
-                </div>
-                <div className="rounded-lg border border-slate-800 bg-slate-800/40 px-3 py-2">
-                  <p className="text-xs text-slate-400">Total Balance</p>
-                  <p className="font-semibold text-cyan-300">
-                    {formatMoney(
-                      wallet?.totalBalance ?? 0,
-                      wallet?.currency ?? "GHS",
-                    )}
-                  </p>
-                </div>
+              <div className="grid grid-cols-2 gap-2">
+                <BalanceCard label="Available" value={formatMoney(wallet?.availableBalance ?? 0, currency)} color="text-emerald-300" />
+                <BalanceCard label="Pending"   value={formatMoney(wallet?.pendingBalance ?? 0, currency)}   color="text-amber-300" />
+                <BalanceCard label="In Escrow" value={formatMoney(wallet?.escrowLocked ?? 0, currency)}     color="text-slate-200" />
+                <BalanceCard label="Total"     value={formatMoney(wallet?.totalBalance ?? 0, currency)}     color="text-cyan-300" />
               </div>
 
               <div className="space-y-2 pt-1">
-                <label
-                  className="block text-xs text-slate-400"
-                  htmlFor="wallet-top-up"
-                >
+                <label className="block text-xs text-slate-400" htmlFor="wallet-top-up">
                   Deposit Amount (GHS)
                 </label>
                 <div className="flex items-center gap-2">
@@ -332,13 +310,11 @@ const TransactionsPage = () => {
                   />
                   <button
                     type="button"
-                    onClick={() => {
-                      void handleDeposit();
-                    }}
+                    onClick={() => { void handleDeposit(); }}
                     disabled={isDepositing}
-                    className="rounded-lg bg-cyan-500 px-3 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-400 disabled:opacity-60"
+                    className="rounded-lg bg-cyan-500 px-3 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-400 disabled:opacity-60 whitespace-nowrap"
                   >
-                    {isDepositing ? "Processing..." : "Deposit"}
+                    {isDepositing ? "..." : "Deposit"}
                   </button>
                 </div>
               </div>
@@ -346,10 +322,9 @@ const TransactionsPage = () => {
           )}
         </section>
 
+        {/* Right: transactions list */}
         <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-          <h2 className="text-sm font-semibold text-white mb-3">
-            Recent Transactions
-          </h2>
+          <h2 className="text-sm font-semibold text-white mb-3">Recent Transactions</h2>
 
           {isLoading ? (
             <div className="flex items-center justify-center py-10">
@@ -358,58 +333,51 @@ const TransactionsPage = () => {
           ) : sortedTransactions.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-center">
               <Clock3 className="w-8 h-8 text-slate-600 mb-2" />
-              <p className="text-sm text-slate-400">
-                No transactions found yet.
-              </p>
+              <p className="text-sm text-slate-400">No transactions found yet.</p>
             </div>
           ) : (
             <div className="space-y-2">
-              {sortedTransactions.map((transaction) => {
-                const normalizedStatus = transaction.status.toLowerCase();
-                const statusClass =
-                  statusClassByValue[normalizedStatus] ??
-                  "bg-slate-700/30 text-slate-300 border-slate-700";
+              {sortedTransactions.map((tx) => {
+                const credit = isCredit(tx.type);
+                const normalizedStatus = tx.status.toLowerCase();
+                const statusClass = statusColors[normalizedStatus] ?? "bg-slate-700/30 text-slate-300 border-slate-700";
 
                 return (
-                  <div
-                    key={transaction.id}
-                    className="rounded-lg border border-slate-800 bg-slate-800/40 px-3 py-2.5"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-white truncate capitalize">
-                          {transaction.type.replace(/_/g, " ")}
-                        </p>
-                        <p className="text-xs text-slate-400 truncate">
-                          Ref: {transaction.reference}
-                        </p>
-                        {transaction.description && (
-                          <p className="text-xs text-slate-500 mt-1 truncate">
-                            {transaction.description}
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="text-right shrink-0">
-                        <p className="text-sm font-semibold text-cyan-300">
-                          {formatMoney(
-                            transaction.amountMinorUnits,
-                            transaction.currency,
-                          )}
-                        </p>
-                        <span
-                          className={`inline-flex mt-1 rounded-full border px-2 py-0.5 text-[11px] capitalize ${statusClass}`}
-                        >
-                          {transaction.status.replace(/_/g, " ")}
-                        </span>
-                      </div>
+                  <div key={tx.id} className="rounded-lg border border-slate-800 bg-slate-800/40 px-3 py-2.5 flex items-start gap-3">
+                    {/* Direction icon */}
+                    <div className={`mt-0.5 p-1.5 rounded-lg shrink-0 ${credit ? "bg-emerald-500/10" : "bg-red-500/10"}`}>
+                      {credit
+                        ? <ArrowDownLeft className="w-3.5 h-3.5 text-emerald-400" />
+                        : <ArrowUpRight className="w-3.5 h-3.5 text-red-400" />
+                      }
                     </div>
 
-                    <p className="text-[11px] text-slate-500 mt-2">
-                      {transaction.createdAt
-                        ? new Date(transaction.createdAt).toLocaleString()
-                        : "-"}
-                    </p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-white truncate capitalize">
+                            {tx.type.replace(/_/g, " ")}
+                          </p>
+                          <p className="text-xs text-slate-500 truncate">Ref: {tx.reference}</p>
+                          {tx.description && (
+                            <p className="text-xs text-slate-500 mt-0.5 truncate">{tx.description}</p>
+                          )}
+                        </div>
+
+                        <div className="text-right shrink-0">
+                          <p className={`text-sm font-semibold ${credit ? "text-emerald-300" : "text-red-300"}`}>
+                            {credit ? "+" : "-"}{formatMoney(tx.amountMinorUnits, tx.currency)}
+                          </p>
+                          <span className={`inline-flex mt-1 rounded-full border px-2 py-0.5 text-[11px] capitalize ${statusClass}`}>
+                            {tx.status.replace(/_/g, " ")}
+                          </span>
+                        </div>
+                      </div>
+
+                      <p className="text-[11px] text-slate-500 mt-1.5">
+                        {tx.createdAt ? new Date(tx.createdAt).toLocaleString() : "—"}
+                      </p>
+                    </div>
                   </div>
                 );
               })}
@@ -422,8 +390,7 @@ const TransactionsPage = () => {
       <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 space-y-4">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-            <ArrowUpRight className="w-4 h-4 text-amber-400" />
-            Withdrawals
+            <ArrowUpRight className="w-4 h-4 text-amber-400" /> Withdrawals
           </h2>
           {!showPayoutForm && (
             <button
@@ -439,31 +406,20 @@ const TransactionsPage = () => {
 
         {showPayoutForm && (
           <div className="rounded-lg border border-slate-700 bg-slate-900/80 p-4 space-y-3">
-            <p className="text-xs text-slate-400">
-              Funds will be sent via Mobile Money to your registered number.
-            </p>
+            <p className="text-xs text-slate-400">Funds will be sent via Mobile Money.</p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs text-slate-400 mb-1">Amount (GHS)</label>
-                <input
-                  type="number"
-                  min="1"
-                  step="0.01"
-                  value={payoutAmount}
-                  onChange={(e) => setPayoutAmount(e.target.value)}
-                  placeholder="e.g. 50"
-                  className="w-full rounded-lg border border-slate-700 bg-slate-800/70 px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none"
-                />
+                <input type="number" min="1" step="0.01" value={payoutAmount}
+                  onChange={(e) => setPayoutAmount(e.target.value)} placeholder="e.g. 50"
+                  className="w-full rounded-lg border border-slate-700 bg-slate-800/70 px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none" />
               </div>
 
               <div>
                 <label className="block text-xs text-slate-400 mb-1">Withdrawal Type</label>
-                <select
-                  value={payoutType}
-                  onChange={(e) => setPayoutType(e.target.value as typeof payoutType)}
-                  className="w-full rounded-lg border border-slate-700 bg-slate-800/70 px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none"
-                >
+                <select value={payoutType} onChange={(e) => setPayoutType(e.target.value as typeof payoutType)}
+                  className="w-full rounded-lg border border-slate-700 bg-slate-800/70 px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none">
                   <option value="wallet_withdrawal">Wallet Withdrawal</option>
                   <option value="tournament_winnings">Tournament Winnings</option>
                 </select>
@@ -471,22 +427,15 @@ const TransactionsPage = () => {
 
               <div>
                 <label className="block text-xs text-slate-400 mb-1">MoMo Number</label>
-                <input
-                  type="text"
-                  value={payoutMomo}
-                  onChange={(e) => setPayoutMomo(e.target.value)}
+                <input type="text" value={payoutMomo} onChange={(e) => setPayoutMomo(e.target.value)}
                   placeholder="e.g. 0241234567"
-                  className="w-full rounded-lg border border-slate-700 bg-slate-800/70 px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none"
-                />
+                  className="w-full rounded-lg border border-slate-700 bg-slate-800/70 px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none" />
               </div>
 
               <div>
                 <label className="block text-xs text-slate-400 mb-1">Network</label>
-                <select
-                  value={payoutNetwork}
-                  onChange={(e) => setPayoutNetwork(e.target.value as typeof payoutNetwork)}
-                  className="w-full rounded-lg border border-slate-700 bg-slate-800/70 px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none"
-                >
+                <select value={payoutNetwork} onChange={(e) => setPayoutNetwork(e.target.value as typeof payoutNetwork)}
+                  className="w-full rounded-lg border border-slate-700 bg-slate-800/70 px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none">
                   <option value="MTN">MTN</option>
                   <option value="Vodafone">Vodafone</option>
                   <option value="AirtelTigo">AirtelTigo</option>
@@ -495,35 +444,20 @@ const TransactionsPage = () => {
 
               <div className="sm:col-span-2">
                 <label className="block text-xs text-slate-400 mb-1">Account Name</label>
-                <input
-                  type="text"
-                  value={payoutAccountName}
-                  onChange={(e) => setPayoutAccountName(e.target.value)}
+                <input type="text" value={payoutAccountName} onChange={(e) => setPayoutAccountName(e.target.value)}
                   placeholder="Name registered on the MoMo account"
-                  className="w-full rounded-lg border border-slate-700 bg-slate-800/70 px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none"
-                />
+                  className="w-full rounded-lg border border-slate-700 bg-slate-800/70 px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none" />
               </div>
             </div>
 
             <div className="flex items-center gap-3 pt-1">
-              <button
-                type="button"
-                onClick={() => void handleWithdraw()}
-                disabled={isSubmittingPayout}
-                className="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-amber-400 disabled:opacity-60 transition-colors"
-              >
-                {isSubmittingPayout ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <ArrowUpRight className="w-4 h-4" />
-                )}
+              <button type="button" onClick={() => void handleWithdraw()} disabled={isSubmittingPayout}
+                className="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-amber-400 disabled:opacity-60 transition-colors">
+                {isSubmittingPayout ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowUpRight className="w-4 h-4" />}
                 {isSubmittingPayout ? "Submitting..." : "Submit Request"}
               </button>
-              <button
-                type="button"
-                onClick={() => setShowPayoutForm(false)}
-                className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:bg-white/5 transition-colors"
-              >
+              <button type="button" onClick={() => setShowPayoutForm(false)}
+                className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:bg-white/5 transition-colors">
                 Cancel
               </button>
             </div>
@@ -539,39 +473,19 @@ const TransactionsPage = () => {
         ) : (
           <div className="space-y-2">
             {payoutRequests.map((req) => {
-              const statusColors: Record<string, string> = {
-                pending: "bg-amber-500/15 text-amber-300 border-amber-500/30",
-                approved: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
-                processing: "bg-cyan-500/15 text-cyan-300 border-cyan-500/30",
-                paid: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
-                rejected: "bg-red-500/15 text-red-300 border-red-500/30",
-                cancelled: "bg-slate-600/20 text-slate-300 border-slate-600/30",
-              };
-              const statusClass = statusColors[req.status] ?? "bg-slate-700/30 text-slate-300 border-slate-700";
-
+              const statusClass = payoutStatusColors[req.status] ?? "bg-slate-700/30 text-slate-300 border-slate-700";
               return (
-                <div
-                  key={req.id}
-                  className="rounded-lg border border-slate-800 bg-slate-800/40 px-3 py-2.5"
-                >
+                <div key={req.id} className="rounded-lg border border-slate-800 bg-slate-800/40 px-3 py-2.5">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-white capitalize">
-                        {req.requestType.replace(/_/g, " ")}
-                      </p>
-                      <p className="text-xs text-slate-400">
-                        {req.network} · {req.momoNumber} · {req.accountName}
-                      </p>
+                      <p className="text-sm font-medium text-white capitalize">{req.requestType.replace(/_/g, " ")}</p>
+                      <p className="text-xs text-slate-400">{req.network} · {req.momoNumber} · {req.accountName}</p>
                       {req.rejectionReason && (
-                        <p className="text-xs text-red-400 mt-1">
-                          Rejected: {req.rejectionReason}
-                        </p>
+                        <p className="text-xs text-red-400 mt-1">Rejected: {req.rejectionReason}</p>
                       )}
                     </div>
                     <div className="text-right shrink-0 space-y-1">
-                      <p className="text-sm font-semibold text-amber-300">
-                        GHS {req.amountGhs.toFixed(2)}
-                      </p>
+                      <p className="text-sm font-semibold text-amber-300">GHS {req.amountGhs.toFixed(2)}</p>
                       <span className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] capitalize ${statusClass}`}>
                         {req.status}
                       </span>
@@ -579,15 +493,12 @@ const TransactionsPage = () => {
                   </div>
                   <div className="flex items-center justify-between mt-2">
                     <p className="text-[11px] text-slate-500">
-                      {req.createdAt ? new Date(req.createdAt).toLocaleString() : "-"}
+                      {req.createdAt ? new Date(req.createdAt).toLocaleString() : "—"}
                     </p>
                     {req.status === "pending" && (
-                      <button
-                        type="button"
-                        onClick={() => void handleCancelPayout(req.id)}
+                      <button type="button" onClick={() => void handleCancelPayout(req.id)}
                         disabled={cancellingPayoutId === req.id}
-                        className="text-[11px] text-red-400 hover:text-red-300 disabled:opacity-50 transition-colors"
-                      >
+                        className="text-[11px] text-red-400 hover:text-red-300 disabled:opacity-50 transition-colors">
                         {cancellingPayoutId === req.id ? "Cancelling..." : "Cancel"}
                       </button>
                     )}
@@ -598,6 +509,13 @@ const TransactionsPage = () => {
           </div>
         )}
       </section>
+
+      {/* Account info */}
+      {user && (
+        <p className="text-xs text-slate-600 text-center">
+          Logged in as <span className="text-slate-500">@{user.username}</span>
+        </p>
+      )}
     </div>
   );
 };
