@@ -346,26 +346,32 @@ const TournamentDetail = () => {
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
       <div className="relative overflow-hidden">
         {/* Cover */}
-        <div className="relative h-64 sm:h-80 overflow-hidden bg-slate-900">
-          {hasImage ? (
+        <div className="relative h-52 sm:h-64 overflow-hidden bg-slate-900">
+          {imageUrl ? (
             <>
               <FadeImage
                 src={imageUrl}
                 alt={tournament.title}
                 className="absolute inset-0 w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-linear-to-br from-orange-500/20 via-transparent to-violet-600/20" />
+              <div className="absolute inset-0 bg-linear-to-br from-orange-600/40 via-transparent to-violet-700/40" />
+            </>
+          ) : tournament.game?.logoUrl ? (
+            <>
+              <div className="absolute inset-0 bg-linear-to-br from-orange-950 via-slate-900 to-violet-950" />
+              <FadeImage
+                src={tournament.game.logoUrl}
+                alt={tournament.title}
+                className="absolute inset-0 w-full h-full object-contain p-8"
+              />
+              <div className="absolute inset-0 bg-linear-to-br from-orange-600/30 via-transparent to-violet-700/30" />
             </>
           ) : (
             <>
               <div className="absolute inset-0 bg-linear-to-br from-orange-950 via-slate-900 to-violet-950" />
               <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.025)_1px,transparent_1px)] bg-size-[48px_48px]" />
               <div className="absolute inset-0 flex items-center justify-center">
-                {tournament.game?.logoUrl ? (
-                  <img src={tournament.game.logoUrl} alt="" className="w-28 h-28 object-contain opacity-15" />
-                ) : (
-                  <Gamepad2 className="w-24 h-24 text-slate-800" />
-                )}
+                <Gamepad2 className="w-24 h-24 text-slate-800" />
               </div>
             </>
           )}
