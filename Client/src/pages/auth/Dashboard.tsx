@@ -8,7 +8,6 @@ import {
   Wallet,
   ArrowRight,
   Swords,
-  BarChart2,
 } from "lucide-react";
 import { useAuth } from "../../lib/auth-context";
 import {
@@ -26,7 +25,6 @@ import {
   EmptyState,
   JoinedTournamentDetailsCard,
   OrganizerTournamentCard,
-  TournamentCard,
 } from "../../components/dashboard";
 
 // ─── Dashboard ───────────────────────────────────────────────────────────────
@@ -34,15 +32,21 @@ import {
 const Dashboard = () => {
   const { user } = useAuth();
   const [data, setData] = useState<DashboardData | null>(null);
-  const [organizerTournaments, setOrganizerTournaments] = useState<OrganizerTournament[]>([]);
-  const [organizerWalletBalance, setOrganizerWalletBalance] = useState<number | null>(null);
+  const [organizerTournaments, setOrganizerTournaments] = useState<
+    OrganizerTournament[]
+  >([]);
+  const [organizerWalletBalance, setOrganizerWalletBalance] = useState<
+    number | null
+  >(null);
   const [playerWallet, setPlayerWallet] = useState<WalletBalance | null>(null);
   const [walletAmountInput, setWalletAmountInput] = useState("10");
   const [isDepositing, setIsDepositing] = useState(false);
   const [walletError, setWalletError] = useState<string | null>(null);
   const [walletInfo, setWalletInfo] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [tournamentTab, setTournamentTab] = useState<"active" | "history">("active");
+  const [tournamentTab, setTournamentTab] = useState<"active" | "history">(
+    "active",
+  );
   const hasFetched = useRef(false);
   const isOrganizer = user?.role === "organizer";
 
@@ -58,7 +62,12 @@ const Dashboard = () => {
         setData({
           profile,
           registrations: [],
-          stats: { joinedTournaments: 0, totalWins: 0, totalPrizeWon: 0, checkedInCount: 0 },
+          stats: {
+            joinedTournaments: 0,
+            totalWins: 0,
+            totalPrizeWon: 0,
+            checkedInCount: 0,
+          },
         });
         setOrganizerTournaments(tournaments);
         setOrganizerWalletBalance(wallet?.availableBalance ?? null);
@@ -125,9 +134,14 @@ const Dashboard = () => {
       ? `${(user.firstName?.[0] ?? "").toUpperCase()}${(user.lastName?.[0] ?? "").toUpperCase()}`
       : "?";
 
-  const liveOrganizerStatuses = new Set(["open", "published", "awaiting_deposit"]);
+  const liveOrganizerStatuses = new Set([
+    "open",
+    "published",
+    "awaiting_deposit",
+  ]);
   const organizerTotalParticipants = organizerTournaments.reduce(
-    (sum, t) => sum + t.currentCount, 0,
+    (sum, t) => sum + t.currentCount,
+    0,
   );
   const organizerLiveCount = organizerTournaments.filter((t) =>
     liveOrganizerStatuses.has(t.status),
@@ -142,7 +156,10 @@ const Dashboard = () => {
     (t) => t.status !== "completed" && t.status !== "cancelled",
   );
   const organizerActivePreview = organizerActiveList.slice(0, 8);
-  const organizerActiveHiddenCount = Math.max(0, organizerActiveList.length - 8);
+  const organizerActiveHiddenCount = Math.max(
+    0,
+    organizerActiveList.length - 8,
+  );
 
   const formatGhs = (amountMinorUnits?: number | null) => {
     const value = Number(amountMinorUnits ?? 0) / 100;
@@ -164,8 +181,12 @@ const Dashboard = () => {
         window.location.href = result.authorizationUrl;
         return;
       }
-      setWalletInfo("Deposit initiated. Check your payment app or transaction history.");
-      const refreshedWallet = await organizerService.getWalletBalance().catch(() => null);
+      setWalletInfo(
+        "Deposit initiated. Check your payment app or transaction history.",
+      );
+      const refreshedWallet = await organizerService
+        .getWalletBalance()
+        .catch(() => null);
       if (refreshedWallet) setPlayerWallet(refreshedWallet);
     } catch (error) {
       setWalletError(
@@ -248,7 +269,6 @@ const Dashboard = () => {
   if (isOrganizer) {
     return (
       <div className="px-4 sm:px-6 py-6 max-w-7xl mx-auto space-y-8">
-
         {/* ── Hero ──────────────────────────────────────────────────────── */}
         <div className="relative overflow-hidden rounded-2xl bg-slate-900 border border-slate-800">
           {/* Ambient glows */}
@@ -263,9 +283,15 @@ const Dashboard = () => {
               <div className="flex items-center gap-5">
                 <div className="relative shrink-0">
                   <div className="w-16 h-16 rounded-full ring-2 ring-orange-500/40 ring-offset-2 ring-offset-slate-900 bg-slate-800 flex items-center justify-center text-xl font-bold text-white overflow-hidden">
-                    {profile?.avatarUrl
-                      ? <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover" />
-                      : initials}
+                    {profile?.avatarUrl ? (
+                      <img
+                        src={profile.avatarUrl}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      initials
+                    )}
                   </div>
                   <div className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-slate-900" />
                 </div>
@@ -278,11 +304,16 @@ const Dashboard = () => {
                   </h1>
                   {organizerTournaments.length > 0 ? (
                     <p className="text-sm text-slate-400 mt-2">
-                      {organizerTournaments.length} tournament{organizerTournaments.length !== 1 ? "s" : ""} ·{" "}
-                      <span className="text-emerald-400">{organizerLiveCount} live</span>
+                      {organizerTournaments.length} tournament
+                      {organizerTournaments.length !== 1 ? "s" : ""} ·{" "}
+                      <span className="text-emerald-400">
+                        {organizerLiveCount} live
+                      </span>
                     </p>
                   ) : (
-                    <p className="text-sm text-slate-500 mt-2">No tournaments yet — create your first one</p>
+                    <p className="text-sm text-slate-500 mt-2">
+                      No tournaments yet — create your first one
+                    </p>
                   )}
                 </div>
               </div>
@@ -295,8 +326,12 @@ const Dashboard = () => {
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                       <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400" />
                     </span>
-                    <span className="font-display text-2xl font-bold text-white">{organizerLiveCount}</span>
-                    <span className="text-sm text-slate-400">live right now</span>
+                    <span className="font-display text-2xl font-bold text-white">
+                      {organizerLiveCount}
+                    </span>
+                    <span className="text-sm text-slate-400">
+                      live right now
+                    </span>
                   </div>
                 )}
                 <div className="flex items-center gap-2">
@@ -321,14 +356,39 @@ const Dashboard = () => {
             {/* Stats strip */}
             <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-px bg-slate-800/60 rounded-xl overflow-hidden border border-slate-800/60">
               {[
-                { label: "Tournaments",   value: String(organizerTournaments.length),            accent: "text-white" },
-                { label: "Live / Active", value: String(organizerLiveCount),                     accent: "text-emerald-400" },
-                { label: "Total Entrants",value: String(organizerTotalParticipants),              accent: "text-cyan-400" },
-                { label: "Wallet",        value: organizerWalletBalance === null ? "GHS —" : `GHS ${(organizerWalletBalance / 100).toFixed(2)}`, accent: "text-amber-400" },
+                {
+                  label: "Tournaments",
+                  value: String(organizerTournaments.length),
+                  accent: "text-white",
+                },
+                {
+                  label: "Live / Active",
+                  value: String(organizerLiveCount),
+                  accent: "text-emerald-400",
+                },
+                {
+                  label: "Total Entrants",
+                  value: String(organizerTotalParticipants),
+                  accent: "text-cyan-400",
+                },
+                {
+                  label: "Wallet",
+                  value:
+                    organizerWalletBalance === null
+                      ? "GHS —"
+                      : `GHS ${(organizerWalletBalance / 100).toFixed(2)}`,
+                  accent: "text-amber-400",
+                },
               ].map((s) => (
                 <div key={s.label} className="bg-slate-900 px-4 py-3">
-                  <p className="text-[11px] text-slate-500 uppercase tracking-widest mb-1">{s.label}</p>
-                  <p className={`font-display text-xl font-bold tabular-nums ${s.accent}`}>{s.value}</p>
+                  <p className="text-[11px] text-slate-500 uppercase tracking-widest mb-1">
+                    {s.label}
+                  </p>
+                  <p
+                    className={`font-display text-xl font-bold tabular-nums ${s.accent}`}
+                  >
+                    {s.value}
+                  </p>
                 </div>
               ))}
             </div>
@@ -338,12 +398,13 @@ const Dashboard = () => {
         {/* ── Main grid ─────────────────────────────────────────────────── */}
         <div className="grid lg:grid-cols-[1fr_272px] gap-6">
           <div className="space-y-8 min-w-0">
-
             {/* Active Tournaments */}
             <section>
               <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-3">
-                  <h2 className="font-display text-xl font-bold text-white">Active Tournaments</h2>
+                  <h2 className="font-display text-xl font-bold text-white">
+                    Active Tournaments
+                  </h2>
                   {organizerActiveList.length > 0 && (
                     <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-orange-500/15 text-orange-400 border border-orange-500/20">
                       {organizerActiveList.length}
@@ -355,7 +416,8 @@ const Dashboard = () => {
                     to="/auth/organizer/tournaments"
                     className="text-xs text-slate-400 hover:text-orange-400 flex items-center gap-1 transition-colors"
                   >
-                    +{organizerActiveHiddenCount} more <ArrowRight className="w-3 h-3" />
+                    +{organizerActiveHiddenCount} more{" "}
+                    <ArrowRight className="w-3 h-3" />
                   </Link>
                 )}
               </div>
@@ -369,8 +431,12 @@ const Dashboard = () => {
               ) : (
                 <div className="rounded-2xl border border-dashed border-slate-700 bg-slate-900/40 py-14 px-6 text-center">
                   <Trophy className="w-10 h-10 text-slate-700 mx-auto mb-3" />
-                  <p className="font-display text-lg font-semibold text-slate-400">No active tournaments</p>
-                  <p className="text-sm text-slate-600 mt-1 mb-6">Create or publish one to start receiving registrations.</p>
+                  <p className="font-display text-lg font-semibold text-slate-400">
+                    No active tournaments
+                  </p>
+                  <p className="text-sm text-slate-600 mt-1 mb-6">
+                    Create or publish one to start receiving registrations.
+                  </p>
                   <Link
                     to="/auth/organizer/create-tournament"
                     className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-linear-to-r from-orange-400 to-amber-400 text-slate-950 text-sm font-bold"
@@ -386,14 +452,19 @@ const Dashboard = () => {
             {organizerDrafts.length > 0 && (
               <section>
                 <div className="flex items-center gap-3 mb-5">
-                  <h2 className="font-display text-xl font-bold text-white">Drafts & Pending</h2>
+                  <h2 className="font-display text-xl font-bold text-white">
+                    Drafts & Pending
+                  </h2>
                   <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/20">
                     {organizerDrafts.length}
                   </span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   {organizerDrafts.slice(0, 6).map((t) => (
-                    <OrganizerTournamentCard key={`draft-${t.id}`} tournament={t} />
+                    <OrganizerTournamentCard
+                      key={`draft-${t.id}`}
+                      tournament={t}
+                    />
                   ))}
                 </div>
               </section>
@@ -407,20 +478,48 @@ const Dashboard = () => {
             {/* Portfolio at a glance */}
             <div className="rounded-xl border border-slate-800 bg-slate-900 overflow-hidden">
               <div className="px-4 py-3 border-b border-slate-800/60">
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Portfolio</p>
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">
+                  Portfolio
+                </p>
               </div>
               <div className="divide-y divide-slate-800/60">
                 {[
-                  { label: "Open / Live",     value: organizerLiveCount,      accent: "text-emerald-400", dot: "bg-emerald-400" },
-                  { label: "Draft / Pending", value: organizerDrafts.length,  accent: "text-amber-400",   dot: "bg-amber-400" },
-                  { label: "Completed",       value: organizerCompletedCount, accent: "text-cyan-300",    dot: "bg-cyan-400" },
+                  {
+                    label: "Open / Live",
+                    value: organizerLiveCount,
+                    accent: "text-emerald-400",
+                    dot: "bg-emerald-400",
+                  },
+                  {
+                    label: "Draft / Pending",
+                    value: organizerDrafts.length,
+                    accent: "text-amber-400",
+                    dot: "bg-amber-400",
+                  },
+                  {
+                    label: "Completed",
+                    value: organizerCompletedCount,
+                    accent: "text-cyan-300",
+                    dot: "bg-cyan-400",
+                  },
                 ].map((row) => (
-                  <div key={row.label} className="flex items-center justify-between px-4 py-3">
+                  <div
+                    key={row.label}
+                    className="flex items-center justify-between px-4 py-3"
+                  >
                     <div className="flex items-center gap-2">
-                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${row.dot}`} />
-                      <span className="text-xs text-slate-400">{row.label}</span>
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full shrink-0 ${row.dot}`}
+                      />
+                      <span className="text-xs text-slate-400">
+                        {row.label}
+                      </span>
                     </div>
-                    <span className={`font-display text-xl font-bold tabular-nums ${row.accent}`}>{row.value}</span>
+                    <span
+                      className={`font-display text-xl font-bold tabular-nums ${row.accent}`}
+                    >
+                      {row.value}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -429,15 +528,24 @@ const Dashboard = () => {
             {/* Quick Actions */}
             <div className="rounded-xl border border-slate-800 bg-slate-900 overflow-hidden">
               <div className="px-4 py-3 border-b border-slate-800/60">
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Quick Actions</p>
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">
+                  Quick Actions
+                </p>
               </div>
               <div className="p-2">
                 {[
-                  { label: "Create a tournament",  to: "/auth/organizer/create-tournament", accent: true },
-                  { label: "Manage tournaments",   to: "/auth/organizer/tournaments" },
-                  { label: "Analytics",            to: "/auth/organizer/analytics" },
-                  { label: "Payouts",              to: "/auth/organizer/payouts" },
-                  { label: "Profile",              to: "/auth/organizer/profile" },
+                  {
+                    label: "Create a tournament",
+                    to: "/auth/organizer/create-tournament",
+                    accent: true,
+                  },
+                  {
+                    label: "Manage tournaments",
+                    to: "/auth/organizer/tournaments",
+                  },
+                  { label: "Analytics", to: "/auth/organizer/analytics" },
+                  { label: "Payouts", to: "/auth/organizer/payouts" },
+                  { label: "Profile", to: "/auth/organizer/profile" },
                 ].map((a) => (
                   <Link
                     key={a.to}
@@ -463,25 +571,29 @@ const Dashboard = () => {
   // ─── Player Dashboard ─────────────────────────────────────────────────────
 
   return (
-    <div className="px-4 sm:px-6 py-6 max-w-7xl mx-auto space-y-6">
-
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-10">
       {/* ── Hero ────────────────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-900">
-        {/* Ambient glows */}
-        <div className="absolute -top-16 -right-16 w-72 h-72 rounded-full bg-orange-500/12 blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-20 -left-20 w-80 h-80 rounded-full bg-violet-600/8 blur-3xl pointer-events-none" />
-        {/* Fine grid */}
-        <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(to_right,rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.025)_1px,transparent_1px)] bg-size-[48px_48px]" />
+      <div className="relative overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-950/55 backdrop-blur-xl">
+        <div className="absolute inset-0 bg-linear-to-br from-cyan-500/8 via-transparent to-orange-500/8 pointer-events-none" />
+        <div className="absolute -top-24 -right-12 w-72 h-72 rounded-full bg-cyan-500/12 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 left-0 w-72 h-72 rounded-full bg-orange-500/12 blur-3xl pointer-events-none" />
+        <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(148,163,184,0.045)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.045)_1px,transparent_1px)] bg-size-[46px_46px]" />
 
-        <div className="relative px-6 py-6 sm:px-8 sm:py-7">
+        <div className="relative px-5 py-6 sm:px-6 sm:py-7">
           <div className="flex flex-col sm:flex-row sm:items-start gap-6 justify-between">
             {/* Identity */}
             <div className="flex items-center gap-5">
               <div className="relative shrink-0">
                 <div className="w-16 h-16 rounded-full ring-2 ring-orange-500/40 ring-offset-2 ring-offset-slate-900 bg-slate-800 flex items-center justify-center text-xl font-bold text-white overflow-hidden">
-                  {profile?.avatarUrl
-                    ? <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover" />
-                    : initials}
+                  {profile?.avatarUrl ? (
+                    <img
+                      src={profile.avatarUrl}
+                      alt=""
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    initials
+                  )}
                 </div>
                 <div className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-slate-900" />
               </div>
@@ -521,14 +633,39 @@ const Dashboard = () => {
           {/* Stats strip */}
           <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-px bg-slate-800/60 rounded-xl overflow-hidden border border-slate-800/60">
             {[
-              { label: "Tournaments",  value: String(stats.joinedTournaments),  accent: "text-white" },
-              { label: "Total Wins",   value: String(stats.totalWins),           accent: "text-emerald-400" },
-              { label: "Prize Won",    value: stats.totalPrizeWon > 0 ? `GHS ${(stats.totalPrizeWon / 100).toFixed(2)}` : "GHS 0", accent: "text-amber-400" },
-              { label: "Checked In",  value: String(stats.checkedInCount),       accent: "text-orange-400" },
+              {
+                label: "Tournaments",
+                value: String(stats.joinedTournaments),
+                accent: "text-white",
+              },
+              {
+                label: "Total Wins",
+                value: String(stats.totalWins),
+                accent: "text-emerald-400",
+              },
+              {
+                label: "Prize Won",
+                value:
+                  stats.totalPrizeWon > 0
+                    ? `GHS ${(stats.totalPrizeWon / 100).toFixed(2)}`
+                    : "GHS 0",
+                accent: "text-amber-400",
+              },
+              {
+                label: "Checked In",
+                value: String(stats.checkedInCount),
+                accent: "text-orange-400",
+              },
             ].map((s) => (
               <div key={s.label} className="bg-slate-900 px-4 py-3">
-                <p className="text-[11px] text-slate-500 uppercase tracking-widest mb-1">{s.label}</p>
-                <p className={`font-display text-xl font-bold tabular-nums ${s.accent}`}>{s.value}</p>
+                <p className="text-[11px] text-slate-500 uppercase tracking-widest mb-1">
+                  {s.label}
+                </p>
+                <p
+                  className={`font-display text-xl font-bold tabular-nums ${s.accent}`}
+                >
+                  {s.value}
+                </p>
               </div>
             ))}
           </div>
@@ -537,11 +674,12 @@ const Dashboard = () => {
 
       {/* ── Main Grid ───────────────────────────────────────────────────── */}
       <div className="grid lg:grid-cols-[1fr_300px] gap-6">
-
         {/* Left: My Tournaments */}
         <section className="min-w-0">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-display text-lg font-bold text-white">My Tournaments</h2>
+            <h2 className="font-display text-lg font-bold text-white">
+              My Tournaments
+            </h2>
             <div className="flex items-center rounded-lg bg-slate-800/60 border border-slate-700/60 p-0.5">
               <button
                 onClick={() => setTournamentTab("active")}
@@ -581,16 +719,20 @@ const Dashboard = () => {
                 </div>
                 <div>
                   <p className="font-display text-sm font-bold text-slate-300 group-hover:text-white transition-colors">
-                    {activeRegistrations.length === 0 ? "Join a Tournament" : "Find More"}
+                    {activeRegistrations.length === 0
+                      ? "Join a Tournament"
+                      : "Find More"}
                   </p>
-                  <p className="text-xs text-slate-500 mt-0.5">Browse open tournaments</p>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Browse open tournaments
+                  </p>
                 </div>
               </Link>
             </div>
           ) : completedRegistrations.length > 0 ? (
-            <div className="space-y-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {completedRegistrations.map((reg) => (
-                <TournamentCard key={reg.id} reg={reg} />
+                <JoinedTournamentDetailsCard key={reg.id} reg={reg} />
               ))}
             </div>
           ) : (
@@ -608,7 +750,6 @@ const Dashboard = () => {
 
         {/* Right Sidebar */}
         <div className="space-y-4">
-
           {/* Calendar */}
           <CalendarWidget events={playerCalendarEvents} />
 
@@ -628,25 +769,40 @@ const Dashboard = () => {
             <div className="bg-slate-900 p-4 space-y-3">
               {/* Balance */}
               <div className="text-center py-1">
-                <p className="text-[11px] text-slate-500 uppercase tracking-widest mb-1">Total Balance</p>
-                <p className="font-display text-2xl font-bold text-white">{formatGhs(playerWallet?.totalBalance)}</p>
+                <p className="text-[11px] text-slate-500 uppercase tracking-widest mb-1">
+                  Total Balance
+                </p>
+                <p className="font-display text-2xl font-bold text-white">
+                  {formatGhs(playerWallet?.totalBalance)}
+                </p>
               </div>
 
               {/* Available / Pending */}
               <div className="grid grid-cols-2 gap-2">
                 <div className="rounded-lg border border-slate-800 px-3 py-2.5 text-center">
-                  <p className="text-[10px] text-slate-500 uppercase tracking-wide mb-0.5">Available</p>
-                  <p className="text-sm font-semibold text-emerald-300">{formatGhs(playerWallet?.availableBalance)}</p>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-wide mb-0.5">
+                    Available
+                  </p>
+                  <p className="text-sm font-semibold text-emerald-300">
+                    {formatGhs(playerWallet?.availableBalance)}
+                  </p>
                 </div>
                 <div className="rounded-lg border border-slate-800 px-3 py-2.5 text-center">
-                  <p className="text-[10px] text-slate-500 uppercase tracking-wide mb-0.5">Pending</p>
-                  <p className="text-sm font-semibold text-amber-300">{formatGhs(playerWallet?.pendingBalance)}</p>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-wide mb-0.5">
+                    Pending
+                  </p>
+                  <p className="text-sm font-semibold text-amber-300">
+                    {formatGhs(playerWallet?.pendingBalance)}
+                  </p>
                 </div>
               </div>
 
               {/* Quick Deposit */}
               <div className="space-y-1.5 pt-1">
-                <label className="text-xs text-slate-400" htmlFor="wallet-amount">
+                <label
+                  className="text-xs text-slate-400"
+                  htmlFor="wallet-amount"
+                >
                   Quick Deposit (GHS)
                 </label>
                 <div className="flex gap-2">
@@ -662,7 +818,9 @@ const Dashboard = () => {
                   />
                   <button
                     type="button"
-                    onClick={() => { void handleDeposit(); }}
+                    onClick={() => {
+                      void handleDeposit();
+                    }}
                     disabled={isDepositing}
                     className="shrink-0 rounded-lg bg-linear-to-r from-orange-500 to-amber-400 px-3 py-2 text-sm font-bold text-slate-950 hover:shadow-md hover:shadow-orange-500/20 disabled:opacity-60 transition-all"
                   >
@@ -687,14 +845,20 @@ const Dashboard = () => {
           {/* Quick Actions */}
           <div className="rounded-xl border border-slate-800 bg-slate-900 overflow-hidden">
             <div className="px-4 py-3 border-b border-slate-800/60">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Quick Actions</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">
+                Quick Actions
+              </p>
             </div>
             <div className="p-2">
               {[
-                { icon: Swords,    label: "Browse Tournaments", to: "/auth/player/join-tournament", accent: true },
-                { icon: Trophy,    label: "Leaderboard",        to: "/auth/leaderboard" },
-                { icon: Wallet,    label: "Wallet",             to: "/auth/wallet" },
-                { icon: BarChart2, label: "Friends & Teams",    to: "/auth/friends" },
+                {
+                  icon: Swords,
+                  label: "Browse Tournaments",
+                  to: "/auth/player/join-tournament",
+                  accent: true,
+                },
+                { icon: Trophy, label: "Leaderboard", to: "/auth/leaderboard" },
+                { icon: Wallet, label: "Wallet", to: "/auth/wallet" },
               ].map(({ icon: Icon, label, to, accent }) => (
                 <Link
                   key={to}
@@ -714,7 +878,6 @@ const Dashboard = () => {
               ))}
             </div>
           </div>
-
         </div>
       </div>
     </div>
