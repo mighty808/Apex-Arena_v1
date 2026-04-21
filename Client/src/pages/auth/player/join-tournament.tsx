@@ -95,13 +95,14 @@ function ActiveTournamentCard({
       onClick={() => onView(registration.tournamentId)}
     >
       {/* Header area */}
-      <div className="relative h-28 overflow-hidden shrink-0">
+      <div className="relative aspect-4/3 overflow-hidden shrink-0">
         <div className={`absolute inset-0 bg-linear-to-br ${meta.bg}`} />
         <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.025)_1px,transparent_1px)] bg-size-[32px_32px]" />
         <div className="absolute inset-0 flex items-center justify-center">
           <Swords className="w-12 h-12 text-white/5" />
         </div>
-        <div className="absolute inset-0 bg-linear-to-t from-slate-900/80 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-br from-orange-600/40 via-transparent to-violet-700/40" />
+        <div className="absolute inset-0 bg-linear-to-t from-slate-900 via-slate-900/40 to-transparent" />
 
         {/* Status chip */}
         <div className="absolute top-2.5 right-2.5">
@@ -149,7 +150,7 @@ function ActiveTournamentCard({
 // ── Main page ─────────────────────────────────────────────────────────────────
 const JoinTournament = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<ActiveTab>("browse");
+  const [activeTab, setActiveTab] = useState<ActiveTab>("registrations");
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [myRegistrations, setMyRegistrations] = useState<MyTournamentRegistration[]>([]);
   const [registrationByTournament, setRegistrationByTournament] = useState<Record<string, string>>({});
@@ -277,9 +278,9 @@ const JoinTournament = () => {
   const activeTournaments = myRegistrations.filter((r) => ACTIVE_TOURNAMENT_STATUSES.has(r.tournamentStatus));
 
   const TABS: { id: ActiveTab; label: string; count?: number }[] = [
-    { id: "browse",         label: "Browse"           },
     { id: "registrations",  label: "My Registrations", count: isLoadingRegistrations ? undefined : upcomingRegistrations.length },
     { id: "my-tournaments", label: "Active",           count: isLoadingRegistrations ? undefined : activeTournaments.length },
+    { id: "browse",         label: "Browse"           },
   ];
 
   return (
