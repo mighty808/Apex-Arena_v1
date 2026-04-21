@@ -85,28 +85,29 @@ export function TournamentCard({
               alt={tournament.title}
               className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
-            <div className="absolute inset-0 bg-linear-to-br from-orange-500/25 via-transparent to-violet-600/25" />
+            <div className="absolute inset-0 bg-linear-to-br from-orange-600/40 via-transparent to-violet-700/40" />
+          </>
+        ) : tournament.game?.logoUrl ? (
+          <>
+            <FadeImage
+              src={tournament.game.logoUrl}
+              alt={tournament.title}
+              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            />
+            <div className="absolute inset-0 bg-linear-to-br from-orange-600/40 via-transparent to-violet-700/40" />
           </>
         ) : (
           <>
             <div className="absolute inset-0 bg-linear-to-br from-orange-950 via-slate-900 to-violet-950" />
             <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-size-[32px_32px]" />
             <div className="absolute inset-0 flex items-center justify-center">
-              {tournament.game?.logoUrl ? (
-                <img
-                  src={tournament.game.logoUrl}
-                  alt=""
-                  className="w-20 h-20 object-contain opacity-20"
-                />
-              ) : (
-                <Gamepad2 className="w-14 h-14 text-slate-700" />
-              )}
+              <Gamepad2 className="w-14 h-14 text-slate-700" />
             </div>
           </>
         )}
 
         {/* Bottom fade */}
-        <div className="absolute inset-0 bg-linear-to-t from-slate-900/95 via-slate-900/20 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-slate-900 via-slate-900/40 to-transparent" />
 
         {/* Tournament status chip — top right */}
         <div className="absolute top-2.5 right-2.5">

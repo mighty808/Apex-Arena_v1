@@ -53,48 +53,47 @@ export function RegistrationCard({
     registration.tournamentBannerUrl ??
     null;
 
-  const hasImage = !!imageUrl;
-
   return (
     <div
       className="group flex flex-col overflow-hidden rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-600 hover:shadow-xl hover:shadow-black/40 transition-all cursor-pointer"
       onClick={() => onOpenDetails(registration.tournamentId)}
     >
-      {/* ── Cover image / styled header ─────────────────────── */}
+      {/* ── Cover image ─────────────────────────────────────── */}
       <div className="relative aspect-4/3 overflow-hidden shrink-0">
         <div className="absolute inset-0 bg-slate-900" />
 
-        {hasImage ? (
+        {imageUrl ? (
           <>
             <FadeImage
               src={imageUrl}
               alt={registration.tournamentTitle}
               className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
-            <div className="absolute inset-0 bg-linear-to-br from-orange-500/25 via-transparent to-violet-600/25" />
+            <div className="absolute inset-0 bg-linear-to-br from-orange-600/40 via-transparent to-violet-700/40" />
+          </>
+        ) : registration.tournamentGameLogoUrl ? (
+          <>
+            <FadeImage
+              src={registration.tournamentGameLogoUrl}
+              alt={registration.tournamentTitle}
+              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            />
+            <div className="absolute inset-0 bg-linear-to-br from-orange-600/40 via-transparent to-violet-700/40" />
           </>
         ) : (
           <>
             <div className="absolute inset-0 bg-linear-to-br from-orange-950 via-slate-900 to-violet-950" />
             <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.025)_1px,transparent_1px)] bg-size-[32px_32px]" />
             <div className="absolute inset-0 flex items-center justify-center">
-              {registration.tournamentGameLogoUrl ? (
-                <img
-                  src={registration.tournamentGameLogoUrl}
-                  alt=""
-                  className="w-20 h-20 object-contain opacity-20"
-                />
-              ) : (
-                <Gamepad2 className="w-14 h-14 text-slate-700" />
-              )}
+              <Gamepad2 className="w-14 h-14 text-slate-700" />
             </div>
           </>
         )}
 
         {/* Bottom fade */}
-        <div className="absolute inset-0 bg-linear-to-t from-slate-900/95 via-slate-900/20 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-slate-900 via-slate-900/40 to-transparent" />
 
-        {/* Tournament status chip — top right */}
+        {/* Tournament status — top right */}
         <div className="absolute top-2.5 right-2.5">
           <span className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full bg-slate-950/80 backdrop-blur-sm border border-white/10 ${tourMeta.text}`}>
             <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${tourMeta.dot}`} />
@@ -102,7 +101,7 @@ export function RegistrationCard({
           </span>
         </div>
 
-        {/* Registration status chip — bottom left */}
+        {/* Registration status — bottom left */}
         <div className="absolute bottom-2.5 left-3">
           <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border backdrop-blur-sm ${regMeta.cls}`}>
             {regMeta.label}
@@ -113,7 +112,7 @@ export function RegistrationCard({
       {/* ── Content ─────────────────────────────────────────── */}
       <div className="px-4 pt-3 pb-4 flex flex-col flex-1 gap-3">
         <div>
-          <h4 className="font-display text-sm font-bold text-white leading-tight line-clamp-2 group-hover:text-orange-300 transition-colors">
+          <h4 className="font-display text-sm font-bold text-white leading-tight truncate group-hover:text-orange-300 transition-colors">
             {registration.tournamentTitle}
           </h4>
           <p className="text-[11px] text-slate-500 mt-0.5 truncate">
