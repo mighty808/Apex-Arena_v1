@@ -27,7 +27,6 @@ import TournamentDetail from "./pages/auth/player/tournament-detail";
 import TransactionsPage from "./pages/auth/transactions";
 import WalletPage from "./pages/auth/WalletPage";
 import LeaderboardPage from "./pages/auth/LeaderboardPage";
-import FriendsPage from "./pages/auth/FriendsPage";
 import NotificationsPage from "./pages/auth/NotificationsPage";
 import AnalyticsPage from "./pages/auth/organizer/AnalyticsPage";
 import PayoutsPage from "./pages/auth/organizer/PayoutsPage";
@@ -75,7 +74,6 @@ const App = () => {
           <Route path="transactions" element={<TransactionsPage />} />
           <Route path="wallet" element={<WalletPage />} />
           <Route path="leaderboard" element={<LeaderboardPage />} />
-          <Route path="friends" element={<FriendsPage />} />
           <Route path="notifications" element={<NotificationsPage />} />
 
           {/* Player-only routes */}

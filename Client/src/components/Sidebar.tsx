@@ -15,7 +15,6 @@ import {
   Swords,
   X,
   Wallet,
-  Users,
   BarChart2,
   DollarSign,
 } from "lucide-react";
@@ -28,7 +27,6 @@ const playerNavItems = [
   { to: "/auth/player/join-tournament", icon: Swords,     label: "Tournaments"              },
   { to: "/auth/leaderboard",            icon: Trophy,     label: "Leaderboard"              },
   { to: "/auth/wallet",                 icon: Wallet,     label: "Wallet"                   },
-  { to: "/auth/friends",                icon: Users,      label: "Friends"                  },
   { to: "/auth/player/profile",         icon: UserCircle, label: "Profile"                  },
   { to: "/auth/notifications",          icon: Bell,       label: "Notifications"            },
 ] as const;
