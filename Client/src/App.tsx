@@ -1,4 +1,5 @@
 import { Routes, Route, Outlet, useLocation } from "react-router-dom";
+import { useEffect } from "react";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import PageTransition from "./components/PageTransition";
@@ -12,6 +13,11 @@ import Dashboard from "./pages/auth/Dashboard";
 import VerifyOtp from "./pages/public/verify-otp";
 import PaymentCallback from "./pages/public/payment-callback.tsx";
 import DepositResult from "./pages/public/deposit-result";
+import Support from "./pages/public/support";
+import HelpCenter from "./pages/public/help-center";
+import Rules from "./pages/public/rules";
+import DisputeResolution from "./pages/public/dispute-resolution";
+import ContactUs from "./pages/public/contact-us";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RoleRoute from "./components/RoleRoute";
 
@@ -50,66 +56,90 @@ const PublicLayout = () => {
   );
 };
 
+const ScrollToTop = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [location.pathname]);
+
+  return null;
+};
+
 const App = () => {
   return (
-    <Routes>
-      {/* Public pages with Navbar + Footer */}
-      <Route element={<PublicLayout />}>
-        <Route index element={<Landing />} />
-        <Route path="signup" element={<Register />} />
-        <Route path="login" element={<Login />} />
-        <Route path="forgot" element={<ForgotPassword />} />
-        <Route path="verify-otp" element={<VerifyOtp />} />
-        <Route path="payment/callback" element={<PaymentCallback />} />
-        <Route path="deposit/success" element={<DepositResult />} />
-        <Route path="deposit/failed" element={<DepositResult />} />
-        <Route path="deposit/pending" element={<DepositResult />} />
-        <Route path="*" element={<NotFound />} />
-      </Route>
+    <>
+      <ScrollToTop />
+      <Routes>
+        {/* Public pages with Navbar + Footer */}
+        <Route element={<PublicLayout />}>
+          <Route index element={<Landing />} />
+          <Route path="support" element={<Support />} />
+          <Route path="support/help-center" element={<HelpCenter />} />
+          <Route path="support/rules" element={<Rules />} />
+          <Route
+            path="support/dispute-resolution"
+            element={<DisputeResolution />}
+          />
+          <Route path="support/contact-us" element={<ContactUs />} />
+          <Route path="signup" element={<Register />} />
+          <Route path="login" element={<Login />} />
+          <Route path="forgot" element={<ForgotPassword />} />
+          <Route path="verify-otp" element={<VerifyOtp />} />
+          <Route path="payment/callback" element={<PaymentCallback />} />
+          <Route path="deposit/success" element={<DepositResult />} />
+          <Route path="deposit/failed" element={<DepositResult />} />
+          <Route path="deposit/pending" element={<DepositResult />} />
+          <Route path="*" element={<NotFound />} />
+        </Route>
 
-      {/* Authenticated pages with Sidebar layout */}
-      <Route path="auth" element={<ProtectedRoute />}>
-        <Route element={<DashboardLayout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="transactions" element={<TransactionsPage />} />
-          <Route path="wallet" element={<WalletPage />} />
-          <Route path="leaderboard" element={<LeaderboardPage />} />
-          <Route path="notifications" element={<NotificationsPage />} />
+        {/* Authenticated pages with Sidebar layout */}
+        <Route path="auth" element={<ProtectedRoute />}>
+          <Route element={<DashboardLayout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="transactions" element={<TransactionsPage />} />
+            <Route path="wallet" element={<WalletPage />} />
+            <Route path="leaderboard" element={<LeaderboardPage />} />
+            <Route path="notifications" element={<NotificationsPage />} />
 
-          {/* Player-only routes */}
-          <Route element={<RoleRoute role="player" />}>
-            <Route path="player/profile" element={<PlayerProfile />} />
-            <Route path="player/join-tournament" element={<JoinTournament />} />
-            <Route path="tournaments" element={<JoinTournament />} />
-            <Route
-              path="tournaments/:tournamentId"
-              element={<TournamentDetail />}
-            />
-            <Route path="become-organizer" element={<BecomeOrganizer />} />
-          </Route>
+            {/* Player-only routes */}
+            <Route element={<RoleRoute role="player" />}>
+              <Route path="player/profile" element={<PlayerProfile />} />
+              <Route
+                path="player/join-tournament"
+                element={<JoinTournament />}
+              />
+              <Route path="tournaments" element={<JoinTournament />} />
+              <Route
+                path="tournaments/:tournamentId"
+                element={<TournamentDetail />}
+              />
+              <Route path="become-organizer" element={<BecomeOrganizer />} />
+            </Route>
 
-          {/* Organizer-only routes */}
-          <Route element={<RoleRoute role="organizer" />}>
-            <Route path="organizer/profile" element={<OrganizerProfile />} />
-            <Route
-              path="organizer/create-tournament"
-              element={<CreateTournament />}
-            />
-            <Route
-              path="organizer/tournaments/:tournamentId/edit"
-              element={<CreateTournament />}
-            />
-            <Route path="organizer/tournaments" element={<MyTournaments />} />
-            <Route
-              path="organizer/tournaments/:tournamentId"
-              element={<TournamentManage />}
-            />
-            <Route path="organizer/analytics" element={<AnalyticsPage />} />
-            <Route path="organizer/payouts" element={<PayoutsPage />} />
+            {/* Organizer-only routes */}
+            <Route element={<RoleRoute role="organizer" />}>
+              <Route path="organizer/profile" element={<OrganizerProfile />} />
+              <Route
+                path="organizer/create-tournament"
+                element={<CreateTournament />}
+              />
+              <Route
+                path="organizer/tournaments/:tournamentId/edit"
+                element={<CreateTournament />}
+              />
+              <Route path="organizer/tournaments" element={<MyTournaments />} />
+              <Route
+                path="organizer/tournaments/:tournamentId"
+                element={<TournamentManage />}
+              />
+              <Route path="organizer/analytics" element={<AnalyticsPage />} />
+              <Route path="organizer/payouts" element={<PayoutsPage />} />
+            </Route>
           </Route>
         </Route>
-      </Route>
-    </Routes>
+      </Routes>
+    </>
   );
 };
 
