@@ -143,7 +143,7 @@ const Landing = () => {
               <motion.h1 {...fade(0.05)} className="font-display text-5xl sm:text-6xl lg:text-6xl font-bold tracking-tight leading-[1.06] mt-6">
                 Build your legacy in a
                 <span className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-400 to-cyan-300">
-                  verified tournament arena
+                  verified tournament
                 </span>
               </motion.h1>
 
