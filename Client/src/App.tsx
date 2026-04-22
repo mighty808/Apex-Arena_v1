@@ -18,6 +18,10 @@ import HelpCenter from "./pages/public/help-center";
 import Rules from "./pages/public/rules";
 import DisputeResolution from "./pages/public/dispute-resolution";
 import ContactUs from "./pages/public/contact-us";
+import About from "./pages/public/about";
+import Careers from "./pages/public/careers";
+import PrivacyPolicy from "./pages/public/privacy-policy";
+import TermsOfService from "./pages/public/terms-of-service";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RoleRoute from "./components/RoleRoute";
 
@@ -82,6 +86,10 @@ const App = () => {
             element={<DisputeResolution />}
           />
           <Route path="support/contact-us" element={<ContactUs />} />
+          <Route path="about" element={<About />} />
+          <Route path="careers" element={<Careers />} />
+          <Route path="privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="terms-of-service" element={<TermsOfService />} />
           <Route path="signup" element={<Register />} />
           <Route path="login" element={<Login />} />
           <Route path="forgot" element={<ForgotPassword />} />
