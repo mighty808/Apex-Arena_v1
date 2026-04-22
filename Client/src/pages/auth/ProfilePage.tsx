@@ -12,7 +12,6 @@ import {
   X,
   Plus,
   Trash2,
-  Trophy,
 } from "lucide-react";
 import { useAuth } from "../../lib/auth-context";
 import { authService } from "../../services/auth.service";
@@ -235,7 +234,6 @@ const ProfilePage = () => {
   const [passwordAlert, setPasswordAlert] = useState<{ type: "success" | "error"; msg: string } | null>(null);
 
   const [registrations, setRegistrations] = useState<MyTournamentRegistration[]>([]);
-  const [statsLoading, setStatsLoading] = useState(false);
 
   const hasFetched = useRef(false);
 
@@ -331,10 +329,9 @@ const ProfilePage = () => {
     hasFetched.current = true;
 
     const load = async () => {
-      setStatsLoading(true);
       tournamentService.getMyRegistrations()
-        .then((regs) => { setRegistrations(regs); setStatsLoading(false); })
-        .catch(() => setStatsLoading(false));
+        .then((regs) => { setRegistrations(regs); })
+        .catch(() => {});
 
       try {
         const [profileRes, gamesRes] = await Promise.all([

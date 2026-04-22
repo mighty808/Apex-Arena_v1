@@ -334,7 +334,6 @@ const TournamentDetail = () => {
   const regMeta = myRegistration ? (REG_STATUS_META[myRegistration.status] ?? null) : null;
 
   const imageUrl = tournament.thumbnailUrl ?? tournament.bannerUrl ?? null;
-  const hasImage = !!imageUrl;
 
   const prizeGhs = tournament.prizePool && tournament.prizePool > 0
     ? formatPrize(tournament.prizePool, tournament.currency)
