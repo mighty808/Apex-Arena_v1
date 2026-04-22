@@ -105,10 +105,10 @@ const Footer = () => {
           </p>
           <ul className="space-y-2.5">
             {[
-              { label: "About", to: "/" },
-              { label: "Careers", to: "/" },
-              { label: "Privacy Policy", to: "/" },
-              { label: "Terms of Service", to: "/" },
+              { label: "About", to: "/about" },
+              { label: "Careers", to: "/careers" },
+              { label: "Privacy Policy", to: "/privacy-policy" },
+              { label: "Terms of Service", to: "/terms-of-service" },
             ].map((l) => (
               <li key={l.label}>
                 <Link
