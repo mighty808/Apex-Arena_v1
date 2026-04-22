@@ -99,7 +99,7 @@ const Sidebar = ({ mobileOpen, onMobileClose }: SidebarProps) => {
 
         {/* ── Logo ─────────────────────────────────────────────── */}
         <div className="relative flex items-center justify-between px-4 py-4 border-b border-slate-800/70 shrink-0">
-          <div className="flex items-center gap-2.5 min-w-0">
+          <NavLink to="/" className="flex items-center gap-2.5 min-w-0">
             <div className="w-8 h-8 rounded-lg overflow-hidden bg-white p-0.5 shrink-0 shadow-md shadow-orange-500/20">
               <img src="/apex-logo.png" alt="Apex Arenas" className="w-full h-full object-contain" />
             </div>
@@ -108,7 +108,7 @@ const Sidebar = ({ mobileOpen, onMobileClose }: SidebarProps) => {
                 APEX ARENAS
               </span>
             )}
-          </div>
+          </NavLink>
           {isMobile && (
             <button
               onClick={onMobileClose}
