@@ -142,7 +142,7 @@ const Landing = () => {
 
               <motion.h1 {...fade(0.05)} className="font-display text-[2.2rem] sm:text-5xl lg:text-[2.2rem] xl:text-[2.8rem] font-bold tracking-tight leading-[1.1] mt-5">
                 <span className="block">Build your legacy in</span>
-                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-400 to-cyan-300">
+                <span className="block text-transparent bg-clip-text bg-linear-to-r from-cyan-300 via-sky-400 to-cyan-300">
                   a verified tournament
                 </span>
               </motion.h1>
@@ -154,7 +154,7 @@ const Landing = () => {
               <motion.div {...fade(0.15)} className="flex flex-col sm:flex-row gap-3 mt-6">
                 <Link
                   to="/signup"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-orange-400 to-amber-400 text-slate-950 text-sm font-bold hover:shadow-xl hover:shadow-orange-500/25 hover:-translate-y-px transition-all duration-200"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-linear-to-r from-orange-400 to-amber-400 text-slate-950 text-sm font-bold hover:shadow-xl hover:shadow-orange-500/25 hover:-translate-y-px transition-all duration-200"
                 >
                   Start competing free <ArrowRight className="w-4 h-4" />
                 </Link>
@@ -252,7 +252,7 @@ const Landing = () => {
                     >
                       <div className="relative h-44 overflow-hidden">
                         <img src={img} alt={t.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent" />
+                        <div className="absolute inset-0 bg-linear-to-t from-slate-900 via-slate-900/40 to-transparent" />
                         {chip && (
                           <div className="absolute top-3 left-3">
                             <span className={`text-[11px] px-2 py-1 rounded-full border font-semibold backdrop-blur-sm ${chip.cls}`}>
@@ -294,7 +294,7 @@ const Landing = () => {
                 <p className="text-sm text-slate-500 mt-2">Sign up to get notified when new tournaments go live.</p>
                 <Link
                   to="/signup"
-                  className="inline-flex items-center gap-2 mt-6 px-6 py-2.5 rounded-xl bg-gradient-to-r from-orange-400 to-amber-400 text-slate-950 text-sm font-bold hover:shadow-lg hover:shadow-orange-500/20 transition-all"
+                  className="inline-flex items-center gap-2 mt-6 px-6 py-2.5 rounded-xl bg-linear-to-r from-orange-400 to-amber-400 text-slate-950 text-sm font-bold hover:shadow-lg hover:shadow-orange-500/20 transition-all"
                 >
                   Create account <ArrowRight className="w-4 h-4" />
                 </Link>
@@ -319,7 +319,7 @@ const Landing = () => {
           </motion.div>
 
           {/* ── Featured trio mosaic — hidden on mobile, too complex ── */}
-          <motion.div {...fade(0.05)} className="hidden sm:grid grid-cols-3 grid-rows-2 gap-2 h-[420px] mb-3 rounded-2xl overflow-hidden border border-slate-800/80">
+          <motion.div {...fade(0.05)} className="hidden sm:grid grid-cols-3 grid-rows-2 gap-2 h-105 mb-3 rounded-2xl overflow-hidden border border-slate-800/80">
             {/* FC 26 — large left (spans 2 cols × 2 rows) */}
             <div className="col-span-2 row-span-2 group relative overflow-hidden cursor-pointer">
               <img
@@ -327,8 +327,8 @@ const Landing = () => {
                 alt={FEATURED_TRIO[0].title}
                 className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/30 to-transparent" />
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent to-slate-950/40" />
+              <div className="absolute inset-0 bg-linear-to-t from-slate-950 via-slate-900/30 to-transparent" />
+              <div className="absolute inset-0 bg-linear-to-r from-transparent to-slate-950/40" />
               <div className="absolute bottom-5 left-5">
                 <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-cyan-300 bg-cyan-500/15 border border-cyan-500/25 px-2 py-0.5 rounded-full mb-2">
                   {FEATURED_TRIO[0].tag}
@@ -350,7 +350,7 @@ const Landing = () => {
                 alt={FEATURED_TRIO[1].title}
                 className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/40 to-transparent" />
+              <div className="absolute inset-0 bg-linear-to-t from-slate-950 via-slate-900/40 to-transparent" />
               <div className="absolute bottom-3 left-3 right-3">
                 <p className="text-[9px] font-bold uppercase tracking-widest text-orange-300">{FEATURED_TRIO[1].tag}</p>
                 <h4 className="font-display text-base font-bold text-white leading-tight">{FEATURED_TRIO[1].title}</h4>
@@ -365,7 +365,7 @@ const Landing = () => {
                 alt={FEATURED_TRIO[2].title}
                 className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/40 to-transparent" />
+              <div className="absolute inset-0 bg-linear-to-t from-slate-950 via-slate-900/40 to-transparent" />
               <div className="absolute bottom-3 left-3 right-3">
                 <p className="text-[9px] font-bold uppercase tracking-widest text-cyan-300">{FEATURED_TRIO[2].tag}</p>
                 <h4 className="font-display text-base font-bold text-white leading-tight">{FEATURED_TRIO[2].title}</h4>
@@ -382,7 +382,7 @@ const Landing = () => {
                 style={{ aspectRatio: "3/4" }}
               >
                 <img src={g.img} alt={g.title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-t from-slate-950 via-slate-950/50 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 p-3.5">
                   <p className="text-[10px] text-cyan-300 font-medium uppercase tracking-wider">{g.tag}</p>
                   <p className="font-display text-sm font-bold text-white leading-tight mt-0.5">{g.title}</p>
@@ -404,7 +404,7 @@ const Landing = () => {
             <p className="text-xs font-semibold text-cyan-400 uppercase tracking-[0.2em] mb-2.5">Why Apex Arenas</p>
             <h2 className="font-display text-3xl sm:text-5xl font-bold text-white tracking-tight">
               Built for players who{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-sky-400">
+              <span className="text-transparent bg-clip-text bg-linear-to-r from-cyan-300 to-sky-400">
                 expect to get paid
               </span>
             </h2>
@@ -445,7 +445,7 @@ const Landing = () => {
               <motion.div key={s.n} {...fade(i * 0.07)}
                 className="relative rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6 overflow-hidden"
               >
-                <p className="font-display text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-b from-cyan-500/40 to-transparent">{s.n}</p>
+                <p className="font-display text-6xl font-bold text-transparent bg-clip-text bg-linear-to-b from-cyan-500/40 to-transparent">{s.n}</p>
                 <h3 className="font-display text-lg font-bold text-white mt-2">{s.title}</h3>
                 <p className="text-sm text-slate-400 mt-2 leading-relaxed">{s.desc}</p>
                 {i < STEPS.length - 1 && (
@@ -501,7 +501,7 @@ const Landing = () => {
             <div className="flex flex-col sm:flex-row justify-center gap-3 mt-7 sm:mt-8">
               <Link
                 to="/signup"
-                className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-gradient-to-r from-orange-400 to-amber-400 text-slate-950 text-sm sm:text-base font-bold hover:shadow-2xl hover:shadow-orange-500/25 hover:-translate-y-px transition-all duration-200"
+                className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-linear-to-r from-orange-400 to-amber-400 text-slate-950 text-sm sm:text-base font-bold hover:shadow-2xl hover:shadow-orange-500/25 hover:-translate-y-px transition-all duration-200"
               >
                 Start competing free <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
               </Link>
