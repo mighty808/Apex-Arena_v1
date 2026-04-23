@@ -245,13 +245,8 @@ export default function AdminDashboard() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-10">
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-950/55 backdrop-blur-xl">
-        <div className="absolute inset-0 bg-linear-to-br from-cyan-500/8 via-transparent to-amber-500/8 pointer-events-none" />
-        <div className="absolute -top-24 -right-12 w-72 h-72 rounded-full bg-cyan-500/12 blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 left-0 w-72 h-72 rounded-full bg-amber-500/12 blur-3xl pointer-events-none" />
-        <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(148,163,184,0.045)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.045)_1px,transparent_1px)] bg-size-[46px_46px]" />
-
-        <div className="relative p-5 sm:p-6">
+      <div className="border-b border-slate-800">
+        <div className="p-5 sm:p-6">
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div>
               <p className="text-xs text-slate-500 uppercase tracking-widest mb-1">
