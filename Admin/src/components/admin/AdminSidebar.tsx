@@ -17,6 +17,7 @@ import {
   X,
   AlertTriangle,
 } from "lucide-react";
+
 import { useEffect, useRef, useState } from "react";
 import { useAdminAuth } from "../../lib/admin-auth-context";
 
@@ -24,7 +25,7 @@ import { useAdminAuth } from "../../lib/admin-auth-context";
 
 const NAV_GROUPS = [
   {
-    label: "Platform",
+    label: "",
     items: [
       { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true },
       { to: "/admin/users", icon: Users, label: "Users" },
@@ -32,26 +33,13 @@ const NAV_GROUPS = [
       { to: "/admin/games", icon: Gamepad2, label: "Games" },
       { to: "/admin/game-requests", icon: Puzzle, label: "Game Requests" },
       { to: "/admin/disputes", icon: AlertTriangle, label: "Disputes" },
-    ],
-  },
-  {
-    label: "Finance",
-    items: [
       { to: "/admin/payouts", icon: Wallet, label: "Payouts" },
       { to: "/admin/escrow", icon: Lock, label: "Escrow" },
-    ],
-  },
-  {
-    label: "System",
-    items: [
       { to: "/admin/scheduler", icon: Clock, label: "Scheduler" },
       { to: "/admin/audit-logs", icon: FileText, label: "Audit Logs" },
       { to: "/admin/admins", icon: ShieldCheck, label: "Admins" },
+      { to: "/admin/profile", icon: UserCircle, label: "Profile" },
     ],
-  },
-  {
-    label: "Account",
-    items: [{ to: "/admin/profile", icon: UserCircle, label: "Profile" }],
   },
 ] as const;
 
@@ -126,7 +114,7 @@ const AdminSidebar = ({ mobileOpen, onMobileClose }: AdminSidebarProps) => {
       >
         {NAV_GROUPS.map((group, index) => (
           <div key={group.label}>
-            {(!collapsed || isMobile) && (
+            {(!collapsed || isMobile) && group.label && (
               <p
                 className={`px-2.5 mb-1 text-[10px] font-bold text-slate-600 uppercase tracking-widest ${index === 0 ? "mt-1" : ""}`}
               >
