@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   AlertCircle,
   CheckCircle2,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Filter,
@@ -171,7 +170,7 @@ const JoinTournament = () => {
   const [withdrawReasonError, setWithdrawReasonError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [statsOpen, setStatsOpen] = useState(false);
+  const [] = useState(false);
 
   const hasFetchedGames = useRef(false);
 
