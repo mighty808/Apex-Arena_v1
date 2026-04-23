@@ -425,7 +425,7 @@ const Dashboard = () => {
               </div>
 
               {organizerActiveList.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {organizerActivePreview.map((t) => (
                     <OrganizerTournamentCard key={t.id} tournament={t} />
                   ))}
@@ -461,7 +461,7 @@ const Dashboard = () => {
                     {organizerDrafts.length}
                   </span>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {organizerDrafts.slice(0, 6).map((t) => (
                     <OrganizerTournamentCard
                       key={`draft-${t.id}`}
