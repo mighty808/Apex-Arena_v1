@@ -187,7 +187,7 @@ const Login = () => {
   };
 
   return (
-    <div className="relative min-h-screen bg-slate-950 flex items-center justify-center py-12 px-4 overflow-hidden">
+    <div className="relative bg-slate-950 flex items-start justify-center py-24 px-4 overflow-hidden">
       {/* Background glows */}
       <div className="absolute inset-0 pointer-events-none" style={{background:"radial-gradient(ellipse 60% 50% at -10% 0%, rgba(249,115,22,0.12), transparent)"}} />
       <div className="absolute inset-0 pointer-events-none" style={{background:"radial-gradient(ellipse 50% 60% at 110% 100%, rgba(139,92,246,0.10), transparent)"}} />
@@ -199,11 +199,11 @@ const Login = () => {
       <div className="relative w-full max-w-md">
       <form
         onSubmit={handleSubmit}
-        className="rounded-2xl border border-slate-800 bg-slate-900/75 backdrop-blur-sm shadow-2xl shadow-black/50 p-8 font-body"
+        className="rounded-2xl border border-slate-800 bg-slate-900/75 backdrop-blur-sm shadow-2xl shadow-black/50 p-6 sm:p-8 font-body"
         autoComplete="off"
       >
         {/* Logo */}
-        <div className="flex items-center justify-center mb-8">
+        <div className="flex items-center justify-center mb-5">
           <Link to="/" className="flex items-center space-x-2">
             <div className="w-10 h-10 rounded-lg overflow-hidden bg-white p-0.5 shrink-0">
               <img src="/apex-logo.png" alt="Apex Arenas" className="w-full h-full object-contain" />
@@ -214,10 +214,10 @@ const Login = () => {
           </Link>
         </div>
 
-        <h1 className="font-display text-3xl font-bold text-center mb-2 text-white">
+        <h1 className="font-display text-3xl font-bold text-center mb-1.5 text-white">
           Welcome Back
         </h1>
-        <p className="text-center text-slate-300 text-sm mb-8">
+        <p className="text-center text-slate-300 text-sm mb-6">
           Log in to your account to continue
         </p>
 
@@ -227,7 +227,7 @@ const Login = () => {
           </div>
         )}
 
-        <div className="space-y-5">
+        <div className="space-y-4">
           {/* Email */}
           <div>
             <label
@@ -307,7 +307,7 @@ const Login = () => {
         <motion.button
           type="submit"
           disabled={isLoading}
-          className="mt-8 w-full py-3 rounded-lg bg-linear-to-r from-orange-400 to-amber-400 text-slate-950 font-semibold text-base shadow hover:shadow-lg hover:shadow-orange-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className="mt-5 w-full py-3 rounded-lg bg-linear-to-r from-orange-400 to-amber-400 text-slate-950 font-semibold text-base shadow hover:shadow-lg hover:shadow-orange-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           whileHover={reduceMotion || isLoading ? undefined : { y: -1 }}
           whileTap={reduceMotion || isLoading ? undefined : { scale: 0.98 }}
         >
@@ -328,7 +328,7 @@ const Login = () => {
         )}
 
         {/* Divider */}
-        <div className="my-6 flex items-center">
+        <div className="my-5 flex items-center">
           <div className="flex-1 border-t border-slate-700"></div>
           <span className="px-4 text-sm text-slate-400">Or</span>
           <div className="flex-1 border-t border-slate-700"></div>
@@ -373,7 +373,7 @@ const Login = () => {
         )}
 
         {/* Sign Up Link */}
-        <div className="mt-6 text-center">
+        <div className="mt-5 text-center">
           <p className="text-sm text-slate-300">
             Don&apos;t have an account?{" "}
             <Link
