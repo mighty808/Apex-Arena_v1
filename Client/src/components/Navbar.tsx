@@ -42,7 +42,7 @@ const Navbar = () => {
         { label: "Leaderboard", to: "/auth/leaderboard" },
       ]
     : [
-        { label: "Tournaments", to: "/login" },
+        { label: "Tournaments", to: "/tournaments" },
         { label: "Leaderboard", to: "/login" },
       ];
 
