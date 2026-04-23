@@ -381,16 +381,11 @@ export default function UserManagement() {
       )}
 
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-950/55 backdrop-blur-xl">
-        <div className="absolute inset-0 bg-linear-to-br from-blue-500/8 via-transparent to-transparent pointer-events-none" />
-        <div className="absolute top-0 right-0 w-80 h-40 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(148,163,184,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.04)_1px,transparent_1px)] bg-size-[48px_48px]" />
-        <div className="relative px-4 sm:px-6 py-8">
+      <div className="border-b border-slate-800">
+        <div className="px-4 sm:px-6 py-5">
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-blue-500/15 border border-blue-500/20 flex items-center justify-center shrink-0">
-                <Users className="w-6 h-6 text-blue-400" />
-              </div>
+            <div className="flex items-center gap-3">
+              <Users className="w-5 h-5 text-slate-400 shrink-0" />
               <div>
                 <h1 className="text-2xl font-display font-bold text-white">
                   User Management
