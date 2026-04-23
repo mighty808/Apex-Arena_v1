@@ -22,6 +22,7 @@ import About from "./pages/public/about";
 import Careers from "./pages/public/careers";
 import PrivacyPolicy from "./pages/public/privacy-policy";
 import TermsOfService from "./pages/public/terms-of-service";
+import PublicTournaments from "./pages/public/tournaments";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RoleRoute from "./components/RoleRoute";
 
@@ -98,6 +99,7 @@ const App = () => {
           <Route path="deposit/success" element={<DepositResult />} />
           <Route path="deposit/failed" element={<DepositResult />} />
           <Route path="deposit/pending" element={<DepositResult />} />
+          <Route path="tournaments" element={<PublicTournaments />} />
           <Route path="*" element={<NotFound />} />
         </Route>
 
