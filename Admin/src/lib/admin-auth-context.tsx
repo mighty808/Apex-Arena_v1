@@ -15,6 +15,17 @@ import {
 import type { AdminUser, AdminTokens } from "../types/admin.types";
 import { saveAdminTokens, clearAdminTokens } from "../utils/auth.utils";
 
+function getTokenExpiryMs(accessToken: string): number {
+  try {
+    const payload = JSON.parse(atob(accessToken.split(".")[1])) as {
+      exp?: number;
+    };
+    return (payload.exp ?? 0) * 1000;
+  } catch {
+    return 0;
+  }
+}
+
 const ADMIN_STORAGE_KEY = "apex_arenas_admin_auth";
 
 interface StoredAdminSession {
@@ -62,6 +73,8 @@ export const AdminAuthProvider = ({ children }: PropsWithChildren) => {
 
   const tokensRef = useRef(tokens);
   tokensRef.current = tokens;
+  const adminRef = useRef(admin);
+  adminRef.current = admin;
 
   const setSession = useCallback(
     (nextTokens: AdminTokens | null, nextUser?: AdminUser | null) => {
@@ -115,8 +128,11 @@ export const AdminAuthProvider = ({ children }: PropsWithChildren) => {
         if (!active) return;
 
         if (result.user) {
-          setAdmin(result.user);
-          persistSession({ tokens: stored.tokens, user: result.user });
+          // Merge with stored user so fields like avatarUrl that the
+          // sessions endpoint may not return are not wiped out.
+          const mergedUser: AdminUser = { ...(stored.user ?? {}), ...result.user };
+          setAdmin(mergedUser);
+          persistSession({ tokens: stored.tokens, user: mergedUser });
         }
       } catch (error) {
         if (!active) return;
@@ -159,6 +175,37 @@ export const AdminAuthProvider = ({ children }: PropsWithChildren) => {
       active = false;
     };
   }, []);
+
+  // Proactive background token refresh — checks every 60 s, refreshes when
+  // the access token has less than 2 minutes remaining.
+  useEffect(() => {
+    const id = setInterval(async () => {
+      const currentTokens = tokensRef.current;
+      if (!currentTokens?.accessToken || !currentTokens.refreshToken) return;
+
+      const expiresAt = getTokenExpiryMs(currentTokens.accessToken);
+      const timeLeft = expiresAt - Date.now();
+      if (timeLeft > 2 * 60 * 1000) return; // still plenty of time
+
+      try {
+        const result = await adminAuthService.refreshToken(
+          currentTokens.refreshToken,
+        );
+        if (result.tokens?.accessToken) {
+          const freshTokens: AdminTokens = {
+            accessToken: result.tokens.accessToken,
+            refreshToken:
+              result.tokens.refreshToken ?? currentTokens.refreshToken,
+          };
+          setSession(freshTokens, adminRef.current);
+        }
+      } catch {
+        // silent — reactive 401 handling in api.utils.ts is the fallback
+      }
+    }, 60_000);
+
+    return () => clearInterval(id);
+  }, [setSession]);
 
   const value = useMemo<AdminAuthContextValue>(
     () => ({
