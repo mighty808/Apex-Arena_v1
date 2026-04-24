@@ -18,7 +18,8 @@ import { useAdminAuth } from "../../lib/admin-auth-context";
 import ImageUploadDropzone from "../../components/ImageUploadDropzone";
 import { apiPost, apiPut, apiGet } from "../../utils/api.utils";
 import { AUTH_ENDPOINTS } from "../../config/api.config";
-import { getAdminAccessToken } from "../../utils/auth.utils";
+import { getAdminAccessToken, getAdminRefreshToken } from "../../utils/auth.utils";
+import type { AdminTokens } from "../../types/admin.types";
 
 const inputCls =
   "w-full bg-slate-900/60 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-amber-500/70 focus:bg-slate-900 disabled:opacity-50 transition-colors";
@@ -159,7 +160,7 @@ const AdminProfile = () => {
         avatar_url: avatarUrl || undefined,
       };
       const response = await apiPut(
-        AUTH_ENDPOINTS.UPDATE_PROFILE,
+        AUTH_ENDPOINTS.ADMIN_UPDATE_PROFILE,
         body,
         adminOpts(),
       );
@@ -170,9 +171,14 @@ const AdminProfile = () => {
         setAlert({ type: "error", msg });
         return;
       }
-      // Update session with new name
-      if (admin && tokens) {
-        setSession(tokens, {
+      // Update session — read fresh tokens from localStorage in case the
+      // access token was silently refreshed since the component mounted.
+      if (admin) {
+        const freshTokens: AdminTokens = {
+          accessToken: getAdminAccessToken() ?? tokens?.accessToken ?? "",
+          refreshToken: getAdminRefreshToken() ?? tokens?.refreshToken,
+        };
+        setSession(freshTokens, {
           ...admin,
           firstName,
           lastName,
@@ -211,7 +217,7 @@ const AdminProfile = () => {
     setPwAlert(null);
     try {
       const response = await apiPost(
-        AUTH_ENDPOINTS.PASSWORD_CHANGE,
+        AUTH_ENDPOINTS.ADMIN_PASSWORD_CHANGE,
         {
           current_password: currentPw,
           new_password: newPw,
