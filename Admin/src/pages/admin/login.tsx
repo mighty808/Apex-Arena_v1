@@ -69,6 +69,8 @@ const AdminLogin = () => {
     if (result.tokens?.accessToken) {
       setSession(result.tokens, result.user ?? null);
       navigate("/admin", { replace: true });
+    } else {
+      setServerError("Login succeeded but no session was returned. Please try again.");
     }
   };
 
@@ -166,9 +168,17 @@ const AdminLogin = () => {
     } catch (error) {
       if (error instanceof AdminApiError) {
         const friendly: Record<string, string> = {
+          // Backend error codes from verifyTOTPCode / completeAdmin2FALogin
+          TWO_FA_INVALID_CODE: "Invalid code. Please try again.",
           INVALID_2FA_CODE: "Invalid code. Please try again.",
+          TWO_FA_VERIFICATION_FAILED: "Verification failed. Please try again.",
+          ADMIN_2FA_VERIFICATION_FAILED: "Verification failed. Please try again.",
           OTP_EXPIRED: "Code has expired. Please generate a new one.",
           OTP_MAX_ATTEMPTS: "Too many attempts. Please try again later.",
+          RATE_LIMIT_EXCEEDED: "Too many attempts. Please wait before trying again.",
+          ADMIN_NOT_FOUND: "Admin account not found. Please contact support.",
+          TWO_FA_NOT_ENABLED: "2FA is not enabled on this account.",
+          TWO_FA_NOT_SETUP: "2FA setup is incomplete. Please re-setup.",
         };
         setServerError(friendly[error.code] ?? error.message);
       } else {
