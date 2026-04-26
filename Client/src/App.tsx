@@ -119,6 +119,11 @@ const App = () => {
             {/* Player-only routes */}
             <Route element={<RoleRoute role="player" />}>
               <Route path="player/profile" element={<PlayerProfile />} />
+              <Route path="become-organizer" element={<BecomeOrganizer />} />
+            </Route>
+
+            {/* Player + Organizer routes */}
+            <Route element={<RoleRoute role={["player", "organizer"]} />}>
               <Route
                 path="player/join-tournament"
                 element={<JoinTournament />}
@@ -128,7 +133,6 @@ const App = () => {
                 path="tournaments/:tournamentId"
                 element={<TournamentDetail />}
               />
-              <Route path="become-organizer" element={<BecomeOrganizer />} />
             </Route>
 
             {/* Organizer-only routes */}

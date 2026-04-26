@@ -258,17 +258,27 @@ export default function LeaderboardPage() {
   );
 
   return (
-    <div className="px-4 sm:px-6 py-6 max-w-5xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto">
       {/* Header */}
-      <div>
-        <h1 className="font-display text-2xl font-bold text-white flex items-center gap-2">
-          <Trophy className="w-6 h-6 text-amber-400" /> Leaderboard
-        </h1>
-        <p className="text-sm text-slate-400 mt-1">
-          Standings by tournament — select a game and tournament to view rankings.
-        </p>
+      <div className="relative overflow-hidden bg-slate-900 border-b border-slate-800 px-6 py-7 sm:px-8 sm:py-8">
+        <div className="absolute -top-16 -right-16 w-72 h-72 rounded-full bg-amber-500/12 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-20 -left-20 w-80 h-80 rounded-full bg-orange-600/8 blur-3xl pointer-events-none" />
+        <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(to_right,rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.025)_1px,transparent_1px)] bg-size-[48px_48px]" />
+        <div className="relative flex flex-col items-center text-center gap-2 sm:flex-row sm:items-center sm:text-left sm:gap-4">
+          <div className="w-11 h-11 rounded-xl bg-amber-500/15 border border-amber-500/25 flex items-center justify-center shrink-0">
+            <Trophy className="w-5 h-5 text-amber-400" />
+          </div>
+          <div>
+            <h1 className="font-display text-2xl font-bold text-white">Leaderboard</h1>
+            <p className="text-sm text-slate-400 mt-0.5">
+              Standings by tournament — select a game and tournament to view rankings.
+            </p>
+          </div>
+        </div>
       </div>
 
+      <div className="px-4 sm:px-6 py-6 space-y-6">
+      <div className="px-6 sm:px-0">
       {loading ? (
         <div className="flex justify-center py-24">
           <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
@@ -276,10 +286,10 @@ export default function LeaderboardPage() {
       ) : (
         <div className="space-y-5">
           {/* Game category tabs */}
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2 overflow-x-auto pb-0.5 no-scrollbar">
             <button
               onClick={() => setSelectedGameId("all")}
-              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold transition-all border ${
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold transition-all border shrink-0 ${
                 selectedGameId === "all"
                   ? "bg-cyan-500 text-slate-950 border-cyan-500"
                   : "bg-slate-900/60 text-slate-400 border-slate-700 hover:border-slate-500 hover:text-white"
@@ -301,7 +311,7 @@ export default function LeaderboardPage() {
                 <button
                   key={game.id}
                   onClick={() => setSelectedGameId(game.id)}
-                  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold transition-all border ${
+                  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold transition-all border shrink-0 ${
                     isActive
                       ? "bg-cyan-500 text-slate-950 border-cyan-500"
                       : "bg-slate-900/60 text-slate-400 border-slate-700 hover:border-slate-500 hover:text-white"
@@ -422,6 +432,8 @@ export default function LeaderboardPage() {
           )}
         </div>
       )}
+      </div>
+      </div>
     </div>
   );
 }

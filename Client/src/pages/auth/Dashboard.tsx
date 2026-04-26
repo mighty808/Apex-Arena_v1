@@ -8,7 +8,6 @@ import {
   Wallet,
   ArrowRight,
   Swords,
-  ChevronDown,
 } from "lucide-react";
 import { useAuth } from "../../lib/auth-context";
 import {
@@ -48,7 +47,7 @@ const Dashboard = () => {
   const [tournamentTab, setTournamentTab] = useState<"active" | "history">(
     "active",
   );
-  const [statsOpen, setStatsOpen] = useState(false);
+
   const hasFetched = useRef(false);
   const isOrganizer = user?.role === "organizer";
 
@@ -270,9 +269,9 @@ const Dashboard = () => {
 
   if (isOrganizer) {
     return (
-      <div className="px-4 sm:px-6 py-6 max-w-7xl mx-auto space-y-8">
+      <div className="max-w-7xl mx-auto">
         {/* ── Hero ──────────────────────────────────────────────────────── */}
-        <div className="relative overflow-hidden rounded-2xl bg-slate-900 border border-slate-800">
+        <div className="relative overflow-hidden bg-slate-900 border-b border-slate-800">
           {/* Ambient glows */}
           <div className="absolute -top-16 -right-16 w-72 h-72 rounded-full bg-orange-500/12 blur-3xl pointer-events-none" />
           <div className="absolute -bottom-20 -left-20 w-80 h-80 rounded-full bg-violet-600/8 blur-3xl pointer-events-none" />
@@ -280,9 +279,9 @@ const Dashboard = () => {
           <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(to_right,rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.025)_1px,transparent_1px)] bg-size-[48px_48px]" />
 
           <div className="relative px-6 py-6 sm:px-8 sm:py-7">
-            <div className="flex flex-col sm:flex-row sm:items-start gap-6 justify-between">
+            <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-start sm:justify-between">
               {/* Identity */}
-              <div className="flex items-center gap-5">
+              <div className="flex flex-col items-center text-center gap-3 sm:flex-row sm:items-center sm:text-left">
                 <div className="relative shrink-0">
                   <div className="w-16 h-16 rounded-full ring-2 ring-orange-500/40 ring-offset-2 ring-offset-slate-900 bg-slate-800 flex items-center justify-center text-xl font-bold text-white overflow-hidden">
                     {profile?.avatarUrl ? (
@@ -321,7 +320,7 @@ const Dashboard = () => {
               </div>
 
               {/* Live count + CTAs */}
-              <div className="flex flex-col sm:items-end gap-4 shrink-0">
+              <div className="flex flex-col items-center gap-4 shrink-0 sm:items-end">
                 {organizerLiveCount > 0 && (
                   <div className="flex items-center gap-2">
                     <span className="relative flex h-2.5 w-2.5">
@@ -397,12 +396,13 @@ const Dashboard = () => {
           </div>
         </div>
 
+        <div className="px-4 sm:px-6 py-6 space-y-8">
         {/* ── Main grid ─────────────────────────────────────────────────── */}
         <div className="grid lg:grid-cols-[1fr_272px] gap-6">
           <div className="space-y-8 min-w-0">
             {/* Active Tournaments */}
             <section>
-              <div className="flex items-center justify-between mb-5">
+              <div className="flex flex-col items-center text-center gap-2 mb-5 sm:flex-row sm:items-center sm:justify-between sm:text-left">
                 <div className="flex items-center gap-3">
                   <h2 className="font-display text-xl font-bold text-white">
                     Active Tournaments
@@ -425,7 +425,7 @@ const Dashboard = () => {
               </div>
 
               {organizerActiveList.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 sm:gap-4 px-6 sm:px-0">
                   {organizerActivePreview.map((t) => (
                     <OrganizerTournamentCard key={t.id} tournament={t} />
                   ))}
@@ -461,7 +461,7 @@ const Dashboard = () => {
                     {organizerDrafts.length}
                   </span>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 sm:gap-4 px-6 sm:px-0">
                   {organizerDrafts.slice(0, 6).map((t) => (
                     <OrganizerTournamentCard
                       key={`draft-${t.id}`}
@@ -474,7 +474,7 @@ const Dashboard = () => {
           </div>
 
           {/* Right Sidebar */}
-          <div className="space-y-4">
+          <div className="space-y-4 px-6 sm:px-0">
             <CalendarWidget events={organizerCalendarEvents} />
 
             {/* Portfolio at a glance */}
@@ -566,6 +566,7 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
+        </div>
       </div>
     );
   }
@@ -573,20 +574,25 @@ const Dashboard = () => {
   // ─── Player Dashboard ─────────────────────────────────────────────────────
 
   return (
-    <div className="max-w-7xl mx-auto px-8 sm:px-6 py-8 space-y-10">
+    <div className="max-w-7xl mx-auto">
       {/* ── Hero ────────────────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-950/55 backdrop-blur-xl">
-        <div className="absolute inset-0 bg-linear-to-br from-cyan-500/8 via-transparent to-orange-500/8 pointer-events-none" />
-        <div className="absolute -top-24 -right-12 w-72 h-72 rounded-full bg-cyan-500/12 blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 left-0 w-72 h-72 rounded-full bg-orange-500/12 blur-3xl pointer-events-none" />
-        <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(148,163,184,0.045)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.045)_1px,transparent_1px)] bg-size-[46px_46px]" />
+      <div className="relative overflow-hidden border-b border-slate-800 bg-slate-900">
+        {/* Grid */}
+        <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "linear-gradient(rgba(148,163,184,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(148,163,184,0.045) 1px, transparent 1px)", backgroundSize: "48px 48px" }} />
+        {/* Orange glow top-right */}
+        <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse 65% 90% at 90% -10%, rgba(249,115,22,0.22), transparent)" }} />
+        {/* Cyan accent top-left */}
+        <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse 45% 60% at -5% 20%, rgba(6,182,212,0.09), transparent)" }} />
+        {/* Bottom fade */}
+        <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse 50% 40% at 40% 120%, rgba(251,191,36,0.08), transparent)" }} />
 
-        <div className="relative px-5 py-6 sm:px-6 sm:py-7">
-          <div className="flex flex-col sm:flex-row sm:items-start gap-6 justify-between">
-            {/* Identity */}
-            <div className="flex items-center gap-5">
+        <div className="relative px-6 py-7 sm:px-8 sm:py-8">
+          {/* Identity */}
+          <div className="flex flex-col items-center text-center gap-4 sm:flex-row sm:items-start sm:text-left sm:justify-between">
+            <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-center">
+              {/* Avatar */}
               <div className="relative shrink-0">
-                <div className="w-16 h-16 rounded-full ring-2 ring-orange-500/40 ring-offset-2 ring-offset-slate-900 bg-slate-800 flex items-center justify-center text-xl font-bold text-white overflow-hidden">
+                <div className="w-16 h-16 rounded-2xl ring-2 ring-orange-500/40 ring-offset-2 ring-offset-slate-900 bg-slate-800 flex items-center justify-center text-xl font-bold text-white overflow-hidden">
                   {profile?.avatarUrl ? (
                     <img
                       src={profile.avatarUrl}
@@ -597,8 +603,9 @@ const Dashboard = () => {
                     initials
                   )}
                 </div>
-                <div className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-slate-900" />
+                <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-slate-900" />
               </div>
+
               <div>
                 <p className="text-xs text-orange-400/80 font-semibold uppercase tracking-[0.18em] mb-1">
                   {greeting} · Player
@@ -615,7 +622,7 @@ const Dashboard = () => {
             </div>
 
             {/* CTAs */}
-            <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            <div className="flex items-center gap-2 shrink-0 flex-wrap justify-center sm:justify-end">
               <Link
                 to="/auth/player/join-tournament"
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-linear-to-r from-orange-400 to-amber-400 text-slate-950 text-sm font-bold hover:shadow-lg hover:shadow-orange-500/25 transition-all"
@@ -632,56 +639,24 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Stats strip */}
-          {/* Mobile: toggle button */}
-          <button
-            onClick={() => setStatsOpen(!statsOpen)}
-            className="sm:hidden mt-5 w-full flex items-center justify-between px-4 py-2.5 rounded-xl border border-slate-800/60 bg-slate-900 text-sm text-slate-300 font-medium"
-          >
-            <span>View stats</span>
-            <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${statsOpen ? "rotate-180" : ""}`} />
-          </button>
-          <div className={`mt-2 sm:mt-5 grid grid-cols-2 sm:grid-cols-4 gap-px bg-slate-800/60 rounded-xl overflow-hidden border border-slate-800/60 sm:grid ${statsOpen ? "grid" : "hidden"}`}>
+          {/* Stats strip — always visible, 2×2 on mobile */}
+          <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-px bg-slate-800/50 rounded-xl overflow-hidden">
             {[
-              {
-                label: "Tournaments",
-                value: String(stats.joinedTournaments),
-                accent: "text-white",
-              },
-              {
-                label: "Total Wins",
-                value: String(stats.totalWins),
-                accent: "text-emerald-400",
-              },
-              {
-                label: "Prize Won",
-                value:
-                  stats.totalPrizeWon > 0
-                    ? `GHS ${(stats.totalPrizeWon / 100).toFixed(2)}`
-                    : "GHS 0",
-                accent: "text-amber-400",
-              },
-              {
-                label: "Checked In",
-                value: String(stats.checkedInCount),
-                accent: "text-orange-400",
-              },
+              { label: "Tournaments", value: String(stats.joinedTournaments), accent: "text-white" },
+              { label: "Total Wins",  value: String(stats.totalWins),         accent: "text-emerald-400" },
+              { label: "Prize Won",   value: stats.totalPrizeWon > 0 ? `GHS ${(stats.totalPrizeWon / 100).toFixed(2)}` : "GHS 0", accent: "text-amber-400" },
+              { label: "Checked In", value: String(stats.checkedInCount),     accent: "text-orange-400" },
             ].map((s) => (
-              <div key={s.label} className="bg-slate-900 px-4 py-3">
-                <p className="text-[11px] text-slate-500 uppercase tracking-widest mb-1">
-                  {s.label}
-                </p>
-                <p
-                  className={`font-display text-xl font-bold tabular-nums ${s.accent}`}
-                >
-                  {s.value}
-                </p>
+              <div key={s.label} className="bg-slate-900/80 px-4 py-3">
+                <p className="text-[11px] text-slate-500 uppercase tracking-widest mb-1">{s.label}</p>
+                <p className={`font-display text-xl font-bold tabular-nums ${s.accent}`}>{s.value}</p>
               </div>
             ))}
           </div>
         </div>
       </div>
 
+      <div className="px-8 sm:px-6 py-8 space-y-10">
       {/* ── Main Grid ───────────────────────────────────────────────────── */}
       <div className="grid lg:grid-cols-[1fr_300px] gap-6">
         {/* Left: My Tournaments */}
@@ -715,7 +690,7 @@ const Dashboard = () => {
           </div>
 
           {tournamentTab === "active" ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:px-0">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 sm:gap-4 px-6 sm:px-0">
               {activeRegistrations.map((reg) => (
                 <JoinedTournamentDetailsCard key={reg.id} reg={reg} />
               ))}
@@ -740,7 +715,7 @@ const Dashboard = () => {
               </Link>
             </div>
           ) : completedRegistrations.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:px-0">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 sm:gap-4 px-6 sm:px-0">
               {completedRegistrations.map((reg) => (
                 <JoinedTournamentDetailsCard key={reg.id} reg={reg} />
               ))}
@@ -889,6 +864,7 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
