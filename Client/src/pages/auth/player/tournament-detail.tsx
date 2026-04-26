@@ -100,7 +100,7 @@ const ACTIVE_STATUSES = new Set(["registered", "checked_in", "pending_payment", 
 
 function PageSkeleton() {
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 animate-pulse space-y-6">
+    <div className=" px-4 sm:px-6 py-6 animate-pulse space-y-6">
       <div className="h-5 w-32 bg-slate-800 rounded" />
       <div className="rounded-2xl overflow-hidden border border-slate-800 h-72 bg-slate-800" />
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -340,7 +340,7 @@ const TournamentDetail = () => {
     : null;
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="">
 
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
       <div className="relative overflow-hidden">
@@ -405,35 +405,60 @@ const TournamentDetail = () => {
           )}
         </div>
 
-        {/* Title bar below image */}
-        <div className="bg-slate-950 border-b border-slate-800 px-4 sm:px-6 py-5">
-          <div className="flex items-start justify-between gap-4">
-            <div className="min-w-0">
-              {/* Back */}
+        {/* Title section */}
+        <div className="relative bg-slate-900 border-b border-slate-800 overflow-hidden">
+          {/* Subtle grid */}
+          <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "linear-gradient(rgba(148,163,184,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(148,163,184,0.04) 1px, transparent 1px)", backgroundSize: "48px 48px" }} />
+          {/* Orange glow right */}
+          <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse 55% 100% at 100% 50%, rgba(249,115,22,0.12), transparent)" }} />
+
+          <div className="relative px-6 py-5 sm:px-8">
+            {/* Back + Refresh row */}
+            <div className="flex items-center justify-between mb-3">
               <button
                 onClick={() => navigate("/auth/tournaments")}
-                className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-orange-400 transition-colors mb-2"
+                className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-orange-400 transition-colors"
               >
                 <ChevronLeft className="w-3.5 h-3.5" />
                 Back to Tournaments
               </button>
-              <h1 className="font-display text-2xl sm:text-3xl font-bold text-white leading-tight">
-                {tournament.title}
-              </h1>
-              <p className="text-sm text-slate-400 mt-1">
-                {tournament.game?.name ?? "Unknown Game"}
-                {tournament.format ? ` · ${tournament.format}` : ""}
-                {tournament.region ? ` · ${tournament.region}` : ""}
-              </p>
+              <button
+                onClick={() => { void handleRefresh(); }}
+                disabled={isRefreshing}
+                className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-white transition-colors disabled:opacity-50"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
+                {isRefreshing ? "Refreshing…" : "Refresh"}
+              </button>
             </div>
-            <button
-              onClick={() => { void handleRefresh(); }}
-              disabled={isRefreshing}
-              className="shrink-0 flex items-center gap-1.5 text-xs text-slate-500 hover:text-white transition-colors disabled:opacity-50 mt-1"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
-              {isRefreshing ? "Refreshing…" : "Refresh"}
-            </button>
+
+            {/* Title + meta */}
+            <h1 className="font-display text-2xl sm:text-3xl font-bold text-white leading-tight text-center sm:text-left">
+              {tournament.title}
+            </h1>
+            <div className="flex items-center gap-2 mt-2 flex-wrap justify-center sm:justify-start">
+              <span className="text-sm text-slate-400">{tournament.game?.name ?? "Unknown Game"}</span>
+              {tournament.format && (
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-800 border border-slate-700 text-slate-300">
+                  {tournament.format}
+                </span>
+              )}
+              {tournament.region && (
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-800 border border-slate-700 text-slate-300">
+                  {tournament.region}
+                </span>
+              )}
+              <span className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border ${
+                statusMeta.text === "text-emerald-300" ? "bg-emerald-500/10 border-emerald-500/25 text-emerald-300" :
+                statusMeta.text === "text-orange-300" ? "bg-orange-500/10 border-orange-500/25 text-orange-300" :
+                statusMeta.text === "text-amber-300"  ? "bg-amber-500/10 border-amber-500/25 text-amber-300"  :
+                statusMeta.text === "text-cyan-300"   ? "bg-cyan-500/10 border-cyan-500/25 text-cyan-300"   :
+                "bg-slate-800 border-slate-700 text-slate-400"
+              }`}>
+                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusMeta.dot}`} />
+                {statusMeta.label}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -456,49 +481,45 @@ const TournamentDetail = () => {
           </div>
         )}
 
-        {/* ── Stats bar ─────────────────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {/* ── Stats strip ───────────────────────────────────────────────────── */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-slate-800/60 rounded-2xl overflow-hidden">
           {[
             {
-              icon: <Trophy className="w-5 h-5 text-amber-400" />,
-              iconBg: "bg-amber-500/10 border-amber-500/20",
+              Icon: Trophy,
               label: "Prize Pool",
               value: prizeGhs ?? "—",
               accent: prizeGhs ? "text-amber-300" : "text-slate-600",
-              border: "border-t-amber-500/40",
+              iconCls: "text-amber-400",
             },
             {
-              icon: <Users className="w-5 h-5 text-orange-400" />,
-              iconBg: "bg-orange-500/10 border-orange-500/20",
+              Icon: Users,
               label: "Players",
               value: `${tournament.currentCount} / ${tournament.maxParticipants}`,
               accent: "text-white",
-              border: "border-t-orange-500/40",
+              iconCls: "text-orange-400",
             },
             {
-              icon: <CalendarDays className="w-5 h-5 text-orange-400" />,
-              iconBg: "bg-orange-500/10 border-orange-500/20",
+              Icon: CalendarDays,
               label: "Starts",
               value: formatDate(tournament.schedule.tournamentStart),
               accent: "text-white",
-              border: "border-t-orange-500/40",
+              iconCls: "text-orange-400",
             },
             {
-              icon: <Award className="w-5 h-5 text-orange-400" />,
-              iconBg: "bg-orange-500/10 border-orange-500/20",
+              Icon: Award,
               label: "Entry",
               value: formatFee(tournament.isFree, tournament.entryFee, tournament.currency),
               accent: tournament.isFree ? "text-emerald-400" : "text-white",
-              border: "border-t-orange-500/40",
+              iconCls: "text-orange-400",
             },
-          ].map((s) => (
-            <div key={s.label} className={`rounded-2xl border border-slate-800 border-t-2 ${s.border} bg-slate-900 px-4 py-4 flex flex-col gap-3`}>
-              <div className={`w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 ${s.iconBg}`}>
-                {s.icon}
+          ].map(({ Icon, label, value, accent, iconCls }) => (
+            <div key={label} className="bg-slate-900/90 px-4 py-4 flex flex-col items-center text-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-slate-800 border border-slate-700/60 flex items-center justify-center shrink-0">
+                <Icon className={`w-4 h-4 ${iconCls}`} />
               </div>
               <div>
-                <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">{s.label}</p>
-                <p className={`text-xl font-display font-bold leading-none ${s.accent}`}>{s.value}</p>
+                <p className={`font-display text-lg font-bold leading-tight ${accent}`}>{value}</p>
+                <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-0.5">{label}</p>
               </div>
             </div>
           ))}
