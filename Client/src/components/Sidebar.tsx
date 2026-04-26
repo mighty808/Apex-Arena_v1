@@ -4,7 +4,6 @@ import {
   Home,
   UserCircle,
   Bell,
-  Receipt,
   LogOut,
   Trophy,
   ChevronLeft,
