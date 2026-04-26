@@ -24,6 +24,7 @@ function parseValue(value: string): Date | undefined {
 
 export function DateTimePicker({ value, onChange, placeholder = 'Pick date & time', minDate }: DateTimePickerProps) {
   const [open, setOpen] = useState(false);
+  const [openUpward, setOpenUpward] = useState(false);
   const [hour, setHour] = useState(() => parseValue(value)?.getHours() ?? 12);
   const [minute, setMinute] = useState(() => parseValue(value)?.getMinutes() ?? 0);
   const ref = useRef<HTMLDivElement>(null);
@@ -36,6 +37,13 @@ export function DateTimePicker({ value, onChange, placeholder = 'Pick date & tim
     document.addEventListener('mousedown', handle);
     return () => document.removeEventListener('mousedown', handle);
   }, []);
+
+  useEffect(() => {
+    if (open && ref.current) {
+      const rect = ref.current.getBoundingClientRect();
+      setOpenUpward(window.innerHeight - rect.bottom < 480);
+    }
+  }, [open]);
 
   // Sync sliders when value changes externally
   useEffect(() => {
@@ -87,7 +95,7 @@ export function DateTimePicker({ value, onChange, placeholder = 'Pick date & tim
 
       {/* Popover */}
       {open && (
-        <div className="dtp-popover absolute z-50 mt-2 left-0 bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl shadow-black/70 p-4 w-72">
+        <div className={`dtp-popover absolute z-[200] left-0 bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl shadow-black/70 p-4 w-72 ${openUpward ? 'bottom-full mb-2' : 'mt-2'}`}>
 
           {/* Calendar */}
           <DayPicker
