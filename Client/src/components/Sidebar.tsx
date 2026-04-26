@@ -36,9 +36,10 @@ const playerNavItems = [
 const organizerNavItems = [
   { to: "/auth",                           icon: Home,       label: "Home",           end: true },
   { to: "/auth/organizer/tournaments",     icon: ListTodo,   label: "My Tournaments"            },
+  { to: "/auth/player/join-tournament",    icon: Swords,     label: "Join Tournament"           },
+  { to: "/auth/leaderboard",              icon: Trophy,     label: "Leaderboard"               },
   { to: "/auth/organizer/analytics",       icon: BarChart2,  label: "Analytics"                 },
   { to: "/auth/organizer/payouts",         icon: DollarSign, label: "Payouts"                   },
-  { to: "/auth/transactions",              icon: Receipt,    label: "Transactions"              },
   { to: "/auth/organizer/profile",         icon: UserCircle, label: "Profile"                   },
   { to: "/auth/notifications",             icon: Bell,       label: "Notifications"             },
   { to: "/auth/contact-us",                icon: Mail,       label: "Contact Us"                },
