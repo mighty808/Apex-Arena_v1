@@ -1231,7 +1231,7 @@ const TournamentManage = () => {
       )}
 
       {/* Header */}
-      <div className="flex items-start gap-3 flex-wrap">
+      <div className="flex flex-col items-center text-center gap-3 sm:flex-row sm:items-start sm:text-left flex-wrap">
         <button
           onClick={() => navigate("/auth/organizer/tournaments")}
           className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors mt-0.5"
@@ -1239,7 +1239,7 @@ const TournamentManage = () => {
           <ChevronLeft className="w-5 h-5" />
         </button>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center justify-center gap-3 flex-wrap sm:justify-start">
             <h1 className="font-display text-2xl font-bold text-white truncate">
               {tournament.title}
             </h1>
