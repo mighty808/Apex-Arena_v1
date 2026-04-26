@@ -293,8 +293,8 @@ const JoinTournament = () => {
         <div className="absolute -bottom-20 -left-20 w-80 h-80 rounded-full bg-violet-600/8 blur-3xl pointer-events-none" />
         <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(to_right,rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.025)_1px,transparent_1px)] bg-size-[48px_48px]" />
 
-        <div className="relative">
-          <div className="flex items-center gap-3 mb-1">
+        <div className="relative text-center sm:text-left">
+          <div className="flex items-center justify-center gap-3 mb-1 sm:justify-start">
             <div className="w-8 h-8 rounded-lg bg-orange-500/15 border border-orange-500/25 flex items-center justify-center">
               <Trophy className="w-4 h-4 text-orange-400" />
             </div>
@@ -326,7 +326,7 @@ const JoinTournament = () => {
         </div>
       </div>
 
-      <div className="px-4 sm:px-6 py-6 space-y-5">
+      <div className="px-10 sm:px-6 py-6 space-y-5">
 
         {/* Notifications */}
         {successMsg && (
@@ -345,12 +345,12 @@ const JoinTournament = () => {
         )}
 
         {/* Tab switcher */}
-        <div className="flex items-center gap-1.5 bg-slate-900 border border-slate-800 rounded-2xl p-1.5 w-fit">
+        <div className="flex items-center gap-1.5 bg-slate-900 border border-slate-800 rounded-2xl p-1.5 w-full sm:w-fit">
           {TABS.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
+              className={`flex flex-1 sm:flex-none items-center justify-center gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
                 activeTab === tab.id
                   ? "bg-linear-to-r from-orange-500 to-amber-400 text-slate-950 shadow-lg shadow-orange-500/20"
                   : "text-slate-400 hover:text-white hover:bg-slate-800/60"
@@ -371,27 +371,28 @@ const JoinTournament = () => {
         {/* ── BROWSE TAB ──────────────────────────────────────────────────── */}
         {activeTab === "browse" && (
           <div className="space-y-5">
-            {/* Search + filters row */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <form onSubmit={handleSearch} className="relative flex-1">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search tournaments..."
-                  className="w-full bg-slate-800/60 border border-slate-700 rounded-2xl pl-11 pr-4 py-3.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-orange-500/70 transition-colors"
-                />
-              </form>
+            {/* Search */}
+            <form onSubmit={handleSearch} className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search tournaments..."
+                className="w-full bg-slate-800/60 border border-slate-700 rounded-2xl pl-11 pr-4 py-3.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-orange-500/70 transition-colors"
+              />
+            </form>
 
+            {/* Game + Free/Paid filters */}
+            <div className="flex gap-3">
               {/* Game filter */}
               {availableGames.length > 0 && (
-                <div className="relative flex items-center gap-2.5 bg-slate-800/60 border border-slate-700 rounded-2xl px-4 py-3.5 min-w-37.5">
+                <div className="relative flex items-center gap-2.5 bg-slate-800/60 border border-slate-700 rounded-2xl px-4 py-3 flex-1">
                   <Gamepad2 className="w-4 h-4 text-slate-500 shrink-0" />
                   <select
                     value={gameFilter}
                     onChange={(e) => { setGameFilter(e.target.value); setPage(1); }}
-                    className="bg-slate-800 text-sm text-white focus:outline-none flex-1 appearance-none cursor-pointer [&>option]:bg-slate-800 [&>option]:text-white"
+                    className="bg-transparent text-sm text-white focus:outline-none flex-1 appearance-none cursor-pointer [&>option]:bg-slate-800 [&>option]:text-white"
                   >
                     <option value="">All Games</option>
                     {availableGames.map((g) => (
@@ -402,12 +403,12 @@ const JoinTournament = () => {
               )}
 
               {/* Free/Paid */}
-              <div className="flex items-center gap-1 bg-slate-800/60 border border-slate-700 rounded-2xl p-1.5">
+              <div className="flex items-center gap-1 bg-slate-800/60 border border-slate-700 rounded-2xl p-1.5 shrink-0">
                 {(["", "free", "paid"] as const).map((val) => (
                   <button
                     key={val}
                     onClick={() => { setFreeFilter(val); setPage(1); }}
-                    className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+                    className={`px-3 py-2 rounded-xl text-sm font-bold transition-all ${
                       freeFilter === val
                         ? "bg-orange-500 text-slate-950 shadow shadow-orange-500/20"
                         : "text-slate-400 hover:text-white"
@@ -420,7 +421,7 @@ const JoinTournament = () => {
             </div>
 
             {/* Status pills */}
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 overflow-x-auto pb-0.5 no-scrollbar">
               <div className="flex items-center gap-1.5 text-slate-500 shrink-0">
                 <Filter className="w-4 h-4" />
                 <span className="text-xs font-semibold uppercase tracking-wide">Status</span>
@@ -429,7 +430,7 @@ const JoinTournament = () => {
                 <button
                   key={pill.value}
                   onClick={() => { setStatusFilter(pill.value); setPage(1); }}
-                  className={`px-4 py-2 rounded-xl text-sm font-bold transition-all border ${
+                  className={`px-4 py-2 rounded-xl text-sm font-bold transition-all border shrink-0 ${
                     statusFilter === pill.value
                       ? "bg-orange-500/15 border-orange-500/40 text-orange-300"
                       : "border-slate-700 bg-slate-800/60 text-slate-400 hover:text-white hover:border-slate-600"
@@ -442,7 +443,7 @@ const JoinTournament = () => {
 
             {/* Grid */}
             {isLoading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10 sm:gap-4">
                 {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
               </div>
             ) : tournaments.length === 0 ? (
@@ -456,7 +457,7 @@ const JoinTournament = () => {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10 sm:gap-4">
                 {tournaments.map((t) => (
                   <TournamentCard
                     key={t.id}
@@ -499,7 +500,7 @@ const JoinTournament = () => {
         {activeTab === "registrations" && (
           <div className="space-y-4">
             {isLoadingRegistrations ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10 sm:gap-4">
                 {Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}
               </div>
             ) : upcomingRegistrations.length === 0 ? (
@@ -520,7 +521,7 @@ const JoinTournament = () => {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10 sm:gap-4">
                 {upcomingRegistrations.map((registration) => (
                   <RegistrationCard
                     key={registration.registrationId}
@@ -540,7 +541,7 @@ const JoinTournament = () => {
         {activeTab === "my-tournaments" && (
           <div className="space-y-4">
             {isLoadingRegistrations ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10 sm:gap-4">
                 {Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}
               </div>
             ) : activeTournaments.length === 0 ? (
@@ -554,7 +555,7 @@ const JoinTournament = () => {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10 sm:gap-4">
                 {activeTournaments.map((registration) => (
                   <ActiveTournamentCard
                     key={registration.registrationId}
