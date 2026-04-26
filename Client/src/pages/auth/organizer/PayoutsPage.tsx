@@ -121,17 +121,17 @@ export default function PayoutsPage() {
     .reduce((s, r) => s + r.amountGhs, 0);
 
   return (
-    <div className="px-4 sm:px-6 py-6 max-w-5xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto">
 
       {/* ── Header ────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-2xl bg-slate-900 border border-slate-800">
+      <div className="relative overflow-hidden bg-slate-900 border-b border-slate-800">
         <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-orange-500/12 blur-3xl pointer-events-none" />
         <div className="absolute -bottom-16 -left-16 w-64 h-64 rounded-full bg-violet-600/8 blur-3xl pointer-events-none" />
         <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(to_right,rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.025)_1px,transparent_1px)] bg-size-[48px_48px]" />
 
         <div className="relative px-6 py-7 sm:px-8">
-          <div className="flex items-start justify-between gap-4 flex-wrap mb-6">
-            <div className="flex items-center gap-3">
+          <div className="flex flex-col items-center text-center gap-4 mb-6 sm:flex-row sm:items-start sm:justify-between sm:text-left">
+            <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-center">
               <div className="w-10 h-10 rounded-xl bg-orange-500/15 border border-orange-500/25 flex items-center justify-center shrink-0">
                 <DollarSign className="w-5 h-5 text-orange-400" />
               </div>
@@ -165,6 +165,10 @@ export default function PayoutsPage() {
           </div>
         </div>
       </div>
+
+      {/* ── Content ───────────────────────────────────────────── */}
+      <div className="px-4 sm:px-6 py-6">
+      <div className="px-6 sm:px-0 space-y-6">
 
       {/* ── Alerts ────────────────────────────────────────────── */}
       {success && (
@@ -344,6 +348,8 @@ export default function PayoutsPage() {
             })}
           </div>
         )}
+      </div>
+      </div>
       </div>
     </div>
   );
