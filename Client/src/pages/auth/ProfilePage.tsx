@@ -547,38 +547,52 @@ const ProfilePage = () => {
 
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
       <div className="relative overflow-hidden border-b border-slate-800/50">
-        {/* Ambient glows */}
-        <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse 55% 60% at 100% 0%, rgba(249,115,22,0.13), transparent)" }} />
-        <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse 50% 55% at 0% 100%, rgba(139,92,246,0.09), transparent)" }} />
-        {/* Grid */}
-        <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "linear-gradient(rgba(148,163,184,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(148,163,184,0.04) 1px, transparent 1px)", backgroundSize: "48px 48px" }} />
 
-        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 py-8">
-          <div className="flex items-center gap-5">
+        {/* ── Banner strip ── */}
+        <div className="relative h-28 sm:h-36 bg-slate-900 overflow-hidden">
+          {/* Grid */}
+          <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "linear-gradient(rgba(148,163,184,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(148,163,184,0.05) 1px, transparent 1px)", backgroundSize: "48px 48px" }} />
+          {/* Orange glow top-right */}
+          <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse 70% 120% at 80% -10%, rgba(249,115,22,0.35), transparent)" }} />
+          {/* Amber mid-glow */}
+          <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse 40% 80% at 30% 120%, rgba(251,191,36,0.12), transparent)" }} />
+          {/* Purple hint left */}
+          <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse 40% 60% at 0% 50%, rgba(139,92,246,0.12), transparent)" }} />
+          {/* Decorative line across bottom */}
+          <div className="absolute bottom-0 inset-x-0 h-px bg-linear-to-r from-transparent via-orange-500/30 to-transparent" />
+        </div>
+
+        {/* ── Identity (overlaps banner) ── */}
+        <div className="relative max-w-5xl mx-auto px-6 sm:px-8">
+          <div className="flex flex-col items-center text-center sm:flex-row sm:items-end sm:text-left gap-4 -mt-12 sm:-mt-14 pb-5">
+
             {/* Avatar */}
             <div className="relative shrink-0">
-              {form.avatarUrl ? (
-                <img
-                  src={form.avatarUrl}
-                  alt=""
-                  className="w-20 h-20 rounded-2xl object-cover border-2 border-slate-700 shadow-xl"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                />
-              ) : (
-                <div className="w-20 h-20 rounded-2xl bg-linear-to-br from-slate-800 to-slate-900 border-2 border-slate-700 flex items-center justify-center text-2xl font-bold text-white shadow-xl font-display">
-                  {initials(form.firstName, form.lastName, user?.username ?? "")}
-                </div>
-              )}
-              <div className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-xl bg-orange-500/20 border border-orange-500/40 flex items-center justify-center">
+              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden border-4 border-slate-950 shadow-2xl ring-2 ring-orange-500/30 bg-linear-to-br from-slate-800 to-slate-900 flex items-center justify-center">
+                {form.avatarUrl ? (
+                  <img
+                    src={form.avatarUrl}
+                    alt=""
+                    className="w-full h-full object-cover"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                  />
+                ) : (
+                  <span className="font-display text-3xl font-bold text-white">
+                    {initials(form.firstName, form.lastName, user?.username ?? "")}
+                  </span>
+                )}
+              </div>
+              <div className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-xl bg-orange-500/20 border border-orange-500/40 flex items-center justify-center shadow-lg">
                 <Camera className="w-3.5 h-3.5 text-orange-400" />
               </div>
             </div>
 
             {/* Name + meta */}
-            <div className="flex-1 min-w-0">
-              <h1 className="font-display text-3xl font-bold text-white truncate">{displayName}</h1>
-              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+            <div className="min-w-0 sm:pb-1">
+              <h1 className="font-display text-2xl sm:text-3xl font-bold text-white leading-tight">{displayName}</h1>
+              <div className="flex items-center justify-center gap-2 mt-1.5 flex-wrap sm:justify-start">
                 <span className="text-slate-400 text-sm">@{user?.username}</span>
+                <span className="text-slate-700">·</span>
                 <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize ${
                   isOrganizer
                     ? "bg-orange-500/15 border border-orange-500/30 text-orange-300"
@@ -587,26 +601,29 @@ const ProfilePage = () => {
                   {user?.role ?? "player"}
                 </span>
                 {user?.country && (
-                  <span className="text-xs text-slate-500">{user.country}</span>
+                  <>
+                    <span className="text-slate-700">·</span>
+                    <span className="text-xs text-slate-500">{user.country}</span>
+                  </>
                 )}
               </div>
               {form.bio && (
-                <p className="text-sm text-slate-400 mt-2 line-clamp-1">{form.bio}</p>
+                <p className="text-sm text-slate-400 mt-1.5 line-clamp-1">{form.bio}</p>
               )}
             </div>
           </div>
 
           {/* Quick stats strip */}
-          <div className="mt-6 grid grid-cols-4 gap-px bg-slate-800/60 rounded-xl overflow-hidden">
+          <div className="pb-6 grid grid-cols-4 gap-px bg-slate-800/50 rounded-xl overflow-hidden">
             {[
-              { label: "Joined", value: statJoined,    color: "text-cyan-300"    },
-              { label: "Done",   value: statCompleted, color: "text-emerald-300" },
-              { label: "Active", value: statOngoing,   color: "text-amber-300"   },
-              { label: "Checked In", value: statCheckedIn, color: "text-indigo-300" },
+              { label: "Joined",     value: statJoined,    color: "text-cyan-300"    },
+              { label: "Done",       value: statCompleted, color: "text-emerald-300" },
+              { label: "Active",     value: statOngoing,   color: "text-amber-300"   },
+              { label: "Checked In", value: statCheckedIn, color: "text-violet-300"  },
             ].map(({ label, value, color }) => (
-              <div key={label} className="bg-slate-900/70 px-4 py-3 text-center">
+              <div key={label} className="bg-slate-900/80 px-2 py-3 text-center">
                 <p className={`font-display text-xl font-bold ${color}`}>{value}</p>
-                <p className="text-[11px] text-slate-500 mt-0.5 uppercase tracking-wide">{label}</p>
+                <p className="text-[10px] text-slate-500 mt-0.5 uppercase tracking-wide leading-tight">{label}</p>
               </div>
             ))}
           </div>
@@ -614,7 +631,7 @@ const ProfilePage = () => {
       </div>
 
       {/* ── Content ─────────────────────────────────────────────────────────── */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+      <div className="max-w-5xl mx-auto px-10 sm:px-6 py-8">
 
         {/* Global alert */}
         {alert && (
@@ -698,7 +715,7 @@ const ProfilePage = () => {
                 folder="apex-arenas/users/avatars"
               />
               <p className="text-xs text-slate-500 mt-3 text-center">
-                Upload a square image for best results
+                Square image recommended · JPG or PNG
               </p>
             </SectionCard>
 
