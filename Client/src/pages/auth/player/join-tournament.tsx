@@ -3,14 +3,12 @@ import {
   AlertCircle,
   CheckCircle2,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  Filter,
   Gamepad2,
   Search,
   Swords,
   Trophy,
   X,
+  Sliders,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -163,17 +161,14 @@ const JoinTournament = () => {
   const [freeFilter, setFreeFilter] = useState<"" | "free" | "paid">("");
   const [gameFilter, setGameFilter] = useState("");
   const [availableGames, setAvailableGames] = useState<GameFilter[]>([]);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null);
   const [withdrawTarget, setWithdrawTarget] = useState<MyTournamentRegistration | null>(null);
   const [withdrawReason, setWithdrawReason] = useState("");
   const [withdrawReasonError, setWithdrawReasonError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [] = useState(false);
-
   const [statsOpen, setStatsOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const hasFetchedGames = useRef(false);
 
   const fetchMyRegistrations = useCallback(async () => {
@@ -194,18 +189,25 @@ const JoinTournament = () => {
     }
   }, []);
 
-  const fetchTournaments = useCallback(async (pg: number) => {
+  const fetchTournaments = useCallback(async () => {
     setIsLoading(true);
     try {
       const result = await tournamentService.getTournaments({
-        page: pg, limit: 12,
+        page: 1, limit: 999,
         search: search || undefined,
         status: statusFilter || undefined,
-        isFree: freeFilter === "free" ? true : freeFilter === "paid" ? false : undefined,
         gameId: gameFilter || undefined,
       });
-      setTournaments(result.tournaments);
-      setTotalPages(result.pagination.pages);
+
+      // Apply free/paid filter on frontend
+      let filtered = result.tournaments;
+      if (freeFilter === "free") {
+        filtered = filtered.filter((t) => t.isFree && (t.entryFee === 0) && (!t.prizePool || t.prizePool === 0));
+      } else if (freeFilter === "paid") {
+        filtered = filtered.filter((t) => t.entryFee > 0 || (t.prizePool && t.prizePool > 0));
+      }
+
+      setTournaments(filtered);
     } catch {
       setTournaments([]);
     } finally {
@@ -213,7 +215,10 @@ const JoinTournament = () => {
     }
   }, [search, statusFilter, freeFilter, gameFilter]);
 
-  useEffect(() => { void fetchTournaments(page); }, [fetchTournaments, page]);
+  useEffect(() => {
+    void fetchTournaments();
+  }, [fetchTournaments]);
+
   useEffect(() => { void fetchMyRegistrations(); }, [fetchMyRegistrations]);
 
   useEffect(() => {
@@ -234,15 +239,14 @@ const JoinTournament = () => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setPage(1);
-    void fetchTournaments(1);
+    void fetchTournaments();
   };
 
   const handleRegisterSuccess = () => {
     setSelectedTournament(null);
     setErrorMsg(null);
     setSuccessMsg("You've successfully joined the tournament! Check your registrations for details.");
-    void Promise.all([fetchTournaments(page), fetchMyRegistrations()]);
+    void Promise.all([fetchTournaments(), fetchMyRegistrations()]);
     setTimeout(() => setSuccessMsg(null), 6000);
   };
 
@@ -267,7 +271,7 @@ const JoinTournament = () => {
       setWithdrawTarget(null);
       setWithdrawReason("");
       setWithdrawReasonError(null);
-      void Promise.all([fetchTournaments(page), fetchMyRegistrations()]);
+      void Promise.all([fetchTournaments(), fetchMyRegistrations()]);
       setTimeout(() => setSuccessMsg(null), 6000);
     } catch (error) {
       setErrorMsg(error instanceof Error ? error.message : "Failed to withdraw from tournament.");
@@ -280,10 +284,12 @@ const JoinTournament = () => {
   const upcomingRegistrations = myRegistrations.filter((r) => UPCOMING_TOURNAMENT_STATUSES.has(r.tournamentStatus));
   const activeTournaments = myRegistrations.filter((r) => ACTIVE_TOURNAMENT_STATUSES.has(r.tournamentStatus));
 
-  const TABS: { id: ActiveTab; label: string; count?: number }[] = [
-    { id: "registrations",  label: "My Registrations", count: isLoadingRegistrations ? undefined : upcomingRegistrations.length },
-    { id: "my-tournaments", label: "Active",           count: isLoadingRegistrations ? undefined : activeTournaments.length },
-    { id: "browse",         label: "Browse"           },
+  const activeFilterCount = [statusFilter !== "", freeFilter !== "", gameFilter !== ""].filter(Boolean).length;
+
+  const TABS: { id: ActiveTab; label: string; shortLabel: string; count?: number }[] = [
+    { id: "registrations",  label: "My Registrations", shortLabel: "My Reg.", count: isLoadingRegistrations ? undefined : upcomingRegistrations.length },
+    { id: "my-tournaments", label: "Active",           shortLabel: "Active", count: isLoadingRegistrations ? undefined : activeTournaments.length },
+    { id: "browse",         label: "Browse",           shortLabel: "Browse" },
   ];
 
   return (
@@ -360,71 +366,118 @@ const JoinTournament = () => {
           </div>
         )}
 
-        {/* Tab switcher */}
-        <div className="flex items-center gap-1.5 bg-slate-900 border border-slate-800 rounded-2xl p-1.5 w-full sm:w-fit">
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex flex-1 sm:flex-none items-center justify-center gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                activeTab === tab.id
-                  ? "bg-linear-to-r from-orange-500 to-amber-400 text-slate-950 shadow-lg shadow-orange-500/20"
-                  : "text-slate-400 hover:text-white hover:bg-slate-800/60"
-              }`}
-            >
-              {tab.label}
-              {tab.count !== undefined && tab.count > 0 && (
-                <span className={`text-xs px-2 py-0.5 rounded-full font-bold leading-none ${
-                  activeTab === tab.id ? "bg-slate-950/30 text-slate-950" : "bg-orange-500/20 text-orange-400"
-                }`}>
-                  {tab.count}
-                </span>
-              )}
-            </button>
-          ))}
+        {/* Tab switcher + Search bar (same line on desktop) */}
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-center">
+          {/* Tabs */}
+          <div className="flex items-center gap-1.5 bg-slate-900 border border-slate-800 rounded-2xl p-1.5 w-full sm:w-auto justify-center sm:justify-start shrink-0">
+            {TABS.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex flex-1 sm:flex-none items-center justify-center gap-2 px-2 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+                  activeTab === tab.id
+                    ? "bg-linear-to-r from-orange-500 to-amber-400 text-slate-950 shadow-lg shadow-orange-500/20"
+                    : "text-slate-400 hover:text-white hover:bg-slate-800/60"
+                }`}
+              >
+                <span className="sm:hidden">{tab.shortLabel}</span>
+                <span className="hidden sm:inline">{tab.label}</span>
+                {tab.count !== undefined && tab.count > 0 && (
+                  <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold leading-none ${
+                    activeTab === tab.id ? "bg-slate-950/30 text-slate-950" : "bg-orange-500/20 text-orange-400"
+                  }`}>
+                    {tab.count}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Desktop search (always visible, takes remaining space) */}
+          <form onSubmit={handleSearch} className="relative hidden sm:block flex-1">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search tournaments..."
+              className="w-full bg-slate-800/60 border border-slate-700 rounded-2xl pl-11 pr-4 py-2.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-orange-500/70 transition-colors"
+            />
+          </form>
         </div>
 
         {/* ── BROWSE TAB ──────────────────────────────────────────────────── */}
         {activeTab === "browse" && (
-          <div className="space-y-5">
-            {/* Search */}
-            <form onSubmit={handleSearch} className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search tournaments..."
-                className="w-full bg-slate-800/60 border border-slate-700 rounded-2xl pl-11 pr-4 py-3.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-orange-500/70 transition-colors"
-              />
-            </form>
+          <div className="space-y-4">
+            {/* Mobile: Search + Filters button (only visible on mobile) */}
+            <div className="flex gap-2 sm:hidden">
+              <form onSubmit={handleSearch} className="relative flex-1">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search..."
+                  className="w-full bg-slate-800/60 border border-slate-700 rounded-xl pl-10 pr-3 py-2.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-orange-500/70 transition-colors"
+                />
+              </form>
+              <button
+                onClick={() => setFiltersOpen(!filtersOpen)}
+                className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-slate-800/60 border border-slate-700 text-slate-400 hover:text-white transition-colors"
+              >
+                <Sliders className="w-4 h-4" />
+                {activeFilterCount > 0 && (
+                  <span className="flex items-center justify-center w-5 h-5 rounded-full bg-orange-500 text-slate-950 text-[10px] font-bold">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </button>
+            </div>
 
-            {/* Game + Free/Paid filters */}
-            <div className="flex gap-3">
-              {/* Game filter */}
+            {/* Desktop filter bar (all in one row) */}
+            <div className="hidden sm:flex items-center gap-3 px-3 py-3 rounded-xl bg-slate-800/40 border border-slate-700/60">
+              {/* Game filter pill */}
               {availableGames.length > 0 && (
-                <div className="relative flex items-center gap-2.5 bg-slate-800/60 border border-slate-700 rounded-2xl px-4 py-3 flex-1">
-                  <Gamepad2 className="w-4 h-4 text-slate-500 shrink-0" />
+                <div className="relative flex items-center gap-1.5 bg-slate-800/60 border border-slate-700 rounded-full px-3 py-1.5 shrink-0">
+                  <Gamepad2 className="w-3.5 h-3.5 text-slate-500" />
                   <select
                     value={gameFilter}
-                    onChange={(e) => { setGameFilter(e.target.value); setPage(1); }}
-                    className="bg-transparent text-sm text-white focus:outline-none flex-1 appearance-none cursor-pointer [&>option]:bg-slate-800 [&>option]:text-white"
+                    onChange={(e) => { setGameFilter(e.target.value); }}
+                    className="bg-transparent text-xs text-white focus:outline-none appearance-none cursor-pointer [&>option]:bg-slate-800 [&>option]:text-white"
                   >
                     <option value="">All Games</option>
                     {availableGames.map((g) => (
                       <option key={g.id} value={g.id}>{g.name}</option>
                     ))}
                   </select>
+                  <ChevronDown className="w-3 h-3 text-slate-500 shrink-0 pointer-events-none" />
                 </div>
               )}
 
-              {/* Free/Paid */}
-              <div className="flex items-center gap-1 bg-slate-800/60 border border-slate-700 rounded-2xl p-1.5 shrink-0">
+              {/* Status pills — scrollable center */}
+              <div className="flex items-center gap-1.5 overflow-x-auto flex-1 no-scrollbar">
+                {STATUS_PILLS.map((pill) => (
+                  <button
+                    key={pill.value}
+                    onClick={() => { setStatusFilter(pill.value); }}
+                    className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border shrink-0 ${
+                      statusFilter === pill.value
+                        ? "bg-orange-500/15 border-orange-500/40 text-orange-300"
+                        : "border-slate-700 bg-slate-800/60 text-slate-400 hover:text-white hover:border-slate-600"
+                    }`}
+                  >
+                    {pill.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Free/Paid toggle — segmented control */}
+              <div className="flex items-center gap-1 bg-slate-800/60 border border-slate-700 rounded-full p-0.5 shrink-0">
                 {(["", "free", "paid"] as const).map((val) => (
                   <button
                     key={val}
-                    onClick={() => { setFreeFilter(val); setPage(1); }}
-                    className={`px-3 py-2 rounded-xl text-sm font-bold transition-all ${
+                    onClick={() => { setFreeFilter(val); }}
+                    className={`px-2.5 py-1 rounded-full text-xs font-bold transition-all ${
                       freeFilter === val
                         ? "bg-orange-500 text-slate-950 shadow shadow-orange-500/20"
                         : "text-slate-400 hover:text-white"
@@ -436,26 +489,62 @@ const JoinTournament = () => {
               </div>
             </div>
 
-            {/* Status pills */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-0.5 no-scrollbar">
-              <div className="flex items-center gap-1.5 text-slate-500 shrink-0">
-                <Filter className="w-4 h-4" />
-                <span className="text-xs font-semibold uppercase tracking-wide">Status</span>
+            {/* Mobile filter panel (collapsible) */}
+            {filtersOpen && (
+              <div className="sm:hidden space-y-3 p-3 rounded-xl bg-slate-800/40 border border-slate-700/60">
+                {/* Game filter */}
+                {availableGames.length > 0 && (
+                  <div className="relative flex items-center gap-1.5 bg-slate-800/60 border border-slate-700 rounded-full px-3 py-2">
+                    <Gamepad2 className="w-3.5 h-3.5 text-slate-500" />
+                    <select
+                      value={gameFilter}
+                      onChange={(e) => { setGameFilter(e.target.value); }}
+                      className="bg-transparent text-xs text-white focus:outline-none flex-1 appearance-none cursor-pointer [&>option]:bg-slate-800 [&>option]:text-white"
+                    >
+                      <option value="">All Games</option>
+                      {availableGames.map((g) => (
+                        <option key={g.id} value={g.id}>{g.name}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="w-3 h-3 text-slate-500 shrink-0 pointer-events-none" />
+                  </div>
+                )}
+
+                {/* Status pills */}
+                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar -mx-3 px-3">
+                  {STATUS_PILLS.map((pill) => (
+                    <button
+                      key={pill.value}
+                      onClick={() => { setStatusFilter(pill.value); }}
+                      className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border shrink-0 ${
+                        statusFilter === pill.value
+                          ? "bg-orange-500/15 border-orange-500/40 text-orange-300"
+                          : "border-slate-700 bg-slate-800/60 text-slate-400 hover:text-white hover:border-slate-600"
+                      }`}
+                    >
+                      {pill.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Free/Paid toggle */}
+                <div className="flex items-center gap-1 bg-slate-800/60 border border-slate-700 rounded-full p-0.5">
+                  {(["", "free", "paid"] as const).map((val) => (
+                    <button
+                      key={val}
+                      onClick={() => { setFreeFilter(val); }}
+                      className={`px-2.5 py-1 rounded-full text-xs font-bold transition-all flex-1 ${
+                        freeFilter === val
+                          ? "bg-orange-500 text-slate-950 shadow shadow-orange-500/20"
+                          : "text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      {val === "" ? "All" : val === "free" ? "Free" : "Paid"}
+                    </button>
+                  ))}
+                </div>
               </div>
-              {STATUS_PILLS.map((pill) => (
-                <button
-                  key={pill.value}
-                  onClick={() => { setStatusFilter(pill.value); setPage(1); }}
-                  className={`px-4 py-2 rounded-xl text-sm font-bold transition-all border shrink-0 ${
-                    statusFilter === pill.value
-                      ? "bg-orange-500/15 border-orange-500/40 text-orange-300"
-                      : "border-slate-700 bg-slate-800/60 text-slate-400 hover:text-white hover:border-slate-600"
-                  }`}
-                >
-                  {pill.label}
-                </button>
-              ))}
-            </div>
+            )}
 
             {/* Grid */}
             {isLoading ? (
@@ -487,28 +576,6 @@ const JoinTournament = () => {
               </div>
             )}
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-3 pt-2">
-                <button
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                  className="p-2 rounded-lg border border-slate-700 text-slate-400 hover:text-white hover:bg-white/5 disabled:opacity-40 transition-colors"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <span className="text-sm text-slate-400 tabular-nums">
-                  {page} / {totalPages}
-                </span>
-                <button
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={page === totalPages}
-                  className="p-2 rounded-lg border border-slate-700 text-slate-400 hover:text-white hover:bg-white/5 disabled:opacity-40 transition-colors"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            )}
           </div>
         )}
 
