@@ -421,7 +421,7 @@ export default function WalletPage() {
   }
 
   return (
-    <div>
+    <div className="max-w-7xl mx-auto">
 
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
       <div className="relative overflow-hidden border-b border-slate-800 bg-slate-900">
