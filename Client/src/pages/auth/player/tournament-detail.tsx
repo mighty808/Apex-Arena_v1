@@ -100,7 +100,7 @@ const ACTIVE_STATUSES = new Set(["registered", "checked_in", "pending_payment", 
 
 function PageSkeleton() {
   return (
-    <div className=" px-4 sm:px-6 py-6 animate-pulse space-y-6">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 animate-pulse space-y-6">
       <div className="h-5 w-32 bg-slate-800 rounded" />
       <div className="rounded-2xl overflow-hidden border border-slate-800 h-72 bg-slate-800" />
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -340,7 +340,7 @@ const TournamentDetail = () => {
     : null;
 
   return (
-    <div className="">
+    <div className="max-w-5xl mx-auto">
 
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
       <div className="relative overflow-hidden">
