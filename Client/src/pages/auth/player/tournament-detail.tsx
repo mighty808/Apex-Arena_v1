@@ -18,6 +18,7 @@ import {
   Loader2,
   Swords,
   LogOut,
+  Share2,
 } from "lucide-react";
 import {
   tournamentService,
@@ -274,6 +275,27 @@ const TournamentDetail = () => {
     }
   };
 
+  const handleShare = async () => {
+    if (!tournament) return;
+    const url = window.location.href;
+    const shareData = {
+      title: tournament.title,
+      text: `Join "${tournament.title}"${tournament.game?.name ? ` — ${tournament.game.name}` : ""} tournament on Apex Arenas!`,
+      url,
+    };
+    try {
+      if (navigator.share && navigator.canShare?.(shareData)) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(url);
+        setSuccessMsg("Tournament link copied to clipboard!");
+        setTimeout(() => setSuccessMsg(null), 4000);
+      }
+    } catch {
+      // user cancelled or share failed — do nothing
+    }
+  };
+
   if (isLoading) return <PageSkeleton />;
 
   if (!tournament) {
@@ -413,7 +435,7 @@ const TournamentDetail = () => {
           <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse 55% 100% at 100% 50%, rgba(249,115,22,0.12), transparent)" }} />
 
           <div className="relative px-6 py-5 sm:px-8">
-            {/* Back + Refresh row */}
+            {/* Back + Share + Refresh row */}
             <div className="flex items-center justify-between mb-3">
               <button
                 onClick={() => navigate("/auth/tournaments")}
@@ -422,14 +444,23 @@ const TournamentDetail = () => {
                 <ChevronLeft className="w-3.5 h-3.5" />
                 Back to Tournaments
               </button>
-              <button
-                onClick={() => { void handleRefresh(); }}
-                disabled={isRefreshing}
-                className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-white transition-colors disabled:opacity-50"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
-                {isRefreshing ? "Refreshing…" : "Refresh"}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => { void handleShare(); }}
+                  className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-orange-400 transition-colors"
+                >
+                  <Share2 className="w-3.5 h-3.5" />
+                  Share
+                </button>
+                <button
+                  onClick={() => { void handleRefresh(); }}
+                  disabled={isRefreshing}
+                  className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-white transition-colors disabled:opacity-50"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
+                  {isRefreshing ? "Refreshing…" : "Refresh"}
+                </button>
+              </div>
             </div>
 
             {/* Title + meta */}
@@ -585,12 +616,12 @@ const TournamentDetail = () => {
                   { label: "Check-in Open", value: tournament.schedule.checkInStart ?? checkInStart, dot: "bg-cyan-400"    },
                   { label: "Check-in End",  value: tournament.schedule.checkInEnd ?? checkInEnd,     dot: "bg-amber-400"   },
                 ].filter((r) => Boolean(r.value)).map((r) => (
-                  <div key={r.label} className="flex flex-col gap-0.5 px-4 py-2.5 bg-slate-900/60">
-                    <div className="flex items-center gap-1.5">
+                  <div key={r.label} className="flex flex-col gap-1.5 px-4 py-3 bg-slate-900/60">
+                    <div className="flex items-center gap-2">
                       <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${r.dot}`} />
                       <span className="text-[10px] text-slate-500 uppercase tracking-wide font-semibold">{r.label}</span>
                     </div>
-                    <span className="text-xs font-semibold text-white pl-3">{formatDateTime(r.value)}</span>
+                    <span className="text-xs font-semibold text-white pl-4">{formatDateTime(r.value)}</span>
                   </div>
                 ))}
               </div>
@@ -703,17 +734,17 @@ const TournamentDetail = () => {
                   <>
                     {/* Meta rows */}
                     <div className="space-y-0 rounded-xl border border-slate-800 overflow-hidden">
-                      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800/60">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 py-3 border-b border-slate-800/60 gap-1 sm:gap-3">
                         <span className="text-xs text-slate-500">Joined</span>
-                        <span className="text-xs font-bold text-white">{formatDate(myRegistration.registeredAt)}</span>
+                        <span className="text-xs font-bold text-white truncate">{formatDate(myRegistration.registeredAt)}</span>
                       </div>
                       {myRegistration.inGameId && (
-                        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800/60">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 py-3 border-b border-slate-800/60 gap-1 sm:gap-3">
                           <span className="text-xs text-slate-500">In-Game ID</span>
-                          <span className="text-xs font-bold text-orange-300">{myRegistration.inGameId}</span>
+                          <span className="text-xs font-bold text-orange-300 truncate">{myRegistration.inGameId}</span>
                         </div>
                       )}
-                      <div className="flex items-center justify-between px-4 py-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 py-3 gap-1 sm:gap-3">
                         <span className="text-xs text-slate-500">Check-in</span>
                         {isCheckedIn ? (
                           <span className="flex items-center gap-1 text-xs font-bold text-emerald-400">
@@ -840,8 +871,9 @@ const TournamentDetail = () => {
 
         {/* ── Bracket ───────────────────────────────────────────────────────── */}
         {showBracketSection && (
-          <section className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
-            <div className="flex items-center justify-between mb-4">
+          <section className="rounded-2xl border border-slate-800 bg-slate-900/60 overflow-hidden">
+            {/* Header */}
+            <div className="px-5 py-4 border-b border-slate-800 flex items-center justify-between">
               <h2 className="font-display text-base font-bold text-white flex items-center gap-2">
                 <Trophy className="w-4 h-4 text-orange-400" />
                 Tournament Bracket
@@ -855,32 +887,82 @@ const TournamentDetail = () => {
                 {isRefreshing ? "Refreshing…" : "Refresh"}
               </button>
             </div>
+
             {isLoadingBracket ? (
-              <div className="flex items-center justify-center py-10">
+              <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-5 h-5 text-slate-400 animate-spin" />
               </div>
+            ) : bracketRounds.length > 0 ? (
+              <>
+                {/* Progress Stats */}
+                <div className="px-5 py-4 bg-slate-900/40 border-b border-slate-800/60 grid grid-cols-3 gap-3">
+                  <div className="rounded-lg bg-slate-800/30 p-3 text-center">
+                    <p className="text-[10px] text-slate-500 uppercase tracking-wide font-semibold mb-1">Rounds</p>
+                    <p className="text-xl font-display font-bold text-cyan-400">{bracketRounds.length}</p>
+                  </div>
+                  <div className="rounded-lg bg-slate-800/30 p-3 text-center">
+                    <p className="text-[10px] text-slate-500 uppercase tracking-wide font-semibold mb-1">Total Matches</p>
+                    <p className="text-xl font-display font-bold text-orange-400">{allBracketMatches.length}</p>
+                  </div>
+                  <div className="rounded-lg bg-slate-800/30 p-3 text-center">
+                    <p className="text-[10px] text-slate-500 uppercase tracking-wide font-semibold mb-1">Completed</p>
+                    <p className="text-xl font-display font-bold text-emerald-400">
+                      {allBracketMatches.filter((m) => m.status === "completed" || m.status === "final").length}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Progress Bar */}
+                <div className="px-5 py-4 bg-slate-900/20 border-b border-slate-800/60">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs text-slate-400 font-semibold">Tournament Progress</span>
+                    <span className="text-xs font-bold text-white">
+                      {Math.round((allBracketMatches.filter((m) => m.status === "completed" || m.status === "final").length / Math.max(allBracketMatches.length, 1)) * 100)}%
+                    </span>
+                  </div>
+                  <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-linear-to-r from-orange-500 to-amber-400 transition-all duration-300"
+                      style={{
+                        width: `${Math.round((allBracketMatches.filter((m) => m.status === "completed" || m.status === "final").length / Math.max(allBracketMatches.length, 1)) * 100)}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Bracket View */}
+                <div className="p-5">
+                  <BracketView
+                    rounds={bracketRounds}
+                    onMatchClick={isRegistered ? (id) => setActiveMatchId(id) : undefined}
+                  />
+                </div>
+              </>
             ) : (
-              <BracketView
-                rounds={bracketRounds}
-                onMatchClick={isRegistered ? (id) => setActiveMatchId(id) : undefined}
-              />
+              <div className="p-5 text-center">
+                <p className="text-sm text-slate-400">Bracket will be generated when the tournament starts.</p>
+              </div>
             )}
           </section>
         )}
 
         {/* ── My Matches ────────────────────────────────────────────────────── */}
         {isRegistered && showBracketSection && (
-          <section className="rounded-2xl border border-orange-500/20 bg-orange-500/5 p-5">
-            <h2 className="font-display text-base font-bold text-white mb-4 flex items-center gap-2">
-              <Swords className="w-4 h-4 text-orange-400" />
-              My Matches
-            </h2>
+          <section className="rounded-2xl border border-orange-500/20 bg-orange-500/5 overflow-hidden flex flex-col max-h-96">
+            <div className="px-5 py-4 border-b border-orange-500/20 shrink-0">
+              <h2 className="font-display text-base font-bold text-white flex items-center gap-2">
+                <Swords className="w-4 h-4 text-orange-400" />
+                My Matches
+              </h2>
+            </div>
             {myMatches.length === 0 ? (
-              <p className="text-sm text-slate-400">
-                No active matches yet. Your matches will appear here when your bracket match is ready.
-              </p>
+              <div className="p-5 text-center">
+                <p className="text-sm text-slate-400">
+                  No active matches yet. Your matches will appear here when your bracket match is ready.
+                </p>
+              </div>
             ) : (
-              <div className="space-y-3">
+              <div className="overflow-y-auto flex-1 p-5 space-y-3">
                 {myMatches.map((match, index) => {
                   const matchId = match._id ?? match.id ?? "";
                   return (
@@ -891,16 +973,16 @@ const TournamentDetail = () => {
                       disabled={!matchId}
                       className="w-full text-left rounded-xl border border-slate-700 bg-slate-900/70 p-4 hover:border-orange-500/40 hover:bg-orange-500/5 transition-all disabled:opacity-50"
                     >
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div>
+                      <div className="flex items-center justify-between gap-3 mb-2">
+                        <div className="min-w-0 flex-1">
                           <p className="text-sm font-bold text-white">
                             Match #{match.match_number ?? index + 1}
                           </p>
-                          <p className="text-xs text-slate-400 mt-0.5">
+                          <p className="text-xs text-slate-400 mt-0.5 truncate">
                             Round {match.round ?? match.round_number ?? 1} · Opponent: {getOpponentLabel(match, currentUserId, myInGameId)}
                           </p>
                         </div>
-                        <span className="text-[11px] uppercase tracking-wide font-bold text-slate-300 px-2.5 py-1 rounded-full border border-slate-600 bg-slate-800/60">
+                        <span className="text-[11px] uppercase tracking-wide font-bold text-slate-300 px-2.5 py-1 rounded-full border border-slate-600 bg-slate-800/60 shrink-0">
                           {match.status ?? "pending"}
                         </span>
                       </div>
