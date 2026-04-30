@@ -66,7 +66,7 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-4 py-3.5 border-b border-slate-800/60 last:border-0">
       <span className="text-xs font-medium text-slate-500 uppercase tracking-wide shrink-0 mt-0.5">{label}</span>
-      <span className="text-sm font-medium text-slate-200 text-right break-words">{value}</span>
+      <span className="text-sm font-medium text-slate-200 text-right wrap-break-word">{value}</span>
     </div>
   );
 }
@@ -131,7 +131,7 @@ function DeleteModal({ tournament, onClose, onConfirm, loading }) {
             </div>
             <div>
               <h3 className="text-base font-bold text-white">Delete Tournament</h3>
-              <p className="text-xs text-slate-400 truncate max-w-[260px]">{title}</p>
+              <p className="text-xs text-slate-400 truncate max-w-65">{title}</p>
             </div>
           </div>
 
@@ -282,7 +282,7 @@ const TournamentDetail = () => {
       <div className="relative overflow-hidden bg-slate-900 border-b border-slate-800 px-6 py-7 sm:px-8 sm:py-8">
         <div className="absolute -top-16 -right-16 w-72 h-72 rounded-full bg-orange-500/12 blur-3xl pointer-events-none" />
         <div className="absolute -bottom-20 -left-20 w-80 h-80 rounded-full bg-violet-600/8 blur-3xl pointer-events-none" />
-        <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(to_right,rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.025)_1px,transparent_1px)] bg-[size:48px_48px]" />
+        <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(to_right,rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.025)_1px,transparent_1px)] bg-size-[48px_48px]" />
 
         <div className="relative">
           {/* Top nav */}
@@ -470,7 +470,7 @@ const TournamentDetail = () => {
             {/* Description */}
             {tournament.description && (
               <Section title="Description">
-                <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap break-words">
+                <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap wrap-break-word">
                   {String(tournament.description)}
                 </p>
               </Section>
