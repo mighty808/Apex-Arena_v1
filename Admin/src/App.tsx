@@ -17,6 +17,7 @@ import AdminManagement from "./pages/admin/AdminManagement";
 import GameRequests from "./pages/admin/GameRequests";
 import DisputeManagement from "./pages/admin/DisputeManagement";
 import TournamentManagement from "./pages/admin/TournamentManagement";
+import TournamentDetail from "./pages/admin/TournamentDetail";
 
 const App = () => {
   return (
@@ -55,6 +56,7 @@ const App = () => {
             <Route path="users" element={<UserManagement />} />
             <Route path="games" element={<GamesManagement />} />
             <Route path="tournaments" element={<TournamentManagement />} />
+            <Route path="tournaments/:tournamentId" element={<TournamentDetail />} />
             <Route path="verifications" element={<OrganizerVerifications />} />
             <Route path="profile" element={<AdminProfile />} />
             <Route path="payouts" element={<PayoutsManagement />} />
