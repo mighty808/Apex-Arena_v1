@@ -106,10 +106,10 @@ function TournamentRow({
             )}
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-white truncate group-hover:text-orange-300 transition-colors max-w-[200px]">
+            <p className="text-sm font-semibold text-white truncate group-hover:text-orange-300 transition-colors max-w-50">
               {title}
             </p>
-            <p className="text-xs text-slate-500 font-mono truncate max-w-[200px]">
+            <p className="text-xs text-slate-500 font-mono truncate max-w-50">
               {id.slice(0, 20)}…
             </p>
           </div>
@@ -123,7 +123,7 @@ function TournamentRow({
 
       {/* Game */}
       <td className="px-4 py-4">
-        <p className="text-sm text-slate-200 truncate max-w-[120px]">
+        <p className="text-sm text-slate-200 truncate max-w-30">
           {game ? String((game as any).name ?? "Unknown") : "Unknown"}
         </p>
       </td>
@@ -131,11 +131,11 @@ function TournamentRow({
       {/* Organizer */}
       <td className="px-4 py-4">
         <div className="min-w-0">
-          <p className="text-sm text-slate-200 truncate max-w-[130px]">
+          <p className="text-sm text-slate-200 truncate max-w-32.5">
             {organizer ? String((organizer as any).username ?? "Unknown") : "Unknown"}
           </p>
           {organizer && (organizer as any).email && (
-            <p className="text-xs text-slate-500 truncate max-w-[130px]">
+            <p className="text-xs text-slate-500 truncate max-w-32.5">
               {String((organizer as any).email)}
             </p>
           )}
