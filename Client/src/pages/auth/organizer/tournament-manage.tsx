@@ -37,6 +37,7 @@ import {
 import { LeagueView } from "../../../components/league/LeagueView";
 import { apiGet } from "../../../utils/api.utils";
 import { TOURNAMENT_ENDPOINTS } from "../../../config/api.config";
+import { showSuccess, showError } from "../../../utils/toast.utils";
 import {
   BracketView,
   extractBracketRounds,
@@ -464,10 +465,7 @@ const TournamentManage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [toast, setToast] = useState<{
-    type: "success" | "error";
-    msg: string;
-  } | null>(null);
+
   const [isPublishing, setIsPublishing] = useState(false);
   const [isGeneratingBracket, setIsGeneratingBracket] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
@@ -513,8 +511,8 @@ const TournamentManage = () => {
   const hasFetched = useRef(false);
 
   const showToast = (type: "success" | "error", msg: string) => {
-    setToast({ type, msg });
-    setTimeout(() => setToast(null), 4000);
+    if (type === "success") showSuccess(msg);
+    else showError(msg);
   };
 
   const refreshEscrowSummary = useCallback(
@@ -1237,26 +1235,6 @@ const TournamentManage = () => {
 
   return (
     <div className="max-w-5xl mx-auto">
-      {/* Toast */}
-      {toast && (
-        <div
-          className={`fixed top-4 right-4 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl text-sm font-medium ${
-            toast.type === "success"
-              ? "bg-green-500/15 border border-green-500/30 text-green-300"
-              : "bg-red-500/15 border border-red-500/30 text-red-300"
-          }`}
-        >
-          {toast.type === "success" ? (
-            <CheckCircle2 className="w-4 h-4" />
-          ) : (
-            <AlertCircle className="w-4 h-4" />
-          )}
-          {toast.msg}
-          <button onClick={() => setToast(null)}>
-            <X className="w-4 h-4 opacity-60 hover:opacity-100" />
-          </button>
-        </div>
-      )}
 
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
       <div className="relative overflow-hidden border-b border-slate-800 bg-slate-900">
