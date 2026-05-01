@@ -348,7 +348,7 @@ const TournamentDetail = () => {
             </button>
 
             {/* Cards */}
-            <div className={`sm:grid sm:grid-cols-4 sm:gap-3 sm:mt-0 ${statsOpen ? "grid grid-cols-1 gap-2 mt-2" : "hidden sm:grid"}`}>
+            <div className={`sm:grid sm:grid-cols-4 sm:gap-3 sm:mt-3 ${statsOpen ? "grid grid-cols-1 gap-2 mt-2" : "hidden"}`}>
               {[
                 { label: "Players",    value: `${currentCount} / ${maxParticipants}`, icon: Users },
                 { label: "Entry Fee",  value: formatGhs(entryFee),                    icon: DollarSign },
