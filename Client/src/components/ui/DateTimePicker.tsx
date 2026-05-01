@@ -80,8 +80,10 @@ export function DateTimePicker({
     if (selected) emit(selected, hour, m);
   };
 
+  const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+  const displayAmPm = hour < 12 ? "AM" : "PM";
   const displayValue = selected
-    ? `${format(selected, "MMM d, yyyy")}  ${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`
+    ? `${format(selected, "MMM d, yyyy")}  ${String(displayHour).padStart(2, "0")}:${String(minute).padStart(2, "0")} ${displayAmPm}`
     : "";
 
   return (
@@ -143,31 +145,63 @@ export function DateTimePicker({
           </div>
 
           {/* Time picker */}
-          <div className="flex items-center gap-3 px-4 py-3 border-t border-slate-800 bg-slate-900/80">
-            <Clock className="w-4 h-4 text-slate-500 shrink-0" />
-            <span className="text-xs text-slate-400 uppercase tracking-wide">Time</span>
-            <div className="flex items-center gap-1 ml-auto">
-              {/* Hour */}
-              <select
-                value={hour}
-                onChange={(e) => handleHour(Number(e.target.value))}
-                className="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-sm text-white focus:outline-none focus:border-orange-500 w-16 text-center appearance-none"
-              >
-                {Array.from({ length: 24 }, (_, i) => (
-                  <option key={i} value={i}>{String(i).padStart(2, "0")}</option>
-                ))}
-              </select>
-              <span className="text-slate-400 font-bold">:</span>
-              {/* Minute */}
-              <select
-                value={minute}
-                onChange={(e) => handleMinute(Number(e.target.value))}
-                className="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-sm text-white focus:outline-none focus:border-orange-500 w-16 text-center appearance-none"
-              >
-                {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((m) => (
-                  <option key={m} value={m}>{String(m).padStart(2, "0")}</option>
-                ))}
-              </select>
+          <div className="border-t border-slate-800 px-4 py-4 bg-slate-950/40">
+            <div className="flex items-center gap-1.5 mb-3">
+              <Clock className="w-3.5 h-3.5 text-slate-500" />
+              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Time</span>
+            </div>
+            <div className="flex items-center justify-center gap-3">
+              {/* Hour stepper */}
+              <div className="flex flex-col items-center gap-1">
+                <button type="button" onClick={() => handleHour((hour + 1) % 24)}
+                  className="w-9 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors flex items-center justify-center">
+                  <ChevronLeft className="w-3.5 h-3.5 -rotate-90" />
+                </button>
+                <div className="w-14 h-11 bg-slate-800 border border-slate-700 rounded-xl flex items-center justify-center">
+                  <span className="text-xl font-bold text-white tabular-nums">
+                    {String(hour).padStart(2, "0")}
+                  </span>
+                </div>
+                <button type="button" onClick={() => handleHour((hour - 1 + 24) % 24)}
+                  className="w-9 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors flex items-center justify-center">
+                  <ChevronLeft className="w-3.5 h-3.5 rotate-90" />
+                </button>
+                <span className="text-[10px] text-slate-600 uppercase tracking-wide mt-0.5">Hour</span>
+              </div>
+
+              <span className="text-2xl font-bold text-slate-600 mb-5">:</span>
+
+              {/* Minute stepper */}
+              <div className="flex flex-col items-center gap-1">
+                <button type="button" onClick={() => handleMinute((Math.round(minute / 5) * 5 + 5) % 60)}
+                  className="w-9 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors flex items-center justify-center">
+                  <ChevronLeft className="w-3.5 h-3.5 -rotate-90" />
+                </button>
+                <div className="w-14 h-11 bg-slate-800 border border-slate-700 rounded-xl flex items-center justify-center">
+                  <span className="text-xl font-bold text-white tabular-nums">
+                    {String(minute).padStart(2, "0")}
+                  </span>
+                </div>
+                <button type="button" onClick={() => handleMinute((Math.round(minute / 5) * 5 - 5 + 60) % 60)}
+                  className="w-9 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors flex items-center justify-center">
+                  <ChevronLeft className="w-3.5 h-3.5 rotate-90" />
+                </button>
+                <span className="text-[10px] text-slate-600 uppercase tracking-wide mt-0.5">Min</span>
+              </div>
+
+              {/* AM/PM display */}
+              <div className="flex flex-col gap-1.5 mb-5 ml-1">
+                <button type="button"
+                  onClick={() => handleHour(hour < 12 ? hour : hour - 12)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${hour < 12 ? "bg-orange-500 text-white" : "bg-slate-800 text-slate-400 hover:bg-slate-700"}`}>
+                  AM
+                </button>
+                <button type="button"
+                  onClick={() => handleHour(hour >= 12 ? hour : hour + 12)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${hour >= 12 ? "bg-orange-500 text-white" : "bg-slate-800 text-slate-400 hover:bg-slate-700"}`}>
+                  PM
+                </button>
+              </div>
             </div>
           </div>
 
