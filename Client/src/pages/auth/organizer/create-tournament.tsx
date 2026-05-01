@@ -17,7 +17,7 @@ import {
 import { apiGet } from "../../../utils/api.utils";
 import { TOURNAMENT_ENDPOINTS } from "../../../config/api.config";
 import ImageUploadDropzone from "../../../components/ImageUploadDropzone";
-import { DateTimePicker } from "../../../components/DateTimePicker";
+import { DateTimePicker } from "../../../components/ui/DateTimePicker";
 
 // ─── Countries List (ISO 3166-1 alpha-2 codes) ────────────────────────────────
 
@@ -562,38 +562,54 @@ const CreateTournament = () => {
     const checkInEndIso = toIsoString(checkInEnd);
 
     if (isEditMode && tournamentId && isLimitedEditMode) {
-      if (
-        trimmedContactEmail &&
-        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedContactEmail)
-      ) {
+      if (trimmedContactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedContactEmail)) {
         setError("Contact email is invalid.");
         return;
       }
-
       if (trimmedDescription.length > 2000) {
         setError("Description must be 2000 characters or less.");
         return;
       }
+
+      const st = normalizedTournamentStatus;
+      const canEditSchedule   = ["draft","awaiting_deposit","published","open","locked"].includes(st);
+      const canEditCapacity   = ["draft","awaiting_deposit","published","open"].includes(st);
+      const canEditTitle      = ["draft","awaiting_deposit","published"].includes(st);
+      const canEditRules      = ["draft","awaiting_deposit","published","open"].includes(st);
+      const canEditVisibility = ["draft","awaiting_deposit","published"].includes(st);
 
       setIsSubmitting(true);
       try {
         const limitedUpdates: Partial<CreateTournamentPayload> = {
           description: trimmedDescription,
           contactEmail: trimmedContactEmail,
-          ...(canEditThumbnailAfterPublish
-            ? { thumbnailUrl: thumbnailUrl.trim() }
-            : {}),
+          ...(canEditThumbnailAfterPublish ? { thumbnailUrl: thumbnailUrl.trim() } : {}),
+          ...(canEditTitle && title.trim() ? { title: title.trim() } : {}),
+          ...(canEditVisibility ? { visibility, region } : {}),
+          ...(canEditRules ? { rules: trimmedRules, mapPool: mapPool.trim() } : {}),
+          ...(canEditSchedule ? {
+            registrationEnd:  toIsoString(registrationEnd)  ?? undefined,
+            tournamentStart:  toIsoString(tournamentStart)  ?? undefined,
+            tournamentEnd:    toIsoString(tournamentEnd)     ?? undefined,
+            checkInStart:     toIsoString(checkInStart)      ?? undefined,
+            checkInEnd:       toIsoString(checkInEnd)        ?? undefined,
+            ...(["draft","awaiting_deposit","published"].includes(st)
+              ? { registrationStart: toIsoString(registrationStart) ?? undefined }
+              : {}),
+          } : {}),
+          ...(canEditCapacity ? {
+            maxParticipants: Number(maxParticipants),
+            waitlistEnabled,
+            ...(["draft","awaiting_deposit","published"].includes(st)
+              ? { minParticipants: Number(minParticipants) }
+              : {}),
+          } : {}),
         };
 
-        const updated = await organizerService.updateTournament(
-          tournamentId,
-          limitedUpdates,
-        );
+        const updated = await organizerService.updateTournament(tournamentId, limitedUpdates);
         navigate(`/auth/organizer/tournaments/${updated.id}`);
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to update tournament.",
-        );
+        setError(err instanceof Error ? err.message : "Failed to update tournament.");
       } finally {
         setIsSubmitting(false);
       }
@@ -915,45 +931,158 @@ const CreateTournament = () => {
       )}
 
       {/* ── Limited edit (post-publish) ───────────────────────────── */}
-      {!isLoadingTournament && isLimitedEditMode && (
-        <form onSubmit={handleSubmit} className="space-y-5 max-w-2xl">
-          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
-            Tournament is already published. You can still update organizer-facing details.
-            {canEditThumbnailAfterPublish
-              ? " Editable now: description, contact email, and thumbnail image."
-              : " Editable now: description and contact email."}
-          </div>
+      {!isLoadingTournament && isLimitedEditMode && (() => {
+        const st = normalizedTournamentStatus;
+        const canEditTitle      = ["draft","awaiting_deposit","published"].includes(st);
+        const canEditSchedule   = ["draft","awaiting_deposit","published","open","locked"].includes(st);
+        const canEditRegStart   = ["draft","awaiting_deposit","published"].includes(st);
+        const canEditCapacity   = ["draft","awaiting_deposit","published","open"].includes(st);
+        const canEditMinPart    = ["draft","awaiting_deposit","published"].includes(st);
+        const canEditRules      = ["draft","awaiting_deposit","published","open"].includes(st);
+        const canEditVisibility = ["draft","awaiting_deposit","published"].includes(st);
+        const canEditCheckin    = ["draft","awaiting_deposit","published","open","locked"].includes(st);
 
-          <SectionCard step={1} title="Post-Publish Edits" icon={Trophy}>
-            <Field label="Description">
-              <textarea value={description} onChange={(e) => setDescription(e.target.value)}
-                placeholder="Update organizer notes, rules summary, or event details"
-                rows={4} maxLength={2000} className={`${inputCls} resize-none`} />
-            </Field>
-            <Field label="Contact Email">
-              <input type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)}
-                placeholder="organizer@example.com" className={inputCls} />
-            </Field>
-            {canEditThumbnailAfterPublish && (
-              <Field label="Thumbnail Image">
-                <ImageUploadDropzone value={thumbnailUrl} onChange={setThumbnailUrl}
-                  folder="apex-arenas/tournaments/thumbnails" />
-              </Field>
-            )}
-          </SectionCard>
+        const statusLabel: Record<string, string> = {
+          awaiting_deposit: "awaiting deposit",
+          open: "open for registration",
+          locked: "locked",
+          published: "published",
+        };
 
-          <div className="flex justify-end gap-3">
-            <button type="button" onClick={() => navigate("/auth/organizer/tournaments")}
-              className="px-5 py-2.5 rounded-xl border border-slate-700 text-slate-300 text-sm font-medium hover:bg-white/5 transition-colors">
-              Cancel
-            </button>
-            <button type="submit" disabled={isSubmitting}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-linear-to-r from-orange-400 to-amber-400 text-slate-950 text-sm font-bold hover:shadow-lg hover:shadow-orange-500/25 disabled:opacity-60 transition-all">
-              {isSubmitting ? <><Loader2 className="w-4 h-4 animate-spin" />Saving…</> : <><Trophy className="w-4 h-4" />Save Changes</>}
-            </button>
-          </div>
-        </form>
-      )}
+        return (
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Status banner */}
+            <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+              This tournament is <strong>{statusLabel[st] ?? st}</strong>. Some fields are locked to protect registered players.
+            </div>
+
+            {/* ── Two-column grid ── */}
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 items-start">
+
+              {/* ── LEFT — Info & Rules ── */}
+              <div className="space-y-5">
+                <SectionCard step={1} title="Basic Info" icon={Trophy}>
+                  {canEditTitle && (
+                    <Field label="Title" required>
+                      <input type="text" value={title} onChange={(e) => setTitle(e.target.value)}
+                        maxLength={100} className={inputCls} />
+                    </Field>
+                  )}
+                  <Field label="Description">
+                    <textarea value={description} onChange={(e) => setDescription(e.target.value)}
+                      placeholder="Organizer notes, rules summary, event details…"
+                      rows={4} maxLength={2000} className={`${inputCls} resize-none`} />
+                  </Field>
+                  <Field label="Contact Email">
+                    <input type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)}
+                      placeholder="organizer@example.com" className={inputCls} />
+                  </Field>
+                  {canEditVisibility && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <Field label="Visibility">
+                        <select value={visibility} onChange={(e) => setVisibility(e.target.value)} className={selectCls}>
+                          <option value="public">Public</option>
+                          <option value="private">Private</option>
+                          <option value="invite_only">Invite Only</option>
+                        </select>
+                      </Field>
+                      <Field label="Region">
+                        <input type="text" value={region} onChange={(e) => setRegion(e.target.value)}
+                          placeholder="e.g. West Africa" className={inputCls} />
+                      </Field>
+                    </div>
+                  )}
+                  {canEditThumbnailAfterPublish && (
+                    <Field label="Thumbnail Image">
+                      <ImageUploadDropzone value={thumbnailUrl} onChange={setThumbnailUrl}
+                        folder="apex-arenas/tournaments/thumbnails" />
+                    </Field>
+                  )}
+                </SectionCard>
+
+                {canEditRules && (
+                  <SectionCard step={2} title="Rules" icon={Trophy}>
+                    <Field label="Rules / Description">
+                      <textarea value={rules} onChange={(e) => setRules(e.target.value)}
+                        placeholder="Tournament rules, format details, code of conduct…"
+                        rows={4} maxLength={5000} className={`${inputCls} resize-none`} />
+                    </Field>
+                    <Field label="Map Pool">
+                      <input type="text" value={mapPool} onChange={(e) => setMapPool(e.target.value)}
+                        placeholder="e.g. Dust2, Mirage, Inferno" className={inputCls} />
+                    </Field>
+                  </SectionCard>
+                )}
+              </div>
+
+              {/* ── RIGHT — Schedule & Participants ── */}
+              <div className="space-y-5">
+                {canEditSchedule && (
+                  <SectionCard step={3} title="Schedule" icon={Trophy}>
+                    {canEditRegStart && (
+                      <Field label="Registration Opens">
+                        <DateTimePicker value={registrationStart} onChange={setRegistrationStart} placeholder="Pick date & time" />
+                      </Field>
+                    )}
+                    <Field label="Registration Closes">
+                      <DateTimePicker value={registrationEnd} onChange={setRegistrationEnd} placeholder="Pick date & time" />
+                    </Field>
+                    <Field label="Tournament Start">
+                      <DateTimePicker value={tournamentStart} onChange={setTournamentStart} placeholder="Pick date & time" />
+                    </Field>
+                    <Field label="Tournament End">
+                      <DateTimePicker value={tournamentEnd} onChange={setTournamentEnd} placeholder="Pick date & time" />
+                    </Field>
+                    {canEditCheckin && (
+                      <>
+                        <Field label="Check-in Opens">
+                          <DateTimePicker value={checkInStart} onChange={setCheckInStart} placeholder="Pick date & time" />
+                        </Field>
+                        <Field label="Check-in Closes">
+                          <DateTimePicker value={checkInEnd} onChange={setCheckInEnd} placeholder="Pick date & time" />
+                        </Field>
+                      </>
+                    )}
+                  </SectionCard>
+                )}
+
+                {canEditCapacity && (
+                  <SectionCard step={4} title="Participants" icon={Trophy}>
+                    <Field label="Max Players" required>
+                      <input type="number" min={canEditMinPart ? 2 : Number(maxParticipants)}
+                        value={maxParticipants} onChange={(e) => setMaxParticipants(e.target.value)} className={inputCls} />
+                    </Field>
+                    {canEditMinPart && (
+                      <Field label="Min Players" required>
+                        <input type="number" min={2} value={minParticipants}
+                          onChange={(e) => setMinParticipants(e.target.value)} className={inputCls} />
+                      </Field>
+                    )}
+                    <label className="flex items-center gap-3 cursor-pointer mt-1">
+                      <input type="checkbox" checked={waitlistEnabled}
+                        onChange={(e) => setWaitlistEnabled(e.target.checked)}
+                        className="w-4 h-4 rounded accent-orange-500" />
+                      <span className="text-sm text-slate-300">Enable waitlist when full</span>
+                    </label>
+                  </SectionCard>
+                )}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex justify-end gap-3 pb-6">
+              <button type="button" onClick={() => navigate("/auth/organizer/tournaments")}
+                className="px-5 py-2.5 rounded-xl border border-slate-700 text-slate-300 text-sm font-medium hover:bg-white/5 transition-colors">
+                Cancel
+              </button>
+              <button type="submit" disabled={isSubmitting}
+                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-linear-to-r from-orange-400 to-amber-400 text-slate-950 text-sm font-bold hover:shadow-lg hover:shadow-orange-500/25 disabled:opacity-60 transition-all">
+                {isSubmitting ? <><Loader2 className="w-4 h-4 animate-spin" />Saving…</> : <><Trophy className="w-4 h-4" />Save Changes</>}
+              </button>
+            </div>
+          </form>
+        );
+      })()}
 
       {/* ── Full create / edit form ────────────────────────────────── */}
       {!isLoadingTournament && !isLimitedEditMode && (
