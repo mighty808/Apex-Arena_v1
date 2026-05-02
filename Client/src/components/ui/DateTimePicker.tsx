@@ -108,7 +108,7 @@ export function DateTimePicker({
 
       {/* Popover */}
       {open && (
-        <div className="absolute z-50 mt-2 left-0 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl shadow-black/60 overflow-hidden min-w-[300px]">
+        <div className="absolute z-50 mt-2 left-0 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl shadow-black/60 overflow-hidden min-w-75">
           {/* Calendar */}
           <div className="p-3">
             <DayPicker
