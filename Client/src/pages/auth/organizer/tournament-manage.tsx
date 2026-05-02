@@ -372,11 +372,13 @@ function RegistrantRow({
   registrant,
   onCheckIn,
   onUndoCheckIn,
+  onRemove,
   isActionLoading,
 }: {
   registrant: TournamentRegistrant;
   onCheckIn: (userId: string) => void;
   onUndoCheckIn: (userId: string) => void;
+  onRemove: (userId: string, displayName: string) => void;
   isActionLoading: boolean;
 }) {
   const statusColor =
@@ -422,7 +424,7 @@ function RegistrantRow({
         {formatDate(registrant.registeredAt)}
       </td>
       <td className="px-4 py-4">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {registrant.checkedIn ? (
             <button
               onClick={() => onUndoCheckIn(registrant.userId)}
@@ -446,6 +448,16 @@ function RegistrantRow({
             >
               <CheckCircle2 className="w-4 h-4" />
               Check In
+            </button>
+          )}
+          {registrant.status !== "disqualified" && registrant.status !== "withdrawn" && (
+            <button
+              onClick={() => onRemove(registrant.userId, registrant.displayName)}
+              disabled={isActionLoading}
+              title="Remove player"
+              className="p-2 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 disabled:opacity-40 transition-colors"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
@@ -472,6 +484,8 @@ const TournamentManage = () => {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
+  const [removeTarget, setRemoveTarget] = useState<{ userId: string; displayName: string } | null>(null);
+  const [isRemoving, setIsRemoving] = useState(false);
   const [isInitiatingPayment, setIsInitiatingPayment] = useState(false);
   const [escrowSummary, setEscrowSummary] =
     useState<EscrowStatusSummary | null>(null);
@@ -719,6 +733,21 @@ const TournamentManage = () => {
       );
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  const handleRemovePlayer = async () => {
+    if (!tournamentId || !removeTarget) return;
+    setIsRemoving(true);
+    try {
+      await organizerService.removePlayer(tournamentId, removeTarget.userId);
+      setRegistrants((prev) => prev.filter((r) => r.userId !== removeTarget.userId));
+      showSuccess(`${removeTarget.displayName} has been removed from the tournament.`);
+    } catch (err: any) {
+      showError(err.message ?? "Failed to remove player.");
+    } finally {
+      setIsRemoving(false);
+      setRemoveTarget(null);
     }
   };
 
@@ -1245,51 +1274,48 @@ const TournamentManage = () => {
         <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(to_right,rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.025)_1px,transparent_1px)] bg-size-[48px_48px]" />
 
         <div className="relative px-6 py-6 sm:px-8 sm:py-7 space-y-5">
-          {/* Back + title row */}
-          <div className="relative flex items-start">
+          {/* Back + title + actions row */}
+          <div className="flex items-start gap-3">
             <button
               onClick={() => navigate("/auth/organizer/tournaments")}
-              className="sm:relative absolute left-0 top-0 shrink-0 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors mt-0.5"
+              className="shrink-0 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors mt-0.5"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <div className="flex-1 min-w-0 text-center sm:text-left sm:pl-8">
-              <div className="flex items-center justify-center sm:justify-start gap-2.5">
-                <h1 className="font-display text-2xl sm:text-3xl font-bold text-white leading-tight truncate min-w-0">
-                  {tournament.title}
-                </h1>
-                <span className={`shrink-0 text-xs px-2.5 py-0.5 rounded-full font-semibold capitalize ${
-                  tournament.status === "open"       ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/25"
-                  : tournament.status === "awaiting_deposit" || tournament.status === "published" ? "bg-amber-500/20 text-amber-300 border border-amber-500/25"
-                  : tournament.status === "draft"    ? "bg-slate-600/20 text-slate-400 border border-slate-600/25"
-                  : tournament.status === "cancelled"? "bg-red-500/20 text-red-400 border border-red-500/25"
-                  : "bg-cyan-500/20 text-cyan-300 border border-cyan-500/25"
-                }`}>
-                  {tournament.status.replace(/_/g, " ")}
-                </span>
-              </div>
-              <p className="text-sm text-slate-400 mt-1">
-                {tournament.game?.name ?? "Unknown Game"} &middot; {tournament.format ?? "Solo"} &middot;{" "}
-                {tournament.isFree ? "Free" : `GHS ${(tournament.entryFee / 100).toFixed(2)}`}
-              </p>
-            </div>
-          </div>
-
-          {/* Fixtures Generated status row */}
-          {leagueSettings?.fixturesGenerated && !canGenerateLeagueFixtures && (
-            <div className="flex justify-center sm:justify-start">
-              <span className="flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs sm:text-sm font-semibold">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                Fixtures Generated
-                {leagueSettings?.currentMatchweek != null && leagueSettings?.totalMatchweeks != null && (
-                  <span className="ml-1 text-emerald-400/70">· Wk {leagueSettings.currentMatchweek}/{leagueSettings.totalMatchweeks}</span>
-                )}
-              </span>
-            </div>
-          )}
-
-          {/* Action buttons */}
-          <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2.5">
+                    <h1 className="font-display text-2xl sm:text-3xl font-bold text-white leading-tight truncate min-w-0">
+                      {tournament.title}
+                    </h1>
+                    <span className={`shrink-0 text-xs px-2.5 py-0.5 rounded-full font-semibold capitalize ${
+                      tournament.status === "open"       ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/25"
+                      : tournament.status === "awaiting_deposit" || tournament.status === "published" ? "bg-amber-500/20 text-amber-300 border border-amber-500/25"
+                      : tournament.status === "draft"    ? "bg-slate-600/20 text-slate-400 border border-slate-600/25"
+                      : tournament.status === "cancelled"? "bg-red-500/20 text-red-400 border border-red-500/25"
+                      : "bg-cyan-500/20 text-cyan-300 border border-cyan-500/25"
+                    }`}>
+                      {tournament.status.replace(/_/g, " ")}
+                    </span>
+                  </div>
+                  <p className="text-sm text-slate-400 mt-1">
+                    {tournament.game?.name ?? "Unknown Game"} &middot; {tournament.format ?? "Solo"} &middot;{" "}
+                    {tournament.isFree ? "Free" : `GHS ${(tournament.entryFee / 100).toFixed(2)}`}
+                  </p>
+                  {/* Fixtures Generated badge */}
+                  {leagueSettings?.fixturesGenerated && !canGenerateLeagueFixtures && (
+                    <span className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-semibold">
+                      <CheckCircle2 className="w-3 h-3" />
+                      Fixtures Generated
+                      {leagueSettings?.currentMatchweek != null && leagueSettings?.totalMatchweeks != null && (
+                        <span className="text-emerald-400/70">· Wk {leagueSettings.currentMatchweek}/{leagueSettings.totalMatchweeks}</span>
+                      )}
+                    </span>
+                  )}
+                </div>
+                {/* Action buttons */}
+                <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
             {canPublish && (
               <button onClick={handlePublish} disabled={isPublishing}
                 className="flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-linear-to-r from-orange-400 to-amber-400 text-slate-950 text-xs sm:text-sm font-bold hover:shadow-lg hover:shadow-orange-500/20 disabled:opacity-60 transition-all">
@@ -1377,6 +1403,9 @@ const TournamentManage = () => {
                 <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
             )}
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Stats strip */}
@@ -2158,6 +2187,7 @@ const TournamentManage = () => {
                       registrant={r}
                       onCheckIn={handleCheckIn}
                       onUndoCheckIn={handleUndoCheckIn}
+                      onRemove={(userId, displayName) => setRemoveTarget({ userId, displayName })}
                       isActionLoading={actionLoading === r.userId}
                     />
                   ))}
@@ -2362,6 +2392,42 @@ const TournamentManage = () => {
                 className="flex-1 py-2.5 rounded-lg bg-red-500 text-white text-sm font-semibold hover:bg-red-400 transition-colors"
               >
                 Cancel Tournament
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Remove Player Confirm Modal */}
+      {removeTarget && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-sm p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center">
+                <UserCheck className="w-5 h-5 text-red-400" />
+              </div>
+              <div>
+                <h3 className="font-display text-lg font-bold text-white">Remove Player?</h3>
+                <p className="text-xs text-slate-400">{removeTarget.displayName}</p>
+              </div>
+            </div>
+            <p className="text-sm text-slate-400">
+              This player will be removed from the tournament and their entry fee (if any) will be refunded to their wallet.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setRemoveTarget(null)}
+                disabled={isRemoving}
+                className="flex-1 py-2.5 rounded-lg border border-slate-700 text-slate-300 text-sm font-medium hover:bg-white/5 disabled:opacity-50 transition-colors"
+              >
+                Keep Player
+              </button>
+              <button
+                onClick={handleRemovePlayer}
+                disabled={isRemoving}
+                className="flex-1 py-2.5 rounded-lg bg-red-500 text-white text-sm font-semibold hover:bg-red-400 disabled:opacity-60 transition-colors"
+              >
+                {isRemoving ? "Removing…" : "Remove"}
               </button>
             </div>
           </div>
