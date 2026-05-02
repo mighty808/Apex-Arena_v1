@@ -2170,7 +2170,7 @@ const TournamentManage = () => {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[800px]">
+              <table className="w-full min-w-200">
                 <thead>
                   <tr className="border-b border-slate-800 bg-slate-900/50">
                     <th className="px-4 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide">Player</th>
