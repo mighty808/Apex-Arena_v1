@@ -38,6 +38,7 @@ import { LeagueView } from "../../../components/league/LeagueView";
 import { apiGet } from "../../../utils/api.utils";
 import { TOURNAMENT_ENDPOINTS } from "../../../config/api.config";
 import { showSuccess, showError } from "../../../utils/toast.utils";
+import { DateTimePicker } from "../../../components/ui/DateTimePicker";
 import {
   BracketView,
   extractBracketRounds,
@@ -878,10 +879,11 @@ const TournamentManage = () => {
   const handleExtendRegistration = async () => {
     if (!tournamentId || !extendDate) return;
     setIsExtending(true);
+    const isoDate = new Date(extendDate).toISOString();
     try {
-      await organizerService.updateTournament(tournamentId, { registrationEnd: extendDate });
+      await organizerService.updateTournament(tournamentId, { registrationEnd: isoDate });
       setTournament((prev) =>
-        prev ? { ...prev, schedule: { ...prev.schedule, registrationEnd: extendDate } } : prev,
+        prev ? { ...prev, schedule: { ...prev.schedule, registrationEnd: isoDate } } : prev,
       );
       setShowExtendModal(false);
       setExtendDate("");
@@ -2213,11 +2215,11 @@ const TournamentManage = () => {
             <p className="text-sm text-slate-400">Choose a new registration deadline to give more players time to join.</p>
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">New Deadline</label>
-              <input
-                type="datetime-local"
+              <DateTimePicker
                 value={extendDate}
-                onChange={(e) => setExtendDate(e.target.value)}
-                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500 transition-colors"
+                onChange={setExtendDate}
+                placeholder="Pick new deadline"
+                minDate={tournament?.schedule.registrationEnd ? new Date(tournament.schedule.registrationEnd) : new Date()}
               />
             </div>
             <div className="flex gap-2 pt-1">
