@@ -10,6 +10,7 @@ interface DateTimePickerProps {
   label?: string;
   placeholder?: string;
   className?: string;
+  minDate?: Date;
 }
 
 function parseLocal(v: string): Date | null {
@@ -28,6 +29,7 @@ export function DateTimePicker({
   onChange,
   placeholder = "Select date & time",
   className = "",
+  minDate,
 }: DateTimePickerProps) {
   const parsed  = parseLocal(value);
   const [open, setOpen]   = useState(false);
@@ -115,6 +117,7 @@ export function DateTimePicker({
               onSelect={handleDaySelect}
               month={month}
               onMonthChange={setMonth}
+              disabled={minDate ? { before: minDate } : undefined}
               classNames={{
                 root:         "text-white select-none",
                 months:       "flex flex-col",
