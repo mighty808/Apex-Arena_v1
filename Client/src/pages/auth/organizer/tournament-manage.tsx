@@ -384,56 +384,67 @@ function RegistrantRow({
 }) {
   const statusColor =
     STATUS_COLORS[registrant.status] ?? "bg-slate-700/50 text-slate-400";
+  const initials = registrant.displayName?.[0]?.toUpperCase() ?? "?";
 
   return (
-    <tr className="border-b border-slate-800 hover:bg-white/2 transition-colors">
-      <td className="px-4 py-4">
-        <div className="flex items-center gap-4">
-          {registrant.avatarUrl ? (
-            <img
-              src={registrant.avatarUrl}
-              alt=""
-              className="w-9 h-9 rounded-full object-cover border border-slate-700 shrink-0"
-              onError={(e) => {
-                (e.currentTarget as HTMLImageElement).style.display = "none";
-              }}
-            />
-          ) : (
-            <div className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-bold text-slate-400 shrink-0">
-              {registrant.displayName?.[0]?.toUpperCase() ?? "?"}
-            </div>
-          )}
+    <tr className="border-b border-slate-800/60 hover:bg-slate-800/20 transition-colors group">
+      {/* Player */}
+      <td className="px-5 py-3.5">
+        <div className="flex items-center gap-3">
+          <div className="relative shrink-0">
+            {registrant.avatarUrl ? (
+              <img
+                src={registrant.avatarUrl}
+                alt=""
+                className="w-8 h-8 rounded-full object-cover ring-2 ring-slate-700 group-hover:ring-slate-600 transition-all"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).style.display = "none";
+                }}
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500/30 to-indigo-500/30 border border-slate-700 flex items-center justify-center text-xs font-bold text-cyan-300">
+                {initials}
+              </div>
+            )}
+            {registrant.checkedIn && (
+              <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-slate-900" />
+            )}
+          </div>
           <div className="min-w-0">
-            <p className="text-sm font-medium text-white truncate">
+            <p className="text-sm font-semibold text-white truncate leading-tight">
               {registrant.displayName}
             </p>
-            <p className="text-xs text-slate-500 truncate">@{registrant.username}</p>
+            <p className="text-[11px] text-slate-500 truncate">@{registrant.username}</p>
           </div>
         </div>
       </td>
-      <td className="px-6 py-4 text-sm text-slate-300 min-w-40">
-        {registrant.inGameId}
+      {/* In-Game ID */}
+      <td className="px-5 py-3.5 min-w-36">
+        <span className="text-xs font-mono text-slate-300 bg-slate-800/60 px-2 py-1 rounded-md border border-slate-700/50">
+          {registrant.inGameId || <span className="text-slate-600 italic">—</span>}
+        </span>
       </td>
-      <td className="px-6 py-4 min-w-40">
-        <span
-          className={`text-xs px-3 py-2 rounded-full capitalize ${statusColor}`}
-        >
+      {/* Status */}
+      <td className="px-5 py-3.5 min-w-36">
+        <span className={`inline-flex items-center text-[11px] font-semibold px-2.5 py-1 rounded-full capitalize ${statusColor}`}>
           {registrant.status.replace(/_/g, " ")}
         </span>
       </td>
-      <td className="px-6 py-4 text-xs text-slate-400 min-w-52">
-        {formatDate(registrant.registeredAt)}
+      {/* Registered */}
+      <td className="px-5 py-3.5 min-w-48">
+        <span className="text-xs text-slate-500">{formatDate(registrant.registeredAt)}</span>
       </td>
-      <td className="px-4 py-4">
-        <div className="flex items-center gap-2">
+      {/* Actions */}
+      <td className="px-5 py-3.5">
+        <div className="flex items-center gap-1.5">
           {registrant.checkedIn ? (
             <button
               onClick={() => onUndoCheckIn(registrant.userId)}
               disabled={isActionLoading}
               title="Undo check-in"
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium bg-slate-700 text-slate-300 hover:bg-red-500/20 hover:text-red-300 disabled:opacity-50 transition-colors"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-red-500/15 hover:text-red-300 hover:border-red-500/25 disabled:opacity-50 transition-colors"
             >
-              <XCircle className="w-4 h-4" />
+              <XCircle className="w-3.5 h-3.5" />
               Undo
             </button>
           ) : (
@@ -445,9 +456,9 @@ function RegistrantRow({
                 registrant.status === "withdrawn"
               }
               title="Check in player"
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium bg-green-500/10 text-green-400 hover:bg-green-500 hover:text-slate-950 disabled:opacity-40 transition-colors"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 border border-slate-700/60 hover:bg-emerald-500/15 hover:text-emerald-400 hover:border-emerald-500/25 disabled:opacity-40 transition-colors"
             >
-              <CheckCircle2 className="w-4 h-4" />
+              <CheckCircle2 className="w-3.5 h-3.5" />
               Check In
             </button>
           )}
@@ -456,7 +467,7 @@ function RegistrantRow({
               onClick={() => onRemove(registrant.userId, registrant.displayName)}
               disabled={isActionLoading}
               title="Remove player"
-              className="p-2 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 disabled:opacity-40 transition-colors"
+              className="p-1.5 rounded-lg text-slate-600 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 disabled:opacity-40 transition-colors"
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>
@@ -1536,45 +1547,39 @@ const TournamentManage = () => {
       )}
 
       {(hasBracketGenerated || canGenerateBracket) && (
-        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 space-y-3">
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            <div>
-              <h2 className="font-display text-base font-semibold text-white flex items-center gap-2">
+        <div className="rounded-2xl border border-slate-800 bg-slate-900 overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-slate-800/80 bg-slate-950/30">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-cyan-500/15 border border-cyan-500/25 flex items-center justify-center">
                 <Trophy className="w-4 h-4 text-cyan-400" />
-                Bracket Progress
-              </h2>
-              <p className="text-xs text-slate-400 mt-1">
-                {hasBracketGenerated
-                  ? "Track round completion and current bracket stage."
-                  : "Generate bracket to start tracking match progress."}
-              </p>
+              </div>
+              <div>
+                <h2 className="font-display text-sm font-bold text-white">Bracket Progress</h2>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  {hasBracketGenerated ? "Track round completion and match stages." : "Generate bracket to start tracking."}
+                </p>
+              </div>
             </div>
-
             {hasBracketGenerated && (
               <div className="flex items-center gap-2">
                 {bracketRounds.length > 0 && (
                   <button
                     onClick={() => setShowBracketView((v) => !v)}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300 text-xs font-medium hover:bg-white/5 transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300 text-xs font-medium hover:bg-white/5 hover:border-slate-600 transition-colors"
                   >
-                    <Trophy className="w-3.5 h-3.5" />
-                    {showBracketView ? "Hide Bracket" : "View Bracket"}
+                    <Trophy className="w-3 h-3" />
+                    {showBracketView ? "Hide" : "View Bracket"}
                   </button>
                 )}
                 {tournamentId && (
                   <button
-                    onClick={() => {
-                      void loadBracketProgress(tournamentId);
-                    }}
+                    onClick={() => { void loadBracketProgress(tournamentId); }}
                     disabled={isRefreshingBracketProgress}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300 text-xs font-medium hover:bg-white/5 disabled:opacity-50 transition-colors"
+                    className="p-1.5 rounded-lg border border-slate-700 text-slate-400 hover:text-white hover:border-slate-600 disabled:opacity-40 transition-colors"
+                    title="Refresh"
                   >
-                    <RefreshCw
-                      className={`w-3.5 h-3.5 ${
-                        isRefreshingBracketProgress ? "animate-spin" : ""
-                      }`}
-                    />
-                    Refresh
+                    <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingBracketProgress ? "animate-spin" : ""}`} />
                   </button>
                 )}
               </div>
@@ -1582,79 +1587,75 @@ const TournamentManage = () => {
           </div>
 
           {hasBracketGenerated ? (
-            <>
+            <div className="p-5 space-y-5">
+              {/* Stats row */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-2">
-                  <p className="text-[11px] text-slate-500 mb-1">Bracket</p>
-                  <p className="text-base font-semibold text-emerald-300">
-                    Generated
-                  </p>
-                </div>
-                <div className="rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-2">
-                  <p className="text-[11px] text-slate-500 mb-1">Matches</p>
-                  <p className="text-base font-semibold text-white">
-                    {totalBracketMatches}
-                  </p>
-                </div>
-                <div className="rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-2">
-                  <p className="text-[11px] text-slate-500 mb-1">Completed</p>
-                  <p className="text-base font-semibold text-cyan-300">
-                    {completedBracketMatches}/{totalBracketMatches}
-                  </p>
-                </div>
-                <div className="rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-2">
-                  <p className="text-[11px] text-slate-500 mb-1">
-                    Current Round
-                  </p>
-                  <p className="text-base font-semibold text-white">
-                    {currentBracketRound
-                      ? `Round ${currentBracketRound.round}`
-                      : "TBD"}
-                  </p>
-                </div>
+                {[
+                  { label: "Status",        value: "Generated",                                          valueClass: "text-emerald-400", sub: null },
+                  { label: "Total Matches", value: String(totalBracketMatches),                          valueClass: "text-white",        sub: null },
+                  { label: "Completed",     value: `${completedBracketMatches}`,                         valueClass: "text-cyan-400",     sub: `of ${totalBracketMatches}` },
+                  { label: "Current Round", value: currentBracketRound ? `Round ${currentBracketRound.round}` : "TBD", valueClass: "text-white", sub: null },
+                ].map(({ label, value, valueClass, sub }) => (
+                  <div key={label} className="rounded-xl bg-slate-800/40 border border-slate-800 px-4 py-3">
+                    <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">{label}</p>
+                    <div className="flex items-baseline gap-1">
+                      <span className={`font-display text-xl font-bold tabular-nums ${valueClass}`}>{value}</span>
+                      {sub && <span className="text-xs text-slate-500">{sub}</span>}
+                    </div>
+                  </div>
+                ))}
               </div>
 
+              {/* Progress bar */}
               <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-400">Bracket completion</span>
-                  <span className="font-semibold text-emerald-300">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-400">Overall completion</span>
+                  <span className={`text-xs font-bold tabular-nums ${bracketCompletionPercent === 100 ? "text-emerald-400" : "text-cyan-400"}`}>
                     {bracketCompletionPercent}%
                   </span>
                 </div>
-                <div className="h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
                   <div
-                    className="h-full bg-linear-to-r from-cyan-400 via-cyan-300 to-emerald-300 transition-all"
+                    className="h-full rounded-full bg-linear-to-r from-cyan-500 to-emerald-400 transition-all duration-500"
                     style={{ width: `${bracketCompletionPercent}%` }}
                   />
                 </div>
               </div>
 
+              {/* Round chips */}
               {bracketRoundStats.length > 0 && (
-                <div className="flex items-center gap-2 flex-wrap text-xs">
+                <div className="flex items-center gap-2 flex-wrap">
                   {bracketRoundStats.map((round) => (
-                    <span
+                    <div
                       key={round.round}
-                      className={`px-2 py-0.5 rounded-full border ${
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-semibold ${
                         round.done
-                          ? "border-emerald-500/35 text-emerald-300 bg-emerald-500/10"
-                          : "border-cyan-500/30 text-cyan-300 bg-cyan-500/10"
+                          ? "border-emerald-500/30 text-emerald-300 bg-emerald-500/10"
+                          : "border-slate-700 text-slate-300 bg-slate-800/60"
                       }`}
                     >
-                      R{round.round}: {round.completed}/{round.total}
-                    </span>
+                      {round.done
+                        ? <CheckCircle2 className="w-3 h-3" />
+                        : <Circle className="w-3 h-3 text-slate-500" />}
+                      Round {round.round}
+                      <span className={`ml-0.5 ${round.done ? "text-emerald-400" : "text-slate-500"}`}>
+                        {round.completed}/{round.total}
+                      </span>
+                    </div>
                   ))}
                 </div>
               )}
 
               {showBracketView && bracketRounds.length > 0 && (
-                <div className="mt-2 border-t border-slate-800 pt-4">
+                <div className="border-t border-slate-800 pt-4">
                   <BracketView rounds={bracketRounds} />
                 </div>
               )}
-            </>
+            </div>
           ) : (
-            <div className="rounded-lg border border-slate-800 bg-slate-900/70 px-3 py-2 text-sm text-slate-400">
-              Bracket is not generated yet.
+            <div className="flex flex-col items-center py-10 text-center gap-2">
+              <Trophy className="w-8 h-8 text-slate-700" />
+              <p className="text-sm text-slate-500">Bracket not generated yet.</p>
             </div>
           )}
         </div>
@@ -2122,34 +2123,47 @@ const TournamentManage = () => {
 
         {/* Participants Table */}
         <div
-          className={`rounded-xl border border-slate-800 bg-slate-900/60 overflow-hidden ${
+          className={`rounded-2xl border border-slate-800 bg-slate-900 overflow-hidden ${
             !tournament.isFree && escrowSummary
               ? "xl:col-span-8 xl:order-1"
               : ""
           }`}
         >
-          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800 gap-3 flex-wrap">
-            <h2 className="font-display text-base font-semibold text-white flex items-center gap-2">
-              <Users className="w-4 h-4 text-cyan-400" />
-              Participants ({activeRegistrants.length})
-            </h2>
-            <div className="flex items-center gap-2 flex-1 justify-end">
+          {/* Header */}
+          <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-slate-800/80 bg-slate-950/30">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-cyan-500/15 border border-cyan-500/25 flex items-center justify-center shrink-0">
+                <Users className="w-4 h-4 text-cyan-400" />
+              </div>
+              <div>
+                <h2 className="font-display text-sm font-bold text-white leading-tight">
+                  Participants
+                  <span className="ml-2 text-xs font-semibold text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-1.5 py-0.5 rounded-full">
+                    {activeRegistrants.length}
+                  </span>
+                </h2>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  {activeRegistrants.filter(r => r.checkedIn).length} checked in
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
               {/* Search */}
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500 pointer-events-none" />
                 <input
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search players..."
-                  className="bg-slate-800/60 border border-slate-700 rounded-lg pl-9 pr-3 py-1.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500 transition-colors w-36 sm:w-44"
+                  className="bg-slate-800/60 border border-slate-700 rounded-xl pl-8 pr-3 py-1.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500/60 focus:bg-slate-800 transition-colors w-36 sm:w-44"
                 />
               </div>
               {/* Bulk Check-In */}
               <button
                 onClick={handleBulkCheckIn}
                 disabled={actionLoading === "bulk"}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-500/10 border border-green-500/30 text-green-400 text-xs font-medium hover:bg-green-500 hover:text-slate-950 hover:border-green-500 disabled:opacity-50 transition-colors shrink-0"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-xs font-semibold hover:bg-emerald-500 hover:text-slate-950 hover:border-emerald-500 disabled:opacity-50 transition-colors shrink-0"
               >
                 {actionLoading === "bulk" ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -2162,24 +2176,32 @@ const TournamentManage = () => {
           </div>
 
           {filteredRegistrants.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <Users className="w-10 h-10 text-slate-700 mb-3" />
-              <p className="text-sm text-slate-500">
-                {search
-                  ? "No players match your search."
-                  : "No players registered yet."}
+            <div className="flex flex-col items-center justify-center py-16 text-center px-6">
+              <div className="w-12 h-12 rounded-2xl bg-slate-800/60 border border-slate-700/60 flex items-center justify-center mb-3">
+                <Users className="w-5 h-5 text-slate-600" />
+              </div>
+              <p className="text-sm font-medium text-slate-400">
+                {search ? "No players match your search" : "No players registered yet"}
               </p>
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  className="mt-2 text-xs text-cyan-500 hover:text-cyan-400 transition-colors"
+                >
+                  Clear search
+                </button>
+              )}
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-200">
                 <thead>
-                  <tr className="border-b border-slate-800 bg-slate-900/50">
-                    <th className="px-4 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide">Player</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide min-w-40">In-Game ID</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide min-w-40">Status</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide min-w-52">Registered</th>
-                    <th className="px-4 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide">Action</th>
+                  <tr className="border-b border-slate-800/60 bg-slate-950/20">
+                    <th className="px-5 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-widest">Player</th>
+                    <th className="px-5 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-widest min-w-36">In-Game ID</th>
+                    <th className="px-5 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-widest min-w-36">Status</th>
+                    <th className="px-5 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-widest min-w-48">Registered</th>
+                    <th className="px-5 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-widest">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
