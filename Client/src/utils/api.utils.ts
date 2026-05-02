@@ -256,8 +256,8 @@ export const apiPut = <T = any>(url: string, body: any, options?: ApiFetchOption
 export const apiPatch = <T = any>(url: string, body: any, options?: ApiFetchOptions) =>
   apiFetch<T>(url, { ...options, method: 'PATCH', body: JSON.stringify(body) });
 
-export const apiDelete = <T = any>(url: string, options?: ApiFetchOptions) =>
-  apiFetch<T>(url, { ...options, method: 'DELETE' });
+export const apiDelete = <T = any>(url: string, body?: any, options?: ApiFetchOptions) =>
+  apiFetch<T>(url, { ...options, method: 'DELETE', ...(body ? { body: JSON.stringify(body) } : {}) });
 
 export const clearApiCache = () => {
   requestCache.clear();
