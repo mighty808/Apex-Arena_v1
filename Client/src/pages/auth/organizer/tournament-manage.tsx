@@ -1254,8 +1254,8 @@ const TournamentManage = () => {
               <ChevronLeft className="w-5 h-5" />
             </button>
             <div className="flex-1 min-w-0 text-center sm:text-left sm:pl-8">
-              <div className="flex items-center justify-center sm:justify-start gap-2.5 flex-wrap">
-                <h1 className="font-display text-2xl sm:text-3xl font-bold text-white leading-tight truncate">
+              <div className="flex items-center justify-center sm:justify-start gap-2.5">
+                <h1 className="font-display text-2xl sm:text-3xl font-bold text-white leading-tight truncate min-w-0">
                   {tournament.title}
                 </h1>
                 <span className={`shrink-0 text-xs px-2.5 py-0.5 rounded-full font-semibold capitalize ${
