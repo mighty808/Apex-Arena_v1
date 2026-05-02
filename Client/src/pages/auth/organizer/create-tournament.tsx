@@ -586,7 +586,7 @@ const CreateTournament = () => {
           ...(canEditThumbnailAfterPublish ? { thumbnailUrl: thumbnailUrl.trim() } : {}),
           ...(canEditTitle && title.trim() ? { title: title.trim() } : {}),
           ...(canEditVisibility ? { visibility, region } : {}),
-          ...(canEditRules ? { rules: trimmedRules, mapPool: mapPool.trim() } : {}),
+          ...(canEditRules ? { rules: trimmedRules, mapPool: mapPool.trim() ? mapPool.trim().split(",").map((s) => s.trim()).filter(Boolean) : undefined } : {}),
           ...(canEditSchedule ? {
             registrationEnd:  toIsoString(registrationEnd)  ?? undefined,
             tournamentStart:  toIsoString(tournamentStart)  ?? undefined,
