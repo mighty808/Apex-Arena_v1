@@ -7,8 +7,6 @@ import {
   User,
   LogOut,
   LayoutDashboard,
-  Zap,
-  ArrowRight,
 } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useAuth } from "../lib/auth-context";
@@ -52,22 +50,6 @@ const Navbar = () => {
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-800/70 bg-slate-950/80 text-white backdrop-blur-md">
-      {/* Announcement bar */}
-      <div className="bg-linear-to-r from-cyan-500/10 via-sky-500/10 to-cyan-500/10 border-b border-cyan-500/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center justify-center gap-2 text-xs">
-          <Zap className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-          <span className="text-slate-300">
-            <span className="text-cyan-300 font-semibold">GHS 5,000</span> in prize pools this weekend
-          </span>
-          <span className="text-slate-600">·</span>
-          <Link
-            to="/login"
-            className="text-cyan-300 font-medium hover:text-cyan-200 inline-flex items-center gap-1"
-          >
-            View brackets <ArrowRight className="w-3 h-3" />
-          </Link>
-        </div>
-      </div>
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 gap-6">
