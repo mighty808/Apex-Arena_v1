@@ -149,7 +149,7 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
           </h3>
           <p className="text-[11px] text-slate-500 mt-0.5 truncate">
             {tournament.game?.name ?? "Unknown Game"} · {tournament.format ?? "Solo"}
-            {tournament.region ? ` · ${tournament.region}` : ""}
+            {tournament.region ? ` · ${tournament.region === "GLOBAL" ? "Global" : tournament.region}` : ""}
           </p>
         </div>
 
