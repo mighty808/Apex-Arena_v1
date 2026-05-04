@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { server } from '../mocks/server';
-import { apiFetch, apiGet, apiPost, clearApiCache } from '../../utils/api.utils';
+import { apiGet, apiPost, clearApiCache } from '../../utils/api.utils';
 
 const TEST_URL = 'https://api-apexarenas.onrender.com/api/v1/auth/token/refresh';
 const MOCK_URL = 'https://api-apexarenas.onrender.com/api/v1/test-endpoint';
