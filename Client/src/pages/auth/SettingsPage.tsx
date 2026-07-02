@@ -1,13 +1,20 @@
 import { useCallback, useEffect, useState } from "react";
 import {
-  AlertCircle, CheckCircle2, KeyRound, Loader2,
+  AlertCircle, Bell, CheckCircle2, KeyRound, Loader2,
   LogOut, Monitor, Settings, User, X,
 } from "lucide-react";
 import { apiGet, apiPatch, apiPost, apiDelete } from "../../utils/api.utils";
 import { AUTH_ENDPOINTS } from "../../config/api.config";
 import { useAuth } from "../../lib/auth-context";
+import {
+  isPushSupported,
+  getNotificationPermission,
+  getExistingSubscription,
+  subscribeToPush,
+  unsubscribeFromPush,
+} from "../../lib/push";
 
-type Tab = "profile" | "security" | "sessions";
+type Tab = "profile" | "security" | "sessions" | "notifications";
 
 interface Session {
   sessionId: string;
@@ -45,6 +52,11 @@ export default function SettingsPage() {
   const [loadingSessions, setLoadingSessions] = useState(false);
   const [revokingId, setRevokingId] = useState<string | null>(null);
 
+  // Push notifications
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushBusy, setPushBusy] = useState(false);
+  const [pushChecked, setPushChecked] = useState(false);
+
   const showMsg = (msg: string, isError = false) => {
     if (isError) { setError(msg); setSuccess(null); }
     else { setSuccess(msg); setError(null); }
@@ -77,6 +89,33 @@ export default function SettingsPage() {
   useEffect(() => {
     if (tab === "sessions") void loadSessions();
   }, [tab, loadSessions]);
+
+  useEffect(() => {
+    if (tab !== "notifications" || pushChecked) return;
+    setPushChecked(true);
+    getExistingSubscription()
+      .then((sub) => setPushEnabled(Boolean(sub) && Notification.permission === "granted"))
+      .catch(() => setPushEnabled(false));
+  }, [tab, pushChecked]);
+
+  const togglePush = async () => {
+    setPushBusy(true);
+    try {
+      if (pushEnabled) {
+        await unsubscribeFromPush();
+        setPushEnabled(false);
+        showMsg("Tournament alerts disabled on this device.");
+      } else {
+        await subscribeToPush();
+        setPushEnabled(true);
+        showMsg("Tournament alerts enabled. You'll be notified when tournaments open for your games.");
+      }
+    } catch (e) {
+      showMsg(e instanceof Error ? e.message : "Failed to update notification settings.", true);
+    } finally {
+      setPushBusy(false);
+    }
+  };
 
   const saveProfile = async () => {
     setSavingProfile(true);
@@ -130,6 +169,7 @@ export default function SettingsPage() {
     { id: "profile", label: "Profile", icon: <User className="w-4 h-4" /> },
     { id: "security", label: "Security", icon: <KeyRound className="w-4 h-4" /> },
     { id: "sessions", label: "Sessions", icon: <Monitor className="w-4 h-4" /> },
+    { id: "notifications", label: "Notifications", icon: <Bell className="w-4 h-4" /> },
   ];
 
   return (
@@ -272,6 +312,54 @@ export default function SettingsPage() {
                   )}
                 </div>
               ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Notifications tab */}
+      {tab === "notifications" && (
+        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-6 space-y-5">
+          <h2 className="font-semibold text-white">Push Notifications</h2>
+          {!isPushSupported() ? (
+            <p className="text-sm text-slate-400">
+              Push notifications are not supported in this browser. On iPhone/iPad, add
+              Apex Arenas to your Home Screen first, then enable alerts from there.
+            </p>
+          ) : getNotificationPermission() === "denied" ? (
+            <p className="text-sm text-slate-400">
+              Notifications are blocked for this site. Enable them in your browser's
+              site settings, then come back here to turn on tournament alerts.
+            </p>
+          ) : (
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-white font-medium">Tournament alerts</p>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Get notified when a tournament opens for a game you play — even when
+                  Apex Arenas is closed. Applies to this browser/device only.
+                </p>
+              </div>
+              <button
+                onClick={() => { void togglePush(); }}
+                disabled={pushBusy}
+                role="switch"
+                aria-checked={pushEnabled}
+                aria-label="Toggle tournament alerts"
+                className={`relative shrink-0 w-11 h-6 rounded-full transition-colors disabled:opacity-50 ${
+                  pushEnabled ? "bg-cyan-500" : "bg-slate-700"
+                }`}
+              >
+                {pushBusy ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white" />
+                ) : (
+                  <span
+                    className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all ${
+                      pushEnabled ? "left-[22px]" : "left-0.5"
+                    }`}
+                  />
+                )}
+              </button>
             </div>
           )}
         </div>
