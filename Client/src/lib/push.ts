@@ -87,3 +87,31 @@ export async function unsubscribeFromPush(): Promise<void> {
   await subscription.unsubscribe().catch(() => {});
   await apiDelete(PUSH_ENDPOINTS.SUBSCRIBE, { endpoint }).catch(() => {});
 }
+
+const PUSH_INVITE_SHOWN_KEY = 'apex_arenas_push_invited';
+
+/**
+ * Push-by-default, within what browsers allow. Called once per login:
+ * - Permission already granted but no live subscription (cleared site data,
+ *   new subscription lost, etc.) → re-subscribe silently, no prompt.
+ * - Never been asked → call `onInvite` ONCE per browser so the app can show
+ *   an "enable alerts?" toast. The actual permission prompt must come from
+ *   the user clicking that toast — browsers block unsolicited prompts.
+ * - Denied → do nothing; only the user can unblock it in browser settings.
+ */
+export async function maybeAutoEnablePush(onInvite: () => void): Promise<void> {
+  if (!isPushSupported()) return;
+
+  if (Notification.permission === 'granted') {
+    const existing = await getExistingSubscription();
+    if (!existing) {
+      await subscribeToPush().catch(() => {});
+    }
+    return;
+  }
+
+  if (Notification.permission === 'default' && !localStorage.getItem(PUSH_INVITE_SHOWN_KEY)) {
+    localStorage.setItem(PUSH_INVITE_SHOWN_KEY, '1');
+    onInvite();
+  }
+}

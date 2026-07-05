@@ -14,6 +14,7 @@ import {
   type NotificationItem,
 } from '../services/notification.service';
 import { getOrCreateSocket, disconnectSocket } from './socket';
+import { maybeAutoEnablePush, subscribeToPush } from './push';
 
 interface NotificationContextValue {
   notifications: NotificationItem[];
@@ -87,6 +88,38 @@ export function NotificationProvider({ children }: PropsWithChildren) {
     notificationService.getUnreadCount().then(setUnreadCount).catch(() => {});
     loadPage(1);
   }, [loadPage]);
+
+  // Push notifications: silently restore a lost subscription if permission is
+  // already granted, or invite first-time users once. The permission prompt
+  // itself only fires from the toast button click — a required user gesture.
+  useEffect(() => {
+    if (!user) return;
+
+    void maybeAutoEnablePush(() => {
+      const enable = () => {
+        toast.dismiss('push-invite');
+        subscribeToPush()
+          .then(() => toast.success('Tournament alerts enabled!'))
+          .catch(() => toast.info('You can enable alerts anytime in Settings → Notifications.'));
+      };
+
+      toast.info(
+        <div>
+          <p className="font-semibold text-sm">Never miss a tournament</p>
+          <p className="text-xs text-slate-300 mt-0.5">
+            Get an alert when a tournament opens for a game you play — even when the app is closed.
+          </p>
+          <button
+            onClick={enable}
+            className="mt-2 px-3 py-1.5 rounded-lg bg-cyan-500 text-slate-950 text-xs font-semibold hover:bg-cyan-400 transition-colors"
+          >
+            Enable alerts
+          </button>
+        </div>,
+        { toastId: 'push-invite', autoClose: false, closeOnClick: false, draggable: false },
+      );
+    });
+  }, [user]);
 
   const fetchMore = useCallback(() => {
     if (isLoading || !hasMore) return;

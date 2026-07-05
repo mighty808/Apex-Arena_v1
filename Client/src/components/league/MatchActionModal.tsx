@@ -8,6 +8,7 @@ import { tournamentService } from '../../services/tournament.service';
 import type { FullMatch } from '../../services/tournament.service';
 import ImageUploadDropzone from '../ImageUploadDropzone';
 import { organizerService } from '../../services/organizer.service';
+import HypePanel from '../HypePanel';
 
 interface Props {
   matchId: string;
@@ -1150,6 +1151,16 @@ export function MatchActionModal({ matchId, currentUserId, currentMatchweek, isO
             </div>
           ) : (
             <div className="space-y-4">
+              {/* Crowd hype (spec §6.3) — anyone viewing the match can back a player */}
+              {match && (match.player1Id || match.player2Id) && (
+                <HypePanel
+                  matchId={matchId}
+                  players={[
+                    { id: match.player1Id ?? "", name: match.player1Name ?? "Player 1" },
+                    { id: match.player2Id ?? "", name: match.player2Name ?? "Player 2" },
+                  ]}
+                />
+              )}
               {renderContent()}
               {isOrganizer && match && (() => {
                 // Gather every screenshot across all legs (Leg 1, Leg 2, Penalties)

@@ -5,6 +5,8 @@ import {
 } from "lucide-react";
 import { teamService, type Team, type RecruitmentPost } from "../../services/team.service";
 import { useAuth } from "../../lib/auth-context";
+import { apiGet } from "../../utils/api.utils";
+import { TOURNAMENT_ENDPOINTS } from "../../config/api.config";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -26,12 +28,12 @@ function StatusBadge({ status }: { status: string }) {
 interface PostDraft {
   title: string;
   description: string;
-  requirements: string;
-  positions: string;
+  roles: string;      // comma-separated in the form, sent as looking_for_roles[]
+  skillLevel: string;
   status: string;
 }
 
-const EMPTY_DRAFT: PostDraft = { title: "", description: "", requirements: "", positions: "", status: "open" };
+const EMPTY_DRAFT: PostDraft = { title: "", description: "", roles: "", skillLevel: "any", status: "open" };
 
 function RecruitmentForm({
   initial,
@@ -64,17 +66,29 @@ function RecruitmentForm({
           className={inputCls}
         />
       </div>
+      <div>
+        <label className="text-[11px] font-medium text-slate-400 block mb-1">
+          Roles needed <span className="text-red-400">*</span>
+        </label>
+        <input
+          value={draft.roles}
+          onChange={(e) => set("roles", e.target.value)}
+          placeholder="Comma-separated — e.g. striker, goalkeeper"
+          className={inputCls}
+        />
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <label className="text-[11px] font-medium text-slate-400 block mb-1">Positions</label>
-          <input
-            type="number"
-            min="1"
-            value={draft.positions}
-            onChange={(e) => set("positions", e.target.value)}
-            placeholder="e.g. 2"
+          <label className="text-[11px] font-medium text-slate-400 block mb-1">Skill level</label>
+          <select
+            value={draft.skillLevel}
+            onChange={(e) => set("skillLevel", e.target.value)}
             className={inputCls}
-          />
+          >
+            {["any", "beginner", "intermediate", "advanced", "pro"].map((s) => (
+              <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+            ))}
+          </select>
         </div>
         <div>
           <label className="text-[11px] font-medium text-slate-400 block mb-1">Status</label>
@@ -90,22 +104,14 @@ function RecruitmentForm({
         </div>
       </div>
       <div>
-        <label className="text-[11px] font-medium text-slate-400 block mb-1">Description</label>
+        <label className="text-[11px] font-medium text-slate-400 block mb-1">
+          Description <span className="text-red-400">*</span>
+        </label>
         <textarea
           rows={2}
           value={draft.description}
           onChange={(e) => set("description", e.target.value)}
-          placeholder="Brief overview of what you're looking for..."
-          className={`${inputCls} resize-none`}
-        />
-      </div>
-      <div>
-        <label className="text-[11px] font-medium text-slate-400 block mb-1">Requirements</label>
-        <textarea
-          rows={2}
-          value={draft.requirements}
-          onChange={(e) => set("requirements", e.target.value)}
-          placeholder="Skill level, experience, availability..."
+          placeholder="What you're looking for — experience, availability…"
           className={`${inputCls} resize-none`}
         />
       </div>
@@ -154,8 +160,8 @@ function RecruitmentSection({ teamId }: { teamId: string }) {
       const post = await teamService.createRecruitmentPost(teamId, {
         title: draft.title,
         description: draft.description || undefined,
-        requirements: draft.requirements || undefined,
-        positions: draft.positions ? Number(draft.positions) : undefined,
+        roles: draft.roles.split(",").map((r) => r.trim()).filter(Boolean),
+        skillLevel: draft.skillLevel,
       });
       setPosts((prev) => [post, ...prev]);
       setShowCreate(false);
@@ -173,8 +179,8 @@ function RecruitmentSection({ teamId }: { teamId: string }) {
       const updated = await teamService.updateRecruitmentPost(postId, {
         title: draft.title,
         description: draft.description || undefined,
-        requirements: draft.requirements || undefined,
-        positions: draft.positions ? Number(draft.positions) : undefined,
+        roles: draft.roles.split(",").map((r) => r.trim()).filter(Boolean),
+        skillLevel: draft.skillLevel,
         status: draft.status,
       });
       setPosts((prev) => prev.map((p) => (p.id === postId ? updated : p)));
@@ -245,8 +251,8 @@ function RecruitmentSection({ teamId }: { teamId: string }) {
             initial={{
               title: post.title,
               description: post.description ?? "",
-              requirements: post.requirements ?? "",
-              positions: post.positions ? String(post.positions) : "",
+              roles: post.roles.join(", "),
+              skillLevel: post.skillLevel ?? "any",
               status: post.status,
             }}
             onSave={(d) => void handleEdit(post.id, d)}
@@ -267,13 +273,9 @@ function RecruitmentSection({ teamId }: { teamId: string }) {
                 {post.description && (
                   <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">{post.description}</p>
                 )}
-                {post.requirements && (
-                  <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">
-                    Requirements: {post.requirements}
-                  </p>
-                )}
-                <div className="flex items-center gap-3 mt-1 text-[11px] text-slate-500">
-                  {post.positions && <span>{post.positions} position{post.positions !== 1 ? "s" : ""}</span>}
+                <div className="flex items-center gap-3 mt-1 text-[11px] text-slate-500 flex-wrap">
+                  {post.roles.length > 0 && <span>Roles: {post.roles.join(", ")}</span>}
+                  {post.skillLevel && post.skillLevel !== "any" && <span className="capitalize">{post.skillLevel}</span>}
                   <span>{post.applicantCount} applicant{post.applicantCount !== 1 ? "s" : ""}</span>
                 </div>
               </div>
@@ -406,11 +408,11 @@ function BrowseTeamCard({ team, currentUserId }: { team: Team; currentUserId?: s
                     {post.description && (
                       <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">{post.description}</p>
                     )}
-                    {post.requirements && (
-                      <p className="text-[11px] text-slate-500 mt-0.5">Requirements: {post.requirements}</p>
+                    {post.roles.length > 0 && (
+                      <p className="text-[11px] text-slate-500 mt-0.5">Roles: {post.roles.join(", ")}</p>
                     )}
-                    {post.positions && (
-                      <p className="text-[11px] text-slate-500">{post.positions} position{post.positions !== 1 ? "s" : ""}</p>
+                    {post.skillLevel && post.skillLevel !== "any" && (
+                      <p className="text-[11px] text-slate-500 capitalize">{post.skillLevel} level</p>
                     )}
                   </div>
                   {!isMember && !appliedIds.has(post.id) && (
@@ -485,6 +487,16 @@ export default function FriendsPage() {
   const [expandedTeamId, setExpandedTeamId] = useState<string | null>(null);
   const [myTeamsFetched, setMyTeamsFetched] = useState(false);
 
+  // Create team state — any player with a game profile for the chosen game
+  // can create a team and automatically becomes its captain.
+  const [games, setGames] = useState<{ id: string; name: string }[]>([]);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newTag, setNewTag] = useState("");
+  const [newGameId, setNewGameId] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+
   useEffect(() => {
     teamService.getTeams({ limit: 50 })
       .then(({ teams }) => setAllTeams(teams))
@@ -492,15 +504,14 @@ export default function FriendsPage() {
       .finally(() => setLoadingAll(false));
   }, []);
 
-  const loadMyTeams = () => {
-    if (myTeamsFetched) return;
+  const loadMyTeams = (force = false) => {
+    if (myTeamsFetched && !force) return;
+    if (!user?.id) return;
     setLoadingMine(true);
     setMyTeamsFetched(true);
-    // Fetch all teams and filter by captain
-    teamService.getTeams({ limit: 100 })
-      .then(({ teams }) => {
-        setMyTeams(teams.filter((t) => t.captainId === user?.id));
-      })
+    // Server-side filter: teams where I'm captain OR member
+    teamService.getTeams({ memberUserId: user.id, limit: 100 })
+      .then(({ teams }) => setMyTeams(teams))
       .catch(() => setMyTeams([]))
       .finally(() => setLoadingMine(false));
   };
@@ -509,6 +520,37 @@ export default function FriendsPage() {
     if (tab === "my-teams") loadMyTeams();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
+
+  useEffect(() => {
+    apiGet(TOURNAMENT_ENDPOINTS.GAMES, { skipAuth: true })
+      .then((res) => {
+        if (!res.success) return;
+        const raw = res.data as Record<string, unknown>;
+        const list = (Array.isArray(raw) ? raw : ((raw.games ?? raw.data ?? []) as Record<string, unknown>[]));
+        setGames(list.map((g) => ({ id: String(g._id ?? g.id ?? ""), name: String(g.name ?? "") })));
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleCreateTeam = async () => {
+    if (!newName.trim() || !newTag.trim() || !newGameId) {
+      setCreateError("Team name, tag, and game are required.");
+      return;
+    }
+    setCreating(true);
+    setCreateError(null);
+    try {
+      await teamService.createTeam({ name: newName.trim(), tag: newTag.trim(), gameId: newGameId });
+      setCreateOpen(false);
+      setNewName(""); setNewTag(""); setNewGameId("");
+      loadMyTeams(true);
+    } catch (e) {
+      // Most common failure: no game profile for the chosen game
+      setCreateError(e instanceof Error ? e.message : "Failed to create team.");
+    } finally {
+      setCreating(false);
+    }
+  };
 
   const filtered = search.trim()
     ? allTeams.filter(
@@ -597,6 +639,60 @@ export default function FriendsPage() {
       {/* ── My Teams tab ───────────────────────────────────────────────────── */}
       {tab === "my-teams" && (
         <div className="space-y-4">
+          {/* Create team — creator automatically becomes captain */}
+          <div className="flex justify-end">
+            <button
+              onClick={() => setCreateOpen((o) => !o)}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-cyan-500 text-slate-950 text-xs font-bold hover:bg-cyan-400 transition-colors"
+            >
+              {createOpen ? <X className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+              {createOpen ? "Close" : "Create Team"}
+            </button>
+          </div>
+
+          {createOpen && (
+            <div className="rounded-xl border border-cyan-500/25 bg-cyan-500/5 p-4 space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-[1fr_110px] gap-3">
+                <input
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="Team name"
+                  maxLength={40}
+                  className="w-full bg-slate-900/70 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500"
+                />
+                <input
+                  value={newTag}
+                  onChange={(e) => setNewTag(e.target.value.toUpperCase())}
+                  placeholder="TAG"
+                  maxLength={6}
+                  className="w-full bg-slate-900/70 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white font-mono placeholder:text-slate-500 focus:outline-none focus:border-cyan-500"
+                />
+              </div>
+              <select
+                value={newGameId}
+                onChange={(e) => setNewGameId(e.target.value)}
+                className="w-full bg-slate-900/70 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500 appearance-none cursor-pointer [&>option]:bg-slate-800"
+              >
+                <option value="">Select game…</option>
+                {games.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+              </select>
+              <p className="text-[11px] text-slate-500">
+                You must have a game profile (in-game ID) for this game — add one on your Profile. You'll be the team captain.
+              </p>
+              {createError && (
+                <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{createError}</p>
+              )}
+              <button
+                onClick={() => void handleCreateTeam()}
+                disabled={creating}
+                className="w-full py-2.5 rounded-xl bg-cyan-500 text-slate-950 text-sm font-bold hover:bg-cyan-400 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+              >
+                {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                {creating ? "Creating…" : "Create Team"}
+              </button>
+            </div>
+          )}
+
           {loadingMine ? (
             <div className="flex justify-center py-16">
               <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
@@ -604,9 +700,9 @@ export default function FriendsPage() {
           ) : myTeams.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 rounded-xl border border-slate-800 bg-slate-900/40 text-center">
               <Users className="w-8 h-8 text-slate-600 mb-3" />
-              <p className="text-sm text-slate-400">You're not captaining any teams.</p>
+              <p className="text-sm text-slate-400">You're not on any teams yet.</p>
               <p className="text-xs text-slate-500 mt-1">
-                Browse teams to join one, or create a team from the tournament page.
+                Create a team above (you'll be captain) or browse teams to join one.
               </p>
             </div>
           ) : (
@@ -631,9 +727,15 @@ export default function FriendsPage() {
                         {team.tag && (
                           <span className="text-[10px] text-slate-500 font-mono">[{team.tag}]</span>
                         )}
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-400 font-semibold">
-                          Captain
-                        </span>
+                        {team.captainId === user?.id ? (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-400 font-semibold">
+                            Captain
+                          </span>
+                        ) : (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-700/50 text-slate-400 font-semibold">
+                            Member
+                          </span>
+                        )}
                       </div>
                       <p className="text-xs text-slate-500 mt-0.5">
                         {team.memberCount} member{team.memberCount !== 1 ? "s" : ""}
@@ -647,8 +749,8 @@ export default function FriendsPage() {
                     )}
                   </div>
 
-                  {/* Recruitment posts */}
-                  {expandedTeamId === team.id && (
+                  {/* Recruitment posts — captain only */}
+                  {expandedTeamId === team.id && team.captainId === user?.id && (
                     <div className="border-t border-slate-800 px-4 py-4">
                       <RecruitmentSection teamId={team.id} />
                     </div>

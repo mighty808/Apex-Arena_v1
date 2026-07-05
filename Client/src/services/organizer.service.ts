@@ -23,6 +23,16 @@ export interface TournamentRegistrant {
   finalPlacement?: number;
 }
 
+function mapSponsorsToApi(sponsors: CreateTournamentPayload['sponsors']): Record<string, unknown>[] {
+  return (sponsors ?? []).map((s, i) => ({
+    name: s.name,
+    logo_url: s.logoUrl,
+    size: s.size ?? 'medium',
+    display_order: s.displayOrder ?? i,
+    ...(s.websiteUrl ? { website_url: s.websiteUrl } : {}),
+  }));
+}
+
 export interface CreateTournamentPayload {
   title: string;
   description?: string;
@@ -49,6 +59,13 @@ export interface CreateTournamentPayload {
   thumbnailUrl?: string;
   contactEmail?: string;
   waitlistEnabled?: boolean;
+  sponsors?: Array<{
+    name: string;
+    logoUrl: string;
+    size?: 'small' | 'medium' | 'large';
+    displayOrder?: number;
+    websiteUrl?: string;
+  }>;
   prizeDistribution?: Array<{
     position: number;
     percentage: number;
@@ -429,6 +446,7 @@ export const organizerService = {
     if (payload.region) body.region = payload.region;
     if (payload.visibility) body.visibility = payload.visibility;
     if (payload.thumbnailUrl) body.thumbnail_url = payload.thumbnailUrl;
+    if (payload.sponsors !== undefined) body.sponsors = mapSponsorsToApi(payload.sponsors);
     if (
       payload.teamSize ||
       (payload.allowedRegions && payload.allowedRegions.length > 0) ||
@@ -556,6 +574,7 @@ export const organizerService = {
     }
 
     if (updates.thumbnailUrl !== undefined) body.thumbnail_url = updates.thumbnailUrl;
+    if (updates.sponsors !== undefined) body.sponsors = mapSponsorsToApi(updates.sponsors);
     if (updates.region !== undefined) body.region = updates.region;
     if (updates.visibility !== undefined) body.visibility = updates.visibility;
     if (updates.timezone !== undefined) body.timezone = updates.timezone;

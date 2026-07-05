@@ -45,6 +45,11 @@ import {
 import { TournamentChatPanel } from "../../../components/tournament-chat";
 import { tournamentChatService } from "../../../services/tournament-chat.service";
 import { LeagueView } from "../../../components/league/LeagueView";
+import TournamentStatsPanel from "../../../components/tournament-detail/TournamentStatsPanel";
+import ShareCardModal from "../../../components/share-cards/ShareCardModal";
+import SponsorStrip from "../../../components/SponsorStrip";
+import TournamentSummaryTemplate from "../../../components/share-cards/TournamentSummaryTemplate";
+import JourneyCardTemplate from "../../../components/share-cards/JourneyCardTemplate";
 import { MatchActionModal } from "../../../components/league/MatchActionModal";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -245,6 +250,8 @@ const TournamentDetail = () => {
   const [isLoadingBracket, setIsLoadingBracket] = useState(false);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [summaryCardOpen, setSummaryCardOpen] = useState(false);
+  const [journeyCardOpen, setJourneyCardOpen] = useState(false);
   const [isCompletingPayment, setIsCompletingPayment] = useState(false);
   const [withdrawReason, setWithdrawReason] = useState("");
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -1347,6 +1354,54 @@ const TournamentDetail = () => {
         </div>
 
         {/* ── League View ───────────────────────────────────────────────────── */}
+        {/* ── Sponsors (spec §5.1) ── */}
+        {(tournament.sponsors?.length ?? 0) > 0 && (
+          <section className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+            <SponsorStrip
+              sponsors={(tournament.sponsors ?? []).map((s) => ({
+                name: s.name,
+                logoUrl: s.logoUrl,
+                size: s.size,
+                websiteUrl: s.websiteUrl,
+              }))}
+            />
+          </section>
+        )}
+
+        {/* ── Tournament Stats (spec §3.1) — visible to participants & spectators ── */}
+        {["ongoing", "awaiting_results", "verifying_results", "completed"].includes(tournament.status) && (
+          <section className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+            <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+              <h2 className="font-display text-base font-bold text-white flex items-center gap-2">
+                <Trophy className="w-4 h-4 text-orange-400" />
+                Tournament Stats
+              </h2>
+              {/* Share cards unlock once the tournament is done (spec §3.3, §4) */}
+              {tournament.status === "completed" && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setSummaryCardOpen(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-orange-500/30 bg-orange-500/10 text-orange-300 text-xs font-semibold hover:bg-orange-500/20 transition-colors"
+                  >
+                    <Share2 className="w-3.5 h-3.5" />
+                    Summary Card
+                  </button>
+                  {isRegistered && user?.username && (
+                    <button
+                      onClick={() => setJourneyCardOpen(true)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-300 text-xs font-semibold hover:bg-amber-500/20 transition-colors"
+                    >
+                      <Share2 className="w-3.5 h-3.5" />
+                      My Journey
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+            <TournamentStatsPanel tournamentId={tournament.id} />
+          </section>
+        )}
+
         {isLeague && !["draft", "cancelled"].includes(tournament.status) && (
           <section className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
             <h2 className="font-display text-base font-bold text-white mb-4 flex items-center gap-2">
@@ -1388,6 +1443,21 @@ const TournamentDetail = () => {
                 {isRefreshing ? "Refreshing…" : "Refresh"}
               </button>
             </div>
+
+            {/* Sponsor logos on the bracket (spec §5.1 "bracket level") */}
+            {(tournament.sponsors?.length ?? 0) > 0 && (
+              <div className="px-5 py-3 border-b border-slate-800/60">
+                <SponsorStrip
+                  label=""
+                  sponsors={(tournament.sponsors ?? []).map((s) => ({
+                    name: s.name,
+                    logoUrl: s.logoUrl,
+                    size: "small" as const,
+                    websiteUrl: s.websiteUrl,
+                  }))}
+                />
+              </div>
+            )}
 
             {isLoadingBracket ? (
               <div className="flex items-center justify-center py-12">
@@ -1579,6 +1649,33 @@ const TournamentDetail = () => {
           void handleWithdraw();
         }}
       />
+
+      {/* Tournament summary share card (spec §3.3) */}
+      <ShareCardModal
+        open={summaryCardOpen}
+        onClose={() => setSummaryCardOpen(false)}
+        filename={`apex-recap-${tournament.id}`}
+        shareText={`${tournament.title} — tournament recap on Apex Arenas`}
+      >
+        <TournamentSummaryTemplate
+          tournamentId={tournament.id}
+          tournamentTitle={tournament.title}
+          organizerName={tournament.organizerName}
+          date={tournament.schedule?.tournamentStart}
+        />
+      </ShareCardModal>
+
+      {/* Run-to-the-Final journey card (spec §4) */}
+      {user?.username && (
+        <ShareCardModal
+          open={journeyCardOpen}
+          onClose={() => setJourneyCardOpen(false)}
+          filename={`apex-journey-${tournament.id}-${user.username}`}
+          shareText={`My run in ${tournament.title} on Apex Arenas!`}
+        >
+          <JourneyCardTemplate tournamentId={tournament.id} username={user.username} />
+        </ShareCardModal>
+      )}
     </div>
   );
 };

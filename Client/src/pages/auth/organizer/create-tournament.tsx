@@ -23,6 +23,20 @@ import {
 import { apiGet } from "../../../utils/api.utils";
 import { TOURNAMENT_ENDPOINTS } from "../../../config/api.config";
 import ImageUploadDropzone from "../../../components/ImageUploadDropzone";
+import SponsorManager, { type SponsorDraft } from "../../../components/SponsorManager";
+
+// Drop incomplete sponsor rows (no name or no logo) rather than blocking submit
+function sponsorsToPayload(drafts: SponsorDraft[]) {
+  return drafts
+    .filter((s) => s.name.trim() && s.logoUrl.trim())
+    .map((s, i) => ({
+      name: s.name.trim(),
+      logoUrl: s.logoUrl.trim(),
+      size: s.size,
+      displayOrder: i,
+      websiteUrl: s.websiteUrl.trim() || undefined,
+    }));
+}
 import { DateTimePicker } from "../../../components/ui/DateTimePicker";
 
 // ─── Countries List (ISO 3166-1 alpha-2 codes) ────────────────────────────────
@@ -235,6 +249,7 @@ const CreateTournament = () => {
   const [contactEmail, setContactEmail] = useState("");
   const [rules, setRules] = useState("");
   const [thumbnailUrl, setThumbnailUrl] = useState("");
+  const [sponsors, setSponsors] = useState<SponsorDraft[]>([]);
   const [waitlistEnabled, setWaitlistEnabled] = useState(true);
   const [firstPrizePercentage, setFirstPrizePercentage] = useState("60");
   const [secondPrizePercentage, setSecondPrizePercentage] = useState("30");
@@ -472,6 +487,16 @@ const CreateTournament = () => {
         setContactEmail(String(communication.contact_email ?? ""));
         setRules(String(rulesData.description ?? ""));
         setThumbnailUrl(String(tournament.thumbnail_url ?? ""));
+        setSponsors(
+          Array.isArray(tournament.sponsors)
+            ? (tournament.sponsors as Record<string, unknown>[]).map((s) => ({
+                name: String(s.name ?? ""),
+                logoUrl: String(s.logo_url ?? ""),
+                size: (["small", "medium", "large"].includes(String(s.size)) ? String(s.size) : "medium") as SponsorDraft["size"],
+                websiteUrl: String(s.website_url ?? ""),
+              }))
+            : [],
+        );
         setWaitlistEnabled(Boolean(capacity.waitlist_enabled ?? true));
 
         setFirstPrizePercentage(String(byPosition.get(1) ?? 60));
@@ -629,6 +654,7 @@ const CreateTournament = () => {
       const canEditTitle      = ["draft","awaiting_deposit","published"].includes(st);
       const canEditRules      = ["draft","awaiting_deposit","published","open"].includes(st);
       const canEditVisibility = ["draft","awaiting_deposit","published"].includes(st);
+      const canEditSponsors   = ["draft","awaiting_deposit","published","open","locked"].includes(st);
 
       setIsSubmitting(true);
       try {
@@ -636,6 +662,7 @@ const CreateTournament = () => {
           description: trimmedDescription,
           contactEmail: trimmedContactEmail,
           ...(canEditThumbnailAfterPublish ? { thumbnailUrl: thumbnailUrl.trim() } : {}),
+          ...(canEditSponsors ? { sponsors: sponsorsToPayload(sponsors) } : {}),
           ...(canEditTitle && title.trim() ? { title: title.trim() } : {}),
           ...(canEditVisibility ? { visibility } : {}),
           region,
@@ -880,6 +907,7 @@ const CreateTournament = () => {
         region: trimmedRegion || undefined,
         visibility,
         thumbnailUrl: thumbnailUrl.trim() || undefined,
+        sponsors: sponsorsToPayload(sponsors),
         contactEmail: trimmedContactEmail || undefined,
         allowedRegions:
           trimmedRegion === 'GLOBAL'
@@ -1058,6 +1086,9 @@ const CreateTournament = () => {
                         folder="apex-arenas/tournaments/thumbnails" />
                     </Field>
                   )}
+                  <Field label="Sponsors">
+                    <SponsorManager sponsors={sponsors} onChange={setSponsors} />
+                  </Field>
                 </SectionCard>
 
                 {canEditRules && (
@@ -1277,6 +1308,10 @@ const CreateTournament = () => {
                 <Field label="Thumbnail Image">
                   <ImageUploadDropzone value={thumbnailUrl} onChange={setThumbnailUrl}
                     folder="apex-arenas/tournaments/thumbnails" />
+                </Field>
+
+                <Field label="Sponsors">
+                  <SponsorManager sponsors={sponsors} onChange={setSponsors} />
                 </Field>
               </SectionCard>
 

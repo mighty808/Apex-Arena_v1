@@ -23,6 +23,7 @@ import Careers from "./pages/public/careers";
 import PrivacyPolicy from "./pages/public/privacy-policy";
 import TermsOfService from "./pages/public/terms-of-service";
 import PublicTournaments from "./pages/public/tournaments";
+import PublicPlayerProfile from "./pages/public/player-profile";
 import PublicLeaderboard from "./pages/auth/LeaderboardPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RoleRoute from "./components/RoleRoute";
@@ -40,6 +41,9 @@ import TournamentDetail from "./pages/auth/player/tournament-detail";
 import TransactionsPage from "./pages/auth/transactions";
 import LeaderboardPage from "./pages/auth/LeaderboardPage";
 import NotificationsPage from "./pages/auth/NotificationsPage";
+import SettingsPage from "./pages/auth/SettingsPage";
+import CommunityPage from "./pages/auth/CommunityPage";
+import TeamsPage from "./pages/auth/FriendsPage";
 import AnalyticsPage from "./pages/auth/organizer/AnalyticsPage";
 import OrganizerDisputesPage from "./pages/auth/organizer/OrganizerDisputesPage";
 import PrizesPage from "./pages/auth/PrizesPage";
@@ -122,6 +126,7 @@ const App = () => {
           <Route path="forgot" element={<ForgotPassword />} />
           <Route path="verify-otp" element={<VerifyOtp />} />
           <Route path="tournaments" element={<PublicTournaments />} />
+          <Route path="players/:username" element={<PublicPlayerProfile />} />
           <Route path="leaderboard" element={<PublicLeaderboard />} />
           <Route path="*" element={<NotFound />} />
         </Route>
@@ -134,6 +139,9 @@ const App = () => {
             <Route path="wallet" element={<TransactionsPage />} />
             <Route path="leaderboard" element={<LeaderboardPage />} />
             <Route path="notifications" element={<NotificationsPage />} />
+            <Route path="settings" element={<SettingsPage />} />
+            <Route path="community" element={<CommunityPage />} />
+            <Route path="teams" element={<TeamsPage />} />
             <Route path="prizes" element={<PrizesPage />} />
 
             <Route path="contact-us" element={<ContactUs />} />

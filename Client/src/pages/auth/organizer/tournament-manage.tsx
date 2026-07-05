@@ -54,6 +54,7 @@ import {
 } from "../../../components/tournament-detail";
 import { TournamentChatPanel } from "../../../components/tournament-chat";
 import { MatchActionModal } from "../../../components/league/MatchActionModal";
+import JourneyOverview from "../../../components/tournament-detail/JourneyOverview";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -2248,6 +2249,32 @@ const TournamentManage = () => {
             })()}
           </div>
         )}
+
+          {/* Run-to-Final overview (spec §4.3) — organizer recap of every player's journey */}
+          {tournament.status === "completed" && (
+            <div className="rounded-2xl border border-slate-800 bg-slate-900 overflow-hidden">
+              <div className="flex items-center gap-2.5 px-4 py-3 md:px-5 md:py-4 border-b border-slate-800/60 bg-slate-950/20">
+                <div className="w-8 h-8 rounded-xl bg-orange-500/15 border border-orange-500/25 flex items-center justify-center shrink-0">
+                  <Share2 className="w-4 h-4 text-orange-400" />
+                </div>
+                <div>
+                  <h2 className="font-display text-sm font-bold text-white leading-tight">Run to the Final — All Players</h2>
+                  <p className="text-[11px] text-slate-500 mt-0.5">Export journey cards for your recap content</p>
+                </div>
+              </div>
+              <div className="px-4 py-4 md:px-5">
+                <JourneyOverview
+                  tournamentId={tournament.id}
+                  participants={activeRegistrants.map((r) => ({
+                    userId: r.userId,
+                    username: r.username,
+                    displayName: r.displayName,
+                    avatarUrl: r.avatarUrl,
+                  }))}
+                />
+              </div>
+            </div>
+          )}
 
           {/* Participants */}
           <div className="rounded-2xl border border-slate-800 bg-slate-900 overflow-hidden">

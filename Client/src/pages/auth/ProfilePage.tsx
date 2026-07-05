@@ -4,13 +4,18 @@ import {
   Camera,
   Save,
   Edit3,
-  Lock,
   Globe,
   Gamepad2,
   X,
   Plus,
   Trash2,
   ChevronDown,
+  LayoutGrid,
+  Award,
+  History,
+  Swords,
+  Trophy,
+  Share2,
 } from "lucide-react";
 import { useAuth } from "../../lib/auth-context";
 import { authService } from "../../services/auth.service";
@@ -23,6 +28,10 @@ import type {
   UserGameProfile,
 } from "../../types/auth.types";
 import { tournamentService, type MyTournamentRegistration } from "../../services/tournament.service";
+import CareerStatsGrid from "../../components/CareerStatsGrid";
+import BadgeWall from "../../components/BadgeWall";
+import ShareCardModal from "../../components/share-cards/ShareCardModal";
+import PlayerCardTemplate, { publicProfileUrl } from "../../components/share-cards/PlayerCardTemplate";
 
 // ─── Countries List (ISO 3166-1 alpha-2 codes) ────────────────────────────────
 
@@ -206,16 +215,12 @@ interface SavedGameProfile {
   skillLevel: string;
 }
 
-interface PasswordForm {
-  current: string;
-  next: string;
-  confirm: string;
-}
-
 interface GameOption {
   id: string;
   name: string;
 }
+
+type ProfileTab = "overview" | "badges" | "history" | "h2h" | "edit";
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 
@@ -248,17 +253,12 @@ const ProfilePage = () => {
   const [savedGameProfiles, setSavedGameProfiles] = useState<SavedGameProfile[]>([]);
   const [availableGames, setAvailableGames] = useState<GameOption[]>([]);
 
-  const [passwordForm, setPasswordForm] = useState<PasswordForm>({
-    current: "",
-    next: "",
-    confirm: "",
-  });
-
+  const [tab, setTab] = useState<ProfileTab>("overview");
+  const [shareOpen, setShareOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [statsOpen, setStatsOpen] = useState(false);
   const [isSavingGameProfile, setIsSavingGameProfile] = useState(false);
   const [deletingGameId, setDeletingGameId] = useState<string | null>(null);
-  const [isSavingPassword, setIsSavingPassword] = useState(false);
 
   const [registrations, setRegistrations] = useState<MyTournamentRegistration[]>([]);
 
@@ -426,39 +426,6 @@ const ProfilePage = () => {
       showError(err instanceof Error ? err.message : "Failed to save changes.");
     } finally {
       setIsSaving(false);
-    }
-  };
-
-  const handleChangePassword = async () => {
-    if (!passwordForm.current || !passwordForm.next) {
-      showError("Please fill in all password fields.");
-      return;
-    }
-    if (passwordForm.next !== passwordForm.confirm) {
-      showError("New passwords do not match.");
-      return;
-    }
-    if (passwordForm.next.length < 8) {
-      showError("New password must be at least 8 characters.");
-      return;
-    }
-    setIsSavingPassword(true);
-    try {
-      const response = await apiPost(AUTH_ENDPOINTS.PASSWORD_CHANGE, {
-        current_password: passwordForm.current,
-        new_password: passwordForm.next,
-      });
-      if (!response.success) {
-        const msg = (response as { error?: { message?: string } }).error?.message ?? "Failed to change password.";
-        showError(msg);
-        return;
-      }
-      showSuccess("Password changed successfully.");
-      setPasswordForm({ current: "", next: "", confirm: "" });
-    } catch (err) {
-      showError(err instanceof Error ? err.message : "Failed to change password.");
-    } finally {
-      setIsSavingPassword(false);
     }
   };
 
@@ -634,6 +601,17 @@ const ProfilePage = () => {
                 <p className="text-sm text-slate-400 mt-1.5 line-clamp-1">{form.bio}</p>
               )}
             </div>
+
+            {/* Share player card (spec §1 / §2.2) */}
+            <div className="sm:ml-auto sm:pb-1 shrink-0">
+              <button
+                onClick={() => setShareOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-300 text-sm font-semibold hover:bg-orange-500/20 transition-colors"
+              >
+                <Share2 className="w-4 h-4" />
+                Share Card
+              </button>
+            </div>
           </div>
 
           {/* Quick stats strip — dropdown on mobile, grid on sm+ */}
@@ -681,9 +659,140 @@ const ProfilePage = () => {
         </div>
       </div>
 
+      {/* ── Tab switcher ────────────────────────────────────────────────────── */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6">
+        <div className="flex items-center gap-1 bg-slate-900/60 border border-slate-800 rounded-xl p-1 w-fit max-w-full overflow-x-auto">
+          {([
+            { id: "overview", label: "Overview",     icon: LayoutGrid },
+            { id: "badges",   label: "Badges",       icon: Award },
+            { id: "history",  label: "History",      icon: History },
+            { id: "h2h",      label: "Head-to-Head", icon: Swords },
+            { id: "edit",     label: "Edit Profile", icon: Edit3 },
+          ] as { id: ProfileTab; label: string; icon: React.ElementType }[]).map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              onClick={() => setTab(id)}
+              className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-all ${
+                tab === id ? "bg-orange-500 text-slate-950" : "text-slate-400 hover:text-white"
+              }`}
+            >
+              <Icon className="w-4 h-4" />
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* ── Content ─────────────────────────────────────────────────────────── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
 
+        {/* ── Overview tab ── */}
+        {tab === "overview" && (
+          <div className="space-y-6">
+            {/* Earned badge strip — spec §2.2 (hidden until first badge) */}
+            {user?.username && (
+              <BadgeWall username={user.username} variant="strip" />
+            )}
+
+            {/* Game tags — spec §1.2 */}
+            <SectionCard icon={Gamepad2} title="Game Tags">
+              {savedGameProfiles.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {savedGameProfiles.map((gp) => (
+                    <span
+                      key={gp.gameId}
+                      className="px-3 py-1.5 rounded-full bg-slate-800/80 border border-slate-700 text-sm text-white"
+                    >
+                      {gp.gameName || "Unknown Game"}
+                      <span className="ml-2 text-xs text-orange-400 capitalize">{gp.skillLevel}</span>
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-slate-500">
+                  No games added yet — add your games in the Edit Profile tab.
+                </p>
+              )}
+            </SectionCard>
+
+            {/* Career stats — spec §1.3, live from the stats engine */}
+            <SectionCard icon={Trophy} title="Career Stats">
+              {user?.username ? (
+                <CareerStatsGrid username={user.username} />
+              ) : (
+                <p className="text-sm text-slate-500">Stats unavailable.</p>
+              )}
+            </SectionCard>
+          </div>
+        )}
+
+        {/* ── Badges tab — spec §2, live from the badge engine ── */}
+        {tab === "badges" && (
+          <SectionCard icon={Award} title="Badges & Achievements">
+            {user?.username ? (
+              <BadgeWall username={user.username} />
+            ) : (
+              <p className="text-sm text-slate-500">Badges unavailable.</p>
+            )}
+          </SectionCard>
+        )}
+
+        {/* ── History tab — spec §1.1 ── */}
+        {tab === "history" && (
+          <SectionCard icon={History} title="Tournament History">
+            {registrations.length === 0 ? (
+              <p className="text-sm text-slate-500 text-center py-6">
+                You haven't entered any tournaments yet.
+              </p>
+            ) : (
+              <div className="divide-y divide-slate-800/60">
+                {registrations.map((r) => (
+                  <div key={r.registrationId} className="flex items-center gap-3 py-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-white font-medium truncate">{r.tournamentTitle}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        {r.tournamentGameName && `${r.tournamentGameName} · `}
+                        {r.tournamentStart
+                          ? new Date(r.tournamentStart).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                          : "Date TBD"}
+                      </p>
+                    </div>
+                    <span
+                      className={`shrink-0 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${
+                        r.tournamentStatus === "completed"
+                          ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/25"
+                          : ["ongoing", "in_progress", "active"].includes(r.tournamentStatus)
+                            ? "bg-amber-500/15 text-amber-300 border border-amber-500/25"
+                            : "bg-slate-800 text-slate-400 border border-slate-700"
+                      }`}
+                    >
+                      {r.tournamentStatus.replace(/_/g, " ")}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+            <p className="text-xs text-slate-500 mt-4 text-center">
+              Match outcomes and your Run-to-the-Final journey cards will appear here — coming soon.
+            </p>
+          </SectionCard>
+        )}
+
+        {/* ── Head-to-Head tab — spec §1.1 ── */}
+        {tab === "h2h" && (
+          <SectionCard icon={Swords} title="Head-to-Head">
+            <div className="text-center py-10">
+              <Swords className="w-10 h-10 text-slate-700 mx-auto" />
+              <p className="text-sm text-slate-400 mt-4 font-medium">Head-to-head records are coming soon</p>
+              <p className="text-xs text-slate-500 mt-1.5 max-w-sm mx-auto">
+                Once the stats engine is live you'll be able to search any opponent and see your full record against them across every tournament.
+              </p>
+            </div>
+          </SectionCard>
+        )}
+
+        {/* ── Edit Profile tab ── */}
+        {tab === "edit" && (
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
 
           {/* ── Left column ─────────────────────────────────────────────── */}
@@ -878,35 +987,30 @@ const ProfilePage = () => {
               </button>
             </SectionCard>
 
-            {/* Change Password */}
-            <SectionCard icon={Lock} title="Change Password">
-              <div className="space-y-3">
-                <Field label="Current Password">
-                  <Input type="password" value={passwordForm.current} onChange={(v) => setPasswordForm((p) => ({ ...p, current: v }))} placeholder="Current password" />
-                </Field>
-                <Field label="New Password">
-                  <Input type="password" value={passwordForm.next} onChange={(v) => setPasswordForm((p) => ({ ...p, next: v }))} placeholder="At least 8 characters" />
-                </Field>
-                <Field label="Confirm New Password">
-                  <Input type="password" value={passwordForm.confirm} onChange={(v) => setPasswordForm((p) => ({ ...p, confirm: v }))} placeholder="Repeat new password" />
-                </Field>
-              </div>
-              <button
-                onClick={() => void handleChangePassword()}
-                disabled={isSavingPassword}
-                className="mt-5 w-full py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-sm font-semibold hover:bg-slate-700 hover:border-slate-600 disabled:opacity-60 transition-all flex items-center justify-center gap-2"
-              >
-                {isSavingPassword ? (
-                  <><div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />Updating…</>
-                ) : (
-                  <><Edit3 className="w-4 h-4" />Update Password</>
-                )}
-              </button>
-            </SectionCard>
+            {/* Password changes live in Settings → Security (see new_build.md ownership map) */}
 
           </div>
         </div>
+        )}
       </div>
+
+      {/* Shareable player card */}
+      {user?.username && (
+        <ShareCardModal
+          open={shareOpen}
+          onClose={() => setShareOpen(false)}
+          filename={`apex-player-${user.username}`}
+          shareText={`Check out my Apex Arenas player card! @${user.username}`}
+          shareUrl={publicProfileUrl(user.username)}
+        >
+          <PlayerCardTemplate
+            username={user.username}
+            displayName={displayName}
+            avatarUrl={form.avatarUrl || undefined}
+            role={user.role}
+          />
+        </ShareCardModal>
+      )}
     </div>
   );
 };

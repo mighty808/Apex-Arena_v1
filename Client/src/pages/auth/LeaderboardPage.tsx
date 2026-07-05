@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Loader2, Trophy, ChevronDown, Gamepad2, Medal, Crown } from "lucide-react";
 import { tournamentService, type Tournament, type LeagueTableRow } from "../../services/tournament.service";
 import { LeagueTable } from "../../components/league/LeagueTable";
+import GlobalRankings from "../../components/GlobalRankings";
 import { useAuth } from "../../lib/auth-context";
 import { apiGet } from "../../utils/api.utils";
 import { TOURNAMENT_ENDPOINTS } from "../../config/api.config";
@@ -329,6 +330,9 @@ export default function LeaderboardPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6">
+      {/* Global all-time rankings (spec §6.4) — backed by the stats engine */}
+      <GlobalRankings gameId={selectedGameId} />
+
       {loading ? (
         <div className="flex justify-center py-24">
           <Loader2 className="w-6 h-6 animate-spin text-slate-400" />

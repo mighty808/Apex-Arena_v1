@@ -16,8 +16,10 @@ import {
   BarChart2,
   DollarSign,
   Mail,
+  Settings,
   ShieldAlert,
   Star,
+  UsersRound,
   Wallet,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -31,10 +33,13 @@ const playerNavItems = [
   { to: "/auth",                        icon: Home,       label: "Home",         end: true },
   { to: "/auth/player/join-tournament", icon: Swords,     label: "Tournaments"              },
   { to: "/auth/leaderboard",            icon: Trophy,     label: "Leaderboard"              },
+  { to: "/auth/community",              icon: UsersRound, label: "Community"                },
+  { to: "/auth/teams",                  icon: Shield,     label: "Teams"                    },
   { to: "/auth/wallet",                 icon: Wallet,     label: "Wallet"                   },
   { to: "/auth/prizes",                 icon: Star,       label: "Prizes"                   },
   { to: "/auth/player/profile",         icon: UserCircle, label: "Profile"                  },
   { to: "/auth/notifications",          icon: Bell,       label: "Notifications"            },
+  { to: "/auth/settings",               icon: Settings,   label: "Settings"                 },
   { to: "/auth/contact-us",             icon: Mail,       label: "Contact Us"               },
 ] as const;
 
@@ -44,12 +49,15 @@ const organizerNavItems = [
   { to: "/auth/organizer/disputes",        icon: ShieldAlert, label: "Disputes",       badge: "disputes" as const },
   { to: "/auth/player/join-tournament",    icon: Swords,      label: "Join Tournament"           },
   { to: "/auth/leaderboard",               icon: Trophy,      label: "Leaderboard"               },
+  { to: "/auth/community",                 icon: UsersRound,  label: "Community"                 },
+  { to: "/auth/teams",                     icon: Shield,      label: "Teams"                     },
   { to: "/auth/organizer/analytics",       icon: BarChart2,   label: "Analytics"                 },
   { to: "/auth/organizer/finance",         icon: DollarSign,  label: "Finance"                   },
   { to: "/auth/wallet",                    icon: Wallet,      label: "Wallet"                    },
   { to: "/auth/prizes",                    icon: Star,        label: "Prizes"                    },
   { to: "/auth/organizer/profile",         icon: UserCircle,  label: "Profile"                   },
   { to: "/auth/notifications",             icon: Bell,        label: "Notifications"             },
+  { to: "/auth/settings",                  icon: Settings,    label: "Settings"                  },
   { to: "/auth/contact-us",               icon: Mail,        label: "Contact Us"                },
 ] as const;
 

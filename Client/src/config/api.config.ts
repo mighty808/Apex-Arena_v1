@@ -96,6 +96,9 @@ export const AUTH_ENDPOINTS = {
   
   // Auth Status
   ME: `${API_BASE_URLS.AUTH}/me`,
+
+  // Public player profile (no auth) — + /:username
+  PUBLIC_PROFILE: `${API_BASE_URLS.AUTH}/user/public`,
 } as const;
 
 export const TOURNAMENT_ENDPOINTS = {
@@ -158,12 +161,12 @@ export const TOURNAMENT_ENDPOINTS = {
   TEAM_MEMBER_REMOVE: `${API_BASE_URLS.TOURNAMENT}/teams`,                // + /:teamId/members/:userId
   TEAM_LEAVE: `${API_BASE_URLS.TOURNAMENT}/teams`,                        // + /:teamId/leave
 
-  // Team Recruitment
-  RECRUITMENT_POSTS: `${API_BASE_URLS.TOURNAMENT}/team-recruitment`,      // GET, POST for a team (use /teams/:teamId/recruitment)
-  RECRUITMENT_POST_DETAIL: `${API_BASE_URLS.TOURNAMENT}/recruitment`,     // + /:postId (GET, PATCH, DELETE)
-  RECRUITMENT_APPLY: `${API_BASE_URLS.TOURNAMENT}/recruitment`,           // + /:postId/apply
-  RECRUITMENT_APPLICATIONS: `${API_BASE_URLS.TOURNAMENT}/recruitment`,    // + /:postId/applications
-  RECRUITMENT_APPLICATION_RESPOND: `${API_BASE_URLS.TOURNAMENT}/recruitment`, // + /:postId/applications/:applicationId/respond
+  // Team Recruitment — mounted at /teams-recruit on the server
+  RECRUITMENT_POSTS: `${API_BASE_URLS.TOURNAMENT}/teams-recruit`,                     // GET list (?team_id=), POST + /:teamId/recruitment
+  RECRUITMENT_POST_DETAIL: `${API_BASE_URLS.TOURNAMENT}/teams-recruit/recruitment`,   // + /:postId (PATCH, DELETE)
+  RECRUITMENT_APPLY: `${API_BASE_URLS.TOURNAMENT}/teams-recruit/recruitment`,         // + /:postId/apply
+  RECRUITMENT_APPLICATIONS: `${API_BASE_URLS.TOURNAMENT}/teams-recruit/recruitment`,  // + /:postId/applications
+  RECRUITMENT_APPLICATION_RESPOND: `${API_BASE_URLS.TOURNAMENT}/teams-recruit/recruitment`, // + /:postId/applications/:applicantUserId/respond
 
   // Games
   GAMES: `${API_BASE_URLS.TOURNAMENT}/games`,                              // compatibility alias
@@ -183,6 +186,11 @@ export const TOURNAMENT_ENDPOINTS = {
   GAME_REQUEST_UPVOTE: `${API_BASE_URLS.TOURNAMENT}/game-requests`,       // + /:requestId/upvote
   GAME_REQUEST_ADMIN_REVIEW: `${API_BASE_URLS.TOURNAMENT}/game-requests/admin`, // + /:requestId/review
   GAME_REQUEST_ADMIN_MARK_DUPLICATE: `${API_BASE_URLS.TOURNAMENT}/game-requests/admin`, // + /:requestId/mark-duplicate
+
+  // Stats (public — career stats, tournament stats panel, leaderboards)
+  STATS_PLAYER: `${API_BASE_URLS.TOURNAMENT}/stats/players`,          // + /:username
+  STATS_TOURNAMENT: `${API_BASE_URLS.TOURNAMENT}/stats/tournaments`,  // + /:tournamentId
+  STATS_LEADERBOARD: `${API_BASE_URLS.TOURNAMENT}/stats/leaderboard`, // ?metric=&game_id=&page=&limit=
 
   // Scheduler (Admin)
   SCHEDULER_STATUS: `${API_BASE_URLS.TOURNAMENT}/scheduler/status`,
