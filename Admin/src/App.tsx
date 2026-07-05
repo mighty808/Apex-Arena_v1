@@ -19,6 +19,7 @@ import DisputeManagement from "./pages/admin/DisputeManagement";
 import TournamentManagement from "./pages/admin/TournamentManagement";
 import TournamentDetail from "./pages/admin/TournamentDetail";
 import AdminNotifications from "./pages/admin/AdminNotifications";
+import CommunityModeration from "./pages/admin/CommunityModeration";
 import { AdminNotificationProvider } from "./lib/admin-notification-context";
 
 const App = () => {
@@ -69,6 +70,7 @@ const App = () => {
             <Route path="game-requests" element={<GameRequests />} />
             <Route path="disputes" element={<DisputeManagement />} />
             <Route path="notifications" element={<AdminNotifications />} />
+            <Route path="community" element={<CommunityModeration />} />
           </Route>
         </Route>
 
