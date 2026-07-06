@@ -36,7 +36,7 @@ export const saveTokens = (tokens: { accessToken: string; refreshToken?: string 
       localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(session));
     }
   } catch {
-    // If the session object is corrupt, leave it — AuthProvider will handle it
+    // If the session object is corrupt, leave it, AuthProvider will handle it
   }
 };
 
@@ -49,7 +49,7 @@ export const clearTokens = (): void => {
 // ─── Admin token helpers ──────────────────────────────────────────────────────
 
 export const getAdminAccessToken = (): string | null => {
-  // Always read from the session object first — it's always up to date
+  // Always read from the session object first, it's always up to date
   try {
     const raw = localStorage.getItem(ADMIN_STORAGE_KEY);
     if (raw) {

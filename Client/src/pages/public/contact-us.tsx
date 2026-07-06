@@ -105,7 +105,7 @@ const ContactUs = () => {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-8 pt-10 pb-7">
           <div>
             <h1 className="font-display text-4xl sm:text-5xl font-bold text-white leading-none">Contact Us</h1>
-            <p className="text-base text-slate-400 mt-3">Get in touch with the Apex Arenas crew — we're here to help.</p>
+            <p className="text-base text-slate-400 mt-3">Get in touch with the Apex Arenas crew, we're here to help.</p>
           </div>
 
           {/* Contact method pills */}
@@ -197,7 +197,7 @@ const ContactUs = () => {
             </button>
           </form>
 
-          {/* Contact info — unified card */}
+          {/* Contact info, unified card */}
           <div className="rounded-2xl border border-slate-800 bg-slate-900 overflow-hidden h-fit">
             <div className="px-5 py-4 border-b border-slate-800">
               <h3 className="font-display text-sm font-bold text-white">Reach us directly</h3>

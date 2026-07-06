@@ -91,7 +91,7 @@ export function NotificationProvider({ children }: PropsWithChildren) {
 
   // Push notifications: silently restore a lost subscription if permission is
   // already granted, or invite first-time users once. The permission prompt
-  // itself only fires from the toast button click — a required user gesture.
+  // itself only fires from the toast button click, a required user gesture.
   useEffect(() => {
     if (!user) return;
 
@@ -107,7 +107,7 @@ export function NotificationProvider({ children }: PropsWithChildren) {
         <div>
           <p className="font-semibold text-sm">Never miss a tournament</p>
           <p className="text-xs text-slate-300 mt-0.5">
-            Get an alert when a tournament opens for a game you play — even when the app is closed.
+            Get an alert when a tournament opens for a game you play, even when the app is closed.
           </p>
           <button
             onClick={enable}

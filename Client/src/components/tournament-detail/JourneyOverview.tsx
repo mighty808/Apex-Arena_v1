@@ -4,7 +4,7 @@ import ShareCardModal from "../share-cards/ShareCardModal";
 import JourneyCardTemplate from "../share-cards/JourneyCardTemplate";
 
 // Organizer run-to-final overview (spec §4.3): every participant's journey
-// in one place. Click a player to preview/export their journey card — the
+// in one place. Click a player to preview/export their journey card, the
 // full-tournament recap the organizer can post for their audience.
 
 export interface JourneyParticipant {
@@ -30,7 +30,7 @@ export default function JourneyOverview({
   return (
     <div>
       <p className="text-xs text-slate-500 mb-3">
-        Every participant gets a Run-to-the-Final card — tap a player to preview and export theirs.
+        Every participant gets a Run-to-the-Final card, tap a player to preview and export theirs.
       </p>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
         {participants.map((p) => (
@@ -62,7 +62,7 @@ export default function JourneyOverview({
           open
           onClose={() => setSelected(null)}
           filename={`apex-journey-${tournamentId}-${selected.username}`}
-          shareText={`${selected.displayName || selected.username}'s run — on Apex Arenas`}
+          shareText={`${selected.displayName || selected.username}'s run, on Apex Arenas`}
         >
           <JourneyCardTemplate tournamentId={tournamentId} username={selected.username} />
         </ShareCardModal>

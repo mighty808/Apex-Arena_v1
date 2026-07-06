@@ -49,7 +49,7 @@ export default function CareerStatsGrid({ username }: { username: string }) {
     return (
       <div className="text-center py-6">
         <p className="text-sm text-slate-500">
-          No stats yet — they'll accumulate automatically from verified match results.
+          No stats yet, they'll accumulate automatically from verified match results.
         </p>
       </div>
     );

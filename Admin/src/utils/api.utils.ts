@@ -15,7 +15,7 @@ interface CacheEntry<T> {
 }
 
 const requestCache = new Map<string, CacheEntry<any>>();
-const CACHE_DURATION = 100; // ms – very short, adjust as needed
+const CACHE_DURATION = 100; // ms, very short, adjust as needed
 const CACHE_CLEANUP_INTERVAL = 5000;
 
 // Periodic cache cleanup
@@ -152,7 +152,7 @@ async function executeRequest<T = any>(
       console.warn('[API] 401 Unauthorized - attempting token refresh');
       const refreshed = await refreshAccessToken();
       if (!refreshed) {
-        // Don't clear localStorage here — let the auth context handle logout
+        // Don't clear localStorage here, let the auth context handle logout
         // so React state stays in sync
         return {
           success: false,

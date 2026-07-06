@@ -65,7 +65,7 @@ function mapAdminUser(raw: Record<string, unknown>): AdminUser {
 
 export const adminAuthService = {
   /**
-   * Admin login — may return tokens directly, or require 2FA / 2FA setup.
+   * Admin login, may return tokens directly, or require 2FA / 2FA setup.
    */
   async login(payload: AdminLoginPayload): Promise<AdminLoginResult> {
     const body: Record<string, string> = {
@@ -131,8 +131,8 @@ export const adminAuthService = {
   },
 
   /**
-   * Verify 2FA setup (first time — user scanned QR, enters code).
-   * Backend returns { enabled: true, backup_codes, message } — NO tokens.
+   * Verify 2FA setup (first time, user scanned QR, enters code).
+   * Backend returns { enabled: true, backup_codes, message }, NO tokens.
    * After this the admin must log in again with credentials + 2FA code.
    */
   async verify2FASetup(payload: Admin2FAVerifyPayload): Promise<AdminLoginResult> {

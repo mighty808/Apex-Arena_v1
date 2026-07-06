@@ -73,7 +73,7 @@ function RecruitmentForm({
         <input
           value={draft.roles}
           onChange={(e) => set("roles", e.target.value)}
-          placeholder="Comma-separated — e.g. striker, goalkeeper"
+          placeholder="Comma-separated, e.g. striker, goalkeeper"
           className={inputCls}
         />
       </div>
@@ -111,7 +111,7 @@ function RecruitmentForm({
           rows={2}
           value={draft.description}
           onChange={(e) => set("description", e.target.value)}
-          placeholder="What you're looking for — experience, availability…"
+          placeholder="What you're looking for, experience, availability…"
           className={`${inputCls} resize-none`}
         />
       </div>
@@ -487,7 +487,7 @@ export default function FriendsPage() {
   const [expandedTeamId, setExpandedTeamId] = useState<string | null>(null);
   const [myTeamsFetched, setMyTeamsFetched] = useState(false);
 
-  // Create team state — any player with a game profile for the chosen game
+  // Create team state, any player with a game profile for the chosen game
   // can create a team and automatically becomes its captain.
   const [games, setGames] = useState<{ id: string; name: string }[]>([]);
   const [createOpen, setCreateOpen] = useState(false);
@@ -639,7 +639,7 @@ export default function FriendsPage() {
       {/* ── My Teams tab ───────────────────────────────────────────────────── */}
       {tab === "my-teams" && (
         <div className="space-y-4">
-          {/* Create team — creator automatically becomes captain */}
+          {/* Create team, creator automatically becomes captain */}
           <div className="flex justify-end">
             <button
               onClick={() => setCreateOpen((o) => !o)}
@@ -677,7 +677,7 @@ export default function FriendsPage() {
                 {games.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
               </select>
               <p className="text-[11px] text-slate-500">
-                You must have a game profile (in-game ID) for this game — add one on your Profile. You'll be the team captain.
+                You must have a game profile (in-game ID) for this game, add one on your Profile. You'll be the team captain.
               </p>
               {createError && (
                 <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{createError}</p>
@@ -749,7 +749,7 @@ export default function FriendsPage() {
                     )}
                   </div>
 
-                  {/* Recruitment posts — captain only */}
+                  {/* Recruitment posts, captain only */}
                   {expandedTeamId === team.id && team.captainId === user?.id && (
                     <div className="border-t border-slate-800 px-4 py-4">
                       <RecruitmentSection teamId={team.id} />

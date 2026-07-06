@@ -17,7 +17,7 @@ import { showError, showSuccess } from "../../utils/toast.utils";
 import { useAuth } from "../../lib/auth-context";
 
 // Community hub (spec §6, new_build.md Phase 5): social feed (posts, votes,
-// comments — backend already live) + LFG board (team recruitment).
+// comments, backend already live) + LFG board (team recruitment).
 // Backend gap noted in new_build.md: only team captains can create LFG posts
 // ("team looking for player"); player-side "looking for team" posts need a
 // new endpoint first.
@@ -111,7 +111,7 @@ function CommentsSection({ postId, onCommentAdded }: { postId: string; onComment
       {loading ? (
         <div className="flex justify-center py-4"><Loader2 className="w-4 h-4 animate-spin text-slate-500" /></div>
       ) : threads.length === 0 ? (
-        <p className="text-xs text-slate-600 text-center py-2">No comments yet — be the first.</p>
+        <p className="text-xs text-slate-600 text-center py-2">No comments yet, be the first.</p>
       ) : (
         <div className="space-y-3">
           {threads.map(({ comment, replies }) => (
@@ -204,32 +204,35 @@ function PostCard({
   return (
     <article className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
       <div className="flex gap-3">
-        {/* Vote column */}
-        <div className="flex flex-col items-center gap-0.5 shrink-0">
+        {/* Vote column: upvotes and downvotes are counted and shown separately.
+            Switching direction moves your vote (the server records the change),
+            and tapping the same arrow again withdraws it. */}
+        <div className="flex flex-col items-center gap-1 shrink-0">
           <button
             onClick={() => void vote("up")}
             disabled={voting}
             aria-label="Upvote"
-            className={`p-1 rounded-lg transition-colors ${
+            className={`flex flex-col items-center px-1.5 py-1 rounded-lg transition-colors ${
               post.viewerVote === "up" ? "text-orange-400 bg-orange-500/10" : "text-slate-500 hover:text-orange-400 hover:bg-orange-500/5"
             }`}
           >
             <ArrowBigUp className="w-5 h-5" />
+            <span className={`text-xs font-bold tabular-nums ${post.viewerVote === "up" ? "text-orange-300" : "text-slate-400"}`}>
+              {post.upvotes}
+            </span>
           </button>
-          <span className={`text-sm font-bold tabular-nums ${
-            post.score > 0 ? "text-orange-300" : post.score < 0 ? "text-blue-300" : "text-slate-500"
-          }`}>
-            {post.score}
-          </span>
           <button
             onClick={() => void vote("down")}
             disabled={voting}
             aria-label="Downvote"
-            className={`p-1 rounded-lg transition-colors ${
+            className={`flex flex-col items-center px-1.5 py-1 rounded-lg transition-colors ${
               post.viewerVote === "down" ? "text-blue-400 bg-blue-500/10" : "text-slate-500 hover:text-blue-400 hover:bg-blue-500/5"
             }`}
           >
             <ArrowBigDown className="w-5 h-5" />
+            <span className={`text-xs font-bold tabular-nums ${post.viewerVote === "down" ? "text-blue-300" : "text-slate-400"}`}>
+              {post.downvotes}
+            </span>
           </button>
         </div>
 
@@ -243,7 +246,7 @@ function PostCard({
             <span>·</span>
             <span>{timeAgo(post.createdAt)}</span>
             {post.isPinned && <Pin className="w-3 h-3 text-amber-400" />}
-            {/* Delete — strictly the owner here; admins moderate from the Admin app */}
+            {/* Delete, strictly the owner here; admins moderate from the Admin app */}
             {isOwner && (
               <span className="ml-auto flex items-center gap-1.5">
                 {confirmDelete ? (
@@ -419,7 +422,7 @@ export default function CommunityPage() {
     setApplyingId(postId);
     try {
       await communityService.applyToLfgPost(postId);
-      showSuccess("Application sent — the team captain will respond.");
+      showSuccess("Application sent, the team captain will respond.");
       setLfgPosts((prev) => prev.map((p) => (p.id === postId ? { ...p, applicantCount: p.applicantCount + 1 } : p)));
     } catch (e) {
       showError(e instanceof Error ? e.message : "Failed to apply.");
@@ -519,7 +522,7 @@ export default function CommunityPage() {
           ) : posts.length === 0 ? (
             <div className="text-center py-16">
               <MessageSquare className="w-10 h-10 text-slate-700 mx-auto" />
-              <p className="text-sm text-slate-500 mt-3">No posts yet — start the conversation.</p>
+              <p className="text-sm text-slate-500 mt-3">No posts yet, start the conversation.</p>
             </div>
           ) : (
             <>
@@ -591,14 +594,14 @@ export default function CommunityPage() {
               <input
                 value={lftTitle}
                 onChange={(e) => setLftTitle(e.target.value)}
-                placeholder="Title — e.g. Striker looking for a competitive FIFA squad"
+                placeholder="Title, e.g. Striker looking for a competitive FIFA squad"
                 maxLength={100}
                 className="w-full bg-slate-900/70 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-orange-500/70"
               />
               <input
                 value={lftRoles}
                 onChange={(e) => setLftRoles(e.target.value)}
-                placeholder="Roles you play (comma-separated) — e.g. striker, winger"
+                placeholder="Roles you play (comma-separated), e.g. striker, winger"
                 className="w-full bg-slate-900/70 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-orange-500/70"
               />
               <textarea

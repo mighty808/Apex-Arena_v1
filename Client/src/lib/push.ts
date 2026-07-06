@@ -41,7 +41,7 @@ export async function getExistingSubscription(): Promise<PushSubscription | null
 /**
  * Full opt-in flow: permission prompt → service worker registration →
  * PushManager subscription → save subscription on the backend.
- * Must be called from a user gesture (e.g. toggle click) — browsers
+ * Must be called from a user gesture (e.g. toggle click), browsers
  * penalize unsolicited permission prompts.
  */
 export async function subscribeToPush(): Promise<void> {
@@ -96,7 +96,7 @@ const PUSH_INVITE_SHOWN_KEY = 'apex_arenas_push_invited';
  *   new subscription lost, etc.) → re-subscribe silently, no prompt.
  * - Never been asked → call `onInvite` ONCE per browser so the app can show
  *   an "enable alerts?" toast. The actual permission prompt must come from
- *   the user clicking that toast — browsers block unsolicited prompts.
+ *   the user clicking that toast, browsers block unsolicited prompts.
  * - Denied → do nothing; only the user can unblock it in browser settings.
  */
 export async function maybeAutoEnablePush(onInvite: () => void): Promise<void> {

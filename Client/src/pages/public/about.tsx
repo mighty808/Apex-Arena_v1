@@ -29,7 +29,7 @@ const About = () => {
               Reliable infrastructure for every player and organizer
             </h2>
             <p className="text-slate-400 text-sm leading-relaxed">
-              We exist to solve real problems in the African gaming ecosystem — unreliable prize payments, unverified organizers, and the absence of a trusted neutral platform. Apex Arenas brings mandatory escrow, automated payouts, and verified tournament hosting to every competition, from local cups to national championships.
+              We exist to solve real problems in the African gaming ecosystem, unreliable prize payments, unverified organizers, and the absence of a trusted neutral platform. Apex Arenas brings mandatory escrow, automated payouts, and verified tournament hosting to every competition, from local cups to national championships.
             </p>
           </div>
           <div>
@@ -37,7 +37,7 @@ const About = () => {
               Our Model
             </p>
             <h2 className="text-2xl font-bold text-white mb-4">
-              We are not an operator — we are the infrastructure
+              We are not an operator, we are the infrastructure
             </h2>
             <p className="text-slate-400 text-sm leading-relaxed">
               Apex Arenas does not run tournaments or fund prize pools. Independent organizers use our platform to create and manage events, while players compete with confidence knowing every prize is locked in escrow before play begins.
@@ -64,7 +64,7 @@ const About = () => {
               },
               {
                 title: "Accessibility",
-                body: "Built for Ghana first — Mobile Money payments, local currency (GHS), and mobile-first design.",
+                body: "Built for Ghana first, Mobile Money payments, local currency (GHS), and mobile-first design.",
               },
               {
                 title: "Fairness",
@@ -101,7 +101,7 @@ const About = () => {
             Builders who believe in African gaming
           </h2>
           <p className="max-w-2xl text-slate-400 text-sm leading-relaxed">
-            We are a small team of engineers, designers, and gaming enthusiasts based in Ghana. We play the same games, attend the same tournaments, and share the same frustrations that led us to build Apex Arenas. This is not a side project — it is the platform we wished existed.
+            We are a small team of engineers, designers, and gaming enthusiasts based in Ghana. We play the same games, attend the same tournaments, and share the same frustrations that led us to build Apex Arenas. This is not a side project, it is the platform we wished existed.
           </p>
         </div>
       </section>

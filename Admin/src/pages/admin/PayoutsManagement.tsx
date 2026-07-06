@@ -67,7 +67,7 @@ function formatGHS(amount: number) {
 }
 
 function formatDate(iso: string) {
-  if (!iso) return '—';
+  if (!iso) return '-';
   return new Date(iso).toLocaleString(undefined, {
     dateStyle: 'medium',
     timeStyle: 'short',
@@ -337,15 +337,15 @@ export default function PayoutsManagement() {
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-xl bg-slate-800/30 border border-slate-700/40">
                         <div>
                           <span className="text-slate-500 block text-xs mb-1">MoMo Number</span>
-                          <span className="text-white text-sm font-medium">{p.momoNumber ?? '—'}</span>
+                          <span className="text-white text-sm font-medium">{p.momoNumber ?? '-'}</span>
                         </div>
                         <div>
                           <span className="text-slate-500 block text-xs mb-1">Network</span>
-                          <span className="text-white text-sm font-medium">{p.network ?? '—'}</span>
+                          <span className="text-white text-sm font-medium">{p.network ?? '-'}</span>
                         </div>
                         <div>
                           <span className="text-slate-500 block text-xs mb-1">Account Name</span>
-                          <span className="text-white text-sm font-medium">{p.accountName ?? '—'}</span>
+                          <span className="text-white text-sm font-medium">{p.accountName ?? '-'}</span>
                         </div>
                         <div>
                           <span className="text-slate-500 block text-xs mb-1">Requested</span>
@@ -383,7 +383,7 @@ export default function PayoutsManagement() {
 
                           {/* Button row */}
                           <div className="flex items-center gap-2 flex-wrap">
-                            {/* Approve — pending only */}
+                            {/* Approve, pending only */}
                             {p.status === 'pending' && (
                               <button
                                 onClick={() => setSelectedAction(selectedAction === 'approve' ? null : 'approve')}
@@ -398,7 +398,7 @@ export default function PayoutsManagement() {
                               </button>
                             )}
 
-                            {/* Processing — approved or processing */}
+                            {/* Processing, approved or processing */}
                             {(p.status === 'approved' || p.status === 'processing') && (
                               <button
                                 onClick={() => setSelectedAction(selectedAction === 'processing' ? null : 'processing')}
@@ -413,7 +413,7 @@ export default function PayoutsManagement() {
                               </button>
                             )}
 
-                            {/* Reject — pending or approved */}
+                            {/* Reject, pending or approved */}
                             {(p.status === 'pending' || p.status === 'approved') && (
                               <button
                                 onClick={() => setSelectedAction(selectedAction === 'reject' ? null : 'reject')}

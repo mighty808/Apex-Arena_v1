@@ -288,7 +288,7 @@ const TournamentDetail = () => {
     if (paymentCountdown !== 0 || !tournamentId || !myRegistration) return;
     tournamentService.unregister(tournamentId, "Payment not completed").then(() => {
       setMyRegistration(null);
-      setSuccessMsg("Registration cancelled — payment was not completed.");
+      setSuccessMsg("Registration cancelled, payment was not completed.");
       setTimeout(() => setSuccessMsg(null), 6000);
     }).catch(() => {});
   }, [paymentCountdown, tournamentId, myRegistration]);
@@ -494,7 +494,7 @@ const TournamentDetail = () => {
     const url = window.location.href;
     const shareData = {
       title: tournament.title,
-      text: `Join "${tournament.title}"${tournament.game?.name ? ` — ${tournament.game.name}` : ""} tournament on Apex Arenas!`,
+      text: `Join "${tournament.title}"${tournament.game?.name ? `, ${tournament.game.name}` : ""} tournament on Apex Arenas!`,
       url,
     };
     try {
@@ -506,7 +506,7 @@ const TournamentDetail = () => {
         setTimeout(() => setSuccessMsg(null), 4000);
       }
     } catch {
-      // user cancelled or share failed — do nothing
+      // user cancelled or share failed, do nothing
     }
   };
 
@@ -653,7 +653,7 @@ const TournamentDetail = () => {
           {/* Bottom fade */}
           <div className="absolute inset-0 bg-linear-to-t from-slate-950 via-slate-950/50 to-transparent" />
 
-          {/* Status chip — top right */}
+          {/* Status chip, top right */}
           <div className="absolute top-4 right-4">
             <span
               className={`flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide px-3 py-1.5 rounded-full bg-slate-950/80 backdrop-blur-sm border border-white/10 ${statusMeta.text}`}
@@ -665,7 +665,7 @@ const TournamentDetail = () => {
             </span>
           </div>
 
-          {/* Registration status chip — top left (when registered) */}
+          {/* Registration status chip, top left (when registered) */}
           {isRegistered && regMeta && (
             <div className="absolute top-4 left-4">
               <span
@@ -676,7 +676,7 @@ const TournamentDetail = () => {
             </div>
           )}
 
-          {/* Prize badge — bottom right */}
+          {/* Prize badge, bottom right */}
           {prizeGhs && (
             <div className="absolute bottom-4 right-4">
               <span className="text-sm font-bold text-amber-300 bg-slate-950/80 backdrop-blur-sm px-3 py-1 rounded-full border border-amber-400/25 flex items-center gap-1.5">
@@ -830,7 +830,7 @@ const TournamentDetail = () => {
             {
               Icon: Trophy,
               label: "Prize Pool",
-              value: prizeGhs ?? "—",
+              value: prizeGhs ?? "-",
               accent: prizeGhs ? "text-amber-300" : "text-slate-600",
               iconCls: "text-amber-400",
             },
@@ -1253,7 +1253,7 @@ const TournamentDetail = () => {
                   if (tournament.status === "locked") {
                     isAmber = !startPassed;
                     msg = startPassed
-                      ? "Registration closed — awaiting tournament start"
+                      ? "Registration closed, awaiting tournament start"
                       : `Registration closed · Starts ${startTime ?? "soon"}`;
                   } else if (tournament.status === "published") {
                     if (regStart && Date.now() < new Date(regStart).getTime()) {
@@ -1368,7 +1368,7 @@ const TournamentDetail = () => {
           </section>
         )}
 
-        {/* ── Tournament Stats (spec §3.1) — visible to participants & spectators ── */}
+        {/* ── Tournament Stats (spec §3.1), visible to participants & spectators ── */}
         {["ongoing", "awaiting_results", "verifying_results", "completed"].includes(tournament.status) && (
           <section className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
             <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
@@ -1655,7 +1655,7 @@ const TournamentDetail = () => {
         open={summaryCardOpen}
         onClose={() => setSummaryCardOpen(false)}
         filename={`apex-recap-${tournament.id}`}
-        shareText={`${tournament.title} — tournament recap on Apex Arenas`}
+        shareText={`${tournament.title}, tournament recap on Apex Arenas`}
       >
         <TournamentSummaryTemplate
           tournamentId={tournament.id}

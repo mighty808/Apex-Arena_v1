@@ -1,6 +1,6 @@
 import { toPng, toBlob } from 'html-to-image';
 
-// Export a rendered card node as a PNG — download or native share sheet.
+// Export a rendered card node as a PNG, download or native share sheet.
 // Cards are designed at 1/3 scale (e.g. 360×640 for 9:16) and exported at
 // pixelRatio 3 → 1080×1920, Instagram-Story ready (spec §4.2).
 
@@ -42,7 +42,7 @@ export async function shareCardPng(
     await navigator.share({ files: [file], text, url });
     return true;
   } catch {
-    // User cancelled the share sheet — not an error
+    // User cancelled the share sheet, not an error
     return true;
   }
 }

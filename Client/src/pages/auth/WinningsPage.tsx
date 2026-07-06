@@ -28,7 +28,7 @@ function fmtGhs(pesewas: number) {
 }
 
 function fmtDate(iso?: string) {
-  if (!iso) return "—";
+  if (!iso) return "-";
   return new Date(iso).toLocaleDateString("en-GH", { day: "numeric", month: "short", year: "numeric" });
 }
 
@@ -92,7 +92,7 @@ function ClaimModal({ winning, onClose, onClaimed }: { winning: Winning; onClose
         notes: notes.trim() || undefined,
       });
       if (!res.success) throw new Error((res as { error?: { message?: string } }).error?.message ?? "Claim failed.");
-      showSuccess("Prize claim submitted. You'll receive payment within 1–2 business days.");
+      showSuccess("Prize claim submitted. You'll receive payment within 1-2 business days.");
       onClaimed();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong.");
@@ -181,7 +181,7 @@ function ClaimModal({ winning, onClose, onClaimed }: { winning: Winning; onClose
 
           <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-slate-800/60 border border-slate-700 text-xs text-slate-400">
             <Clock className="w-3.5 h-3.5 shrink-0 mt-0.5 text-amber-400" />
-            Prize payments are processed within 1–2 business days after admin review.
+            Prize payments are processed within 1-2 business days after admin review.
           </div>
 
           <button onClick={() => void handleClaim()} disabled={!isValid || submitting}
@@ -275,10 +275,10 @@ export default function WinningsPage() {
   const pending = winnings.filter(w => w.status === "claimed" || w.status === "processing").length;
 
   const statItems = [
-    { icon: Star,        iconColor: "text-amber-400",  bg: "from-amber-500/25 to-orange-500/20",  label: "Total",     value: loading ? "—" : String(winnings.length) },
-    { icon: Trophy,      iconColor: "text-cyan-400",   bg: "from-cyan-500/25 to-indigo-500/20",   label: "Unclaimed", value: loading ? "—" : String(unclaimed)        },
-    { icon: Clock,       iconColor: "text-indigo-400", bg: "from-indigo-500/25 to-violet-500/20", label: "Pending",   value: loading ? "—" : String(pending)          },
-    { icon: CheckCircle2,iconColor: "text-green-400",  bg: "from-green-500/25 to-teal-500/20",    label: "Paid Out",  value: loading ? "—" : fmtGhs(totalEarned)      },
+    { icon: Star,        iconColor: "text-amber-400",  bg: "from-amber-500/25 to-orange-500/20",  label: "Total",     value: loading ? "-" : String(winnings.length) },
+    { icon: Trophy,      iconColor: "text-cyan-400",   bg: "from-cyan-500/25 to-indigo-500/20",   label: "Unclaimed", value: loading ? "-" : String(unclaimed)        },
+    { icon: Clock,       iconColor: "text-indigo-400", bg: "from-indigo-500/25 to-violet-500/20", label: "Pending",   value: loading ? "-" : String(pending)          },
+    { icon: CheckCircle2,iconColor: "text-green-400",  bg: "from-green-500/25 to-teal-500/20",    label: "Paid Out",  value: loading ? "-" : fmtGhs(totalEarned)      },
   ];
 
   return (
@@ -294,7 +294,7 @@ export default function WinningsPage() {
           <div className="flex items-start justify-between gap-4">
             <div>
               <h1 className="font-display text-4xl sm:text-5xl font-bold text-white leading-none">Winnings</h1>
-              <p className="text-base text-slate-400 mt-3">Your tournament prizes — claim them via Mobile Money.</p>
+              <p className="text-base text-slate-400 mt-3">Your tournament prizes, claim them via Mobile Money.</p>
             </div>
             <button onClick={() => void load()} disabled={loading}
               className="p-2 mt-1 rounded-xl border border-slate-700 bg-slate-800/50 text-slate-400 hover:text-white hover:border-slate-600 disabled:opacity-50 transition-colors shrink-0">
@@ -302,7 +302,7 @@ export default function WinningsPage() {
             </button>
           </div>
 
-          {/* Stats — mobile toggle */}
+          {/* Stats, mobile toggle */}
           <div className="sm:hidden mt-4">
             <button onClick={() => setStatsOpen((o) => !o)}
               className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700/60 text-xs font-semibold text-slate-400 uppercase tracking-widest">
@@ -326,7 +326,7 @@ export default function WinningsPage() {
             )}
           </div>
 
-          {/* Stats — desktop */}
+          {/* Stats, desktop */}
           <div className="hidden sm:grid sm:grid-cols-4 gap-3 mt-6">
             {statItems.map((s) => (
               <div key={s.label} className="flex items-center gap-3 bg-slate-800/50 border border-slate-700/60 rounded-xl px-4 py-3">

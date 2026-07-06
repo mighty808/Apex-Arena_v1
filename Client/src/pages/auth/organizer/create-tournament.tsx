@@ -1043,7 +1043,7 @@ const CreateTournament = () => {
             {/* ── Two-column grid ── */}
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 items-start">
 
-              {/* ── LEFT — Info & Rules ── */}
+              {/* ── LEFT, Info & Rules ── */}
               <div className="space-y-5">
                 <SectionCard step={1} title="Basic Info" icon={Trophy}>
                   {canEditTitle && (
@@ -1106,7 +1106,7 @@ const CreateTournament = () => {
                 )}
               </div>
 
-              {/* ── RIGHT — Schedule & Participants ── */}
+              {/* ── RIGHT, Schedule & Participants ── */}
               <div className="space-y-5">
                 {canEditSchedule && (
                   <SectionCard step={3} title="Schedule" icon={Trophy}>
@@ -1197,7 +1197,7 @@ const CreateTournament = () => {
                 </Field>
 
                 <div className="grid grid-cols-2 gap-4">
-                  {/* Row 1 — Game | Format */}
+                  {/* Row 1, Game | Format */}
                   <Field label="Game" required>
                     <select value={gameId} onChange={(e) => setGameId(e.target.value)} className={selectCls}>
                       <option value="">Select a game</option>
@@ -1213,7 +1213,7 @@ const CreateTournament = () => {
                     </select>
                   </Field>
 
-                  {/* Row 2 — Tournament Type (full width) */}
+                  {/* Row 2, Tournament Type (full width) */}
                   <div className="col-span-2">
                     <Field label="Tournament Type" required>
                       <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
@@ -1252,7 +1252,7 @@ const CreateTournament = () => {
                     </Field>
                   </div>
 
-                  {/* League Legs — full width when league (sits above visibility|region row) */}
+                  {/* League Legs, full width when league (sits above visibility|region row) */}
                   {tournamentType === "league" && (
                     <div className="col-span-2">
                       <Field label="League Legs" required>
@@ -1264,15 +1264,15 @@ const CreateTournament = () => {
                     </div>
                   )}
 
-                  {/* Double Elim info banner — full width */}
+                  {/* Double Elim info banner, full width */}
                   {tournamentType === 'double_elimination' && (
                     <div className="col-span-2 rounded-xl border border-indigo-500/20 bg-indigo-500/5 px-3 py-2.5">
-                      <p className="text-xs font-semibold text-indigo-300">Two Legs — UCL Style</p>
+                      <p className="text-xs font-semibold text-indigo-300">Two Legs, UCL Style</p>
                       <p className="text-[11px] text-slate-500 mt-0.5">Each tie is played over two legs. Aggregate score decides the winner. Penalties if level.</p>
                     </div>
                   )}
 
-                  {/* Row — Visibility | Region */}
+                  {/* Row, Visibility | Region */}
                   <Field label="Visibility">
                     <select value={visibility} onChange={(e) => setVisibility(e.target.value)} className={selectCls}>
                       <option value="public">Public</option>
@@ -1294,7 +1294,7 @@ const CreateTournament = () => {
                     </select>
                   </Field>
 
-                  {/* Row — Timezone | Contact Email */}
+                  {/* Row, Timezone | Contact Email */}
                   <Field label="Timezone">
                     <input type="text" value={timezone} onChange={(e) => setTimezone(e.target.value)}
                       placeholder="Africa/Accra" className={inputCls} />
@@ -1376,7 +1376,7 @@ const CreateTournament = () => {
                         const prev = Math.pow(2, Math.floor(Math.log2(n)));
                         return (
                           <p className="text-[11px] text-amber-400 mt-1.5">
-                            {n} isn't a power of 2 — players outside slots will get auto-byes. Use {prev} or {next} for a clean bracket.
+                            {n} isn't a power of 2, players outside slots will get auto-byes. Use {prev} or {next} for a clean bracket.
                           </p>
                         );
                       }

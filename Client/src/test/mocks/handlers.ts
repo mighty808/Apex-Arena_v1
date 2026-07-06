@@ -28,7 +28,7 @@ export const TEST_ORGANIZER = {
 // ── Default handlers (happy path) ────────────────────────────────────────────
 
 export const handlers = [
-  // GET /auth/me — valid token returns current user
+  // GET /auth/me, valid token returns current user
   http.get(AUTH_ENDPOINTS.ME, () => {
     return HttpResponse.json({
       success: true,
@@ -36,7 +36,7 @@ export const handlers = [
     });
   }),
 
-  // POST /auth/token/refresh — flat tokens (auth.service reads data.access_token)
+  // POST /auth/token/refresh, flat tokens (auth.service reads data.access_token)
   http.post(AUTH_ENDPOINTS.TOKEN_REFRESH, () => {
     return HttpResponse.json({
       success: true,
@@ -48,7 +48,7 @@ export const handlers = [
     });
   }),
 
-  // POST /auth/token/validate — alias used by auth-context bootstrap
+  // POST /auth/token/validate, alias used by auth-context bootstrap
   http.post(AUTH_ENDPOINTS.TOKEN_VALIDATE, () => {
     return HttpResponse.json({
       success: true,
@@ -56,7 +56,7 @@ export const handlers = [
     });
   }),
 
-  // POST /auth/login — tokens must be flat (auth.service reads data.access_token)
+  // POST /auth/login, tokens must be flat (auth.service reads data.access_token)
   http.post(AUTH_ENDPOINTS.LOGIN, () => {
     return HttpResponse.json({
       success: true,

@@ -80,18 +80,18 @@ beforeEach(() => {
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
-describe('AuthProvider — bootstrap (no stored session)', () => {
+describe('AuthProvider, bootstrap (no stored session)', () => {
   it('finishes as not authenticated when no session is stored', async () => {
     renderWithAuth(<AuthDisplay />);
 
-    // With no stored session bootstrap completes synchronously — just assert final state
+    // With no stored session bootstrap completes synchronously, just assert final state
     await waitFor(() =>
       expect(screen.getByText('Not authenticated')).toBeInTheDocument(),
     );
   });
 });
 
-describe('AuthProvider — bootstrap (valid stored session)', () => {
+describe('AuthProvider, bootstrap (valid stored session)', () => {
   it('validates stored token via /auth/me and becomes authenticated', async () => {
     setStoredSession();
 
@@ -104,7 +104,7 @@ describe('AuthProvider — bootstrap (valid stored session)', () => {
   });
 });
 
-describe('AuthProvider — bootstrap (expired token, refresh succeeds)', () => {
+describe('AuthProvider, bootstrap (expired token, refresh succeeds)', () => {
   it('refreshes the token silently and stays authenticated', async () => {
     setStoredSession();
 
@@ -137,7 +137,7 @@ describe('AuthProvider — bootstrap (expired token, refresh succeeds)', () => {
   });
 });
 
-describe('AuthProvider — bootstrap (expired token, refresh fails)', () => {
+describe('AuthProvider, bootstrap (expired token, refresh fails)', () => {
   it('clears the session and becomes not authenticated', async () => {
     setStoredSession();
 
@@ -167,7 +167,7 @@ describe('AuthProvider — bootstrap (expired token, refresh fails)', () => {
   });
 });
 
-describe('AuthProvider — login', () => {
+describe('AuthProvider, login', () => {
   it('sets authenticated state after a successful login', async () => {
     const user = userEvent.setup();
 
@@ -207,7 +207,7 @@ describe('AuthProvider — login', () => {
   });
 });
 
-describe('AuthProvider — logout', () => {
+describe('AuthProvider, logout', () => {
   it('clears authenticated state and removes session from localStorage', async () => {
     setStoredSession();
     const user = userEvent.setup();

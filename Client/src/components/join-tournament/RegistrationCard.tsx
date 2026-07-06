@@ -101,7 +101,7 @@ export function RegistrationCard({
         {/* Bottom fade */}
         <div className="absolute inset-0 bg-linear-to-t from-slate-900 via-slate-900/40 to-transparent" />
 
-        {/* Tournament status — top right */}
+        {/* Tournament status, top right */}
         <div className="absolute top-2.5 right-2.5">
           <span className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full bg-slate-950/80 backdrop-blur-sm border border-white/10 ${tourMeta.text}`}>
             <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${tourMeta.dot}`} />
@@ -109,7 +109,7 @@ export function RegistrationCard({
           </span>
         </div>
 
-        {/* Game logo — bottom left (only when cover image exists so it's distinct) */}
+        {/* Game logo, bottom left (only when cover image exists so it's distinct) */}
         {registration.tournamentGameLogoUrl && imageUrl && (
           <div className="absolute bottom-2.5 left-2.5">
             <img
@@ -120,7 +120,7 @@ export function RegistrationCard({
           </div>
         )}
 
-        {/* Registration status — bottom left when no game logo, else bottom overlapping */}
+        {/* Registration status, bottom left when no game logo, else bottom overlapping */}
         <div className={`absolute bottom-2.5 ${registration.tournamentGameLogoUrl && imageUrl ? "left-11" : "left-3"}`}>
           <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border backdrop-blur-sm ${regMeta.cls}`}>
             {regMeta.label}
@@ -140,7 +140,7 @@ export function RegistrationCard({
           </p>
         </div>
 
-        {/* Stats grid — matches Browse card layout exactly */}
+        {/* Stats grid, matches Browse card layout exactly */}
         <div className="grid grid-cols-2 gap-x-3 gap-y-2.5">
           <div>
             <p className="text-[10px] text-slate-600 uppercase tracking-wide mb-0.5 flex items-center gap-1">
@@ -168,7 +168,7 @@ export function RegistrationCard({
           )}
         </div>
 
-        {/* CTA — full-width, pinned to bottom */}
+        {/* CTA, full-width, pinned to bottom */}
         <div className="mt-auto space-y-2">
           {registration.status === "pending_payment" && onCompletePayment ? (
             <button

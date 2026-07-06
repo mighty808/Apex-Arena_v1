@@ -106,7 +106,7 @@ function MatchCard({ match, highlightUserId, onClick }: {
   // Parse penalty/override info from reason string
   const penParsed = (() => {
     if (!match.reason) return null;
-    const m = match.reason.match(/Regular time:\s*(\d+)[-–](\d+).*?Penalties:\s*(\d+)[-–](\d+)/i);
+    const m = match.reason.match(/Regular time:\s*(\d+)[-, ](\d+).*?Penalties:\s*(\d+)[-, ](\d+)/i);
     if (!m) return null;
     return { rt1: Number(m[1]), rt2: Number(m[2]), pen1: Number(m[3]), pen2: Number(m[4]) };
   })();
@@ -145,14 +145,14 @@ function MatchCard({ match, highlightUserId, onClick }: {
                   <span className={`text-xl sm:text-2xl font-display font-bold w-6 sm:w-8 text-center tabular-nums ${isP1Winner ? 'text-white' : 'text-slate-500'}`}>
                     {penParsed ? penParsed.rt1 : match.score1}
                   </span>
-                  <span className="text-slate-600 text-sm font-bold">–</span>
+                  <span className="text-slate-600 text-sm font-bold">-</span>
                   <span className={`text-xl sm:text-2xl font-display font-bold w-6 sm:w-8 text-center tabular-nums ${isP2Winner ? 'text-white' : 'text-slate-500'}`}>
                     {penParsed ? penParsed.rt2 : match.score2}
                   </span>
                 </div>
                 {penParsed && (
                   <span className="text-[10px] text-slate-500 font-semibold">
-                    Pen: {penParsed.pen1}–{penParsed.pen2}
+                    Pen: {penParsed.pen1}-{penParsed.pen2}
                   </span>
                 )}
               </>

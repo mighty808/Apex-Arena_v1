@@ -17,7 +17,7 @@ function fmtGhs(pesewas: number) {
 }
 
 function fmtDate(iso?: string) {
-  if (!iso) return "—";
+  if (!iso) return "-";
   return new Date(iso).toLocaleDateString("en-GH", { day: "numeric", month: "short", year: "numeric" });
 }
 
@@ -93,7 +93,7 @@ function WinningClaimModal({ winning, onClose, onClaimed }: { winning: Winning; 
         notes: notes.trim() || undefined,
       });
       if (!res.success) throw new Error((res as { error?: { message?: string } }).error?.message ?? "Claim failed.");
-      showSuccess("Prize claim submitted. You'll receive payment within 1–2 business days.");
+      showSuccess("Prize claim submitted. You'll receive payment within 1-2 business days.");
       onClaimed();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong.");
@@ -173,7 +173,7 @@ function WinningClaimModal({ winning, onClose, onClaimed }: { winning: Winning; 
 
           <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-slate-800/60 border border-slate-700 text-xs text-slate-400">
             <Clock className="w-3.5 h-3.5 shrink-0 mt-0.5 text-amber-400" />
-            Prize payments are processed within 1–2 business days after admin review.
+            Prize payments are processed within 1-2 business days after admin review.
           </div>
 
           <button onClick={() => void handleClaim()} disabled={!isValid || submitting}
@@ -286,7 +286,7 @@ function RefundClaimModal({ refund, onClose, onClaimed }: { refund: Refund; onCl
         account_name: accountName.trim(),
       });
       if (!res.success) throw new Error((res as { error?: { message?: string } }).error?.message ?? "Claim failed.");
-      showSuccess("Refund claim submitted. You'll receive your funds within 1–2 business days.");
+      showSuccess("Refund claim submitted. You'll receive your funds within 1-2 business days.");
       onClaimed();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong.");
@@ -358,7 +358,7 @@ function RefundClaimModal({ refund, onClose, onClaimed }: { refund: Refund; onCl
 
           <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-slate-800/60 border border-slate-700 text-xs text-slate-400">
             <Clock className="w-3.5 h-3.5 shrink-0 mt-0.5 text-cyan-400" />
-            Refunds are processed within 1–2 business days after admin review.
+            Refunds are processed within 1-2 business days after admin review.
           </div>
 
           <button onClick={() => void handleClaim()} disabled={!isValid || submitting}
@@ -469,17 +469,17 @@ export default function PrizesPage() {
 
   // Stats per tab
   const winStats = [
-    { icon: Star,         iconColor: "text-amber-400",  bg: "from-amber-500/25 to-orange-500/20",  label: "Total",     value: winLoading ? "—" : String(winnings.length) },
-    { icon: Trophy,       iconColor: "text-cyan-400",   bg: "from-cyan-500/25 to-indigo-500/20",   label: "Unclaimed", value: winLoading ? "—" : String(winnings.filter(w => w.status === "allocated").length) },
-    { icon: Clock,        iconColor: "text-indigo-400", bg: "from-indigo-500/25 to-violet-500/20", label: "Pending",   value: winLoading ? "—" : String(winnings.filter(w => w.status === "claimed" || w.status === "processing").length) },
-    { icon: CheckCircle2, iconColor: "text-green-400",  bg: "from-green-500/25 to-teal-500/20",    label: "Paid Out",  value: winLoading ? "—" : fmtGhs(winnings.filter(w => w.status === "paid").reduce((s, w) => s + w.amount, 0)) },
+    { icon: Star,         iconColor: "text-amber-400",  bg: "from-amber-500/25 to-orange-500/20",  label: "Total",     value: winLoading ? "-" : String(winnings.length) },
+    { icon: Trophy,       iconColor: "text-cyan-400",   bg: "from-cyan-500/25 to-indigo-500/20",   label: "Unclaimed", value: winLoading ? "-" : String(winnings.filter(w => w.status === "allocated").length) },
+    { icon: Clock,        iconColor: "text-indigo-400", bg: "from-indigo-500/25 to-violet-500/20", label: "Pending",   value: winLoading ? "-" : String(winnings.filter(w => w.status === "claimed" || w.status === "processing").length) },
+    { icon: CheckCircle2, iconColor: "text-green-400",  bg: "from-green-500/25 to-teal-500/20",    label: "Paid Out",  value: winLoading ? "-" : fmtGhs(winnings.filter(w => w.status === "paid").reduce((s, w) => s + w.amount, 0)) },
   ];
 
   const refStats = [
-    { icon: RotateCcw,    iconColor: "text-cyan-400",   bg: "from-cyan-500/25 to-indigo-500/20",   label: "Total",     value: refLoading ? "—" : String(refunds.length) },
-    { icon: AlertTriangle,iconColor: "text-amber-400",  bg: "from-amber-500/25 to-orange-500/20",  label: "Unclaimed", value: refLoading ? "—" : String(refunds.filter(r => r.status === "pending_claim").length) },
-    { icon: Clock,        iconColor: "text-indigo-400", bg: "from-indigo-500/25 to-violet-500/20", label: "Pending",   value: refLoading ? "—" : String(refunds.filter(r => r.status === "claimed" || r.status === "processing").length) },
-    { icon: CheckCircle2, iconColor: "text-green-400",  bg: "from-green-500/25 to-teal-500/20",    label: "Refunded",  value: refLoading ? "—" : fmtGhs(refunds.filter(r => r.status === "paid").reduce((s, r) => s + r.amount, 0)) },
+    { icon: RotateCcw,    iconColor: "text-cyan-400",   bg: "from-cyan-500/25 to-indigo-500/20",   label: "Total",     value: refLoading ? "-" : String(refunds.length) },
+    { icon: AlertTriangle,iconColor: "text-amber-400",  bg: "from-amber-500/25 to-orange-500/20",  label: "Unclaimed", value: refLoading ? "-" : String(refunds.filter(r => r.status === "pending_claim").length) },
+    { icon: Clock,        iconColor: "text-indigo-400", bg: "from-indigo-500/25 to-violet-500/20", label: "Pending",   value: refLoading ? "-" : String(refunds.filter(r => r.status === "claimed" || r.status === "processing").length) },
+    { icon: CheckCircle2, iconColor: "text-green-400",  bg: "from-green-500/25 to-teal-500/20",    label: "Refunded",  value: refLoading ? "-" : fmtGhs(refunds.filter(r => r.status === "paid").reduce((s, r) => s + r.amount, 0)) },
   ];
 
   const statItems = tab === "winnings" ? winStats : refStats;
@@ -497,7 +497,7 @@ export default function PrizesPage() {
           <div className="flex items-start justify-between gap-4">
             <div>
               <h1 className="font-display text-4xl sm:text-5xl font-bold text-white leading-none">Prizes</h1>
-              <p className="text-base text-slate-400 mt-3">Your tournament winnings and entry fee refunds — claim via Mobile Money.</p>
+              <p className="text-base text-slate-400 mt-3">Your tournament winnings and entry fee refunds, claim via Mobile Money.</p>
             </div>
             <button
               onClick={() => void (tab === "winnings" ? loadWinnings() : loadRefunds())}
@@ -508,7 +508,7 @@ export default function PrizesPage() {
             </button>
           </div>
 
-          {/* Stats — mobile toggle */}
+          {/* Stats, mobile toggle */}
           <div className="sm:hidden mt-4">
             <button onClick={() => setStatsOpen((o) => !o)}
               className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700/60 text-xs font-semibold text-slate-400 uppercase tracking-widest">
@@ -532,7 +532,7 @@ export default function PrizesPage() {
             )}
           </div>
 
-          {/* Stats — desktop */}
+          {/* Stats, desktop */}
           <div className="hidden sm:grid sm:grid-cols-4 gap-3 mt-6">
             {statItems.map((s) => (
               <div key={s.label} className="flex items-center gap-3 bg-slate-800/50 border border-slate-700/60 rounded-xl px-4 py-3">

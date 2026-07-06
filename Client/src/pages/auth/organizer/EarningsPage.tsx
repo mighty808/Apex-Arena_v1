@@ -45,7 +45,7 @@ function fmtGhs(pesewas: number) {
 }
 
 function fmtDate(iso?: string) {
-  if (!iso) return "—";
+  if (!iso) return "-";
   return new Date(iso).toLocaleDateString("en-GH", { day: "numeric", month: "short", year: "numeric" });
 }
 
@@ -74,7 +74,7 @@ function ClaimModal({ earning, onClose, onClaimed }: { earning: Earning; onClose
         notes: notes.trim() || undefined,
       });
       if (!res.success) throw new Error((res as { error?: { message?: string } }).error?.message ?? "Claim failed.");
-      showSuccess("Earnings claim submitted. Payment will be processed within 1–2 business days.");
+      showSuccess("Earnings claim submitted. Payment will be processed within 1-2 business days.");
       onClaimed();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong.");
@@ -179,7 +179,7 @@ function ClaimModal({ earning, onClose, onClaimed }: { earning: Earning; onClose
 
           <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-slate-800/60 border border-slate-700 text-xs text-slate-400">
             <Clock className="w-3.5 h-3.5 shrink-0 mt-0.5 text-orange-400" />
-            Earnings are processed within 1–2 business days after admin review.
+            Earnings are processed within 1-2 business days after admin review.
           </div>
 
           <button onClick={() => void handleClaim()} disabled={!isValid || submitting}
@@ -288,10 +288,10 @@ export default function EarningsPage() {
   const totalPaid  = earnings.filter(e => e.status === "paid").reduce((s, e) => s + e.net_amount, 0);
 
   const statItems = [
-    { icon: TrendingUp,   iconColor: "text-orange-400", bg: "from-orange-500/25 to-amber-500/20",  label: "Total",     value: loading ? "—" : String(earnings.length) },
-    { icon: Banknote,     iconColor: "text-amber-400",  bg: "from-amber-500/25 to-yellow-500/20",  label: "Unclaimed", value: loading ? "—" : String(unclaimed)        },
-    { icon: Clock,        iconColor: "text-indigo-400", bg: "from-indigo-500/25 to-violet-500/20", label: "Pending",   value: loading ? "—" : String(pending)          },
-    { icon: CheckCircle2, iconColor: "text-green-400",  bg: "from-green-500/25 to-teal-500/20",    label: "Paid Out",  value: loading ? "—" : fmtGhs(totalPaid)        },
+    { icon: TrendingUp,   iconColor: "text-orange-400", bg: "from-orange-500/25 to-amber-500/20",  label: "Total",     value: loading ? "-" : String(earnings.length) },
+    { icon: Banknote,     iconColor: "text-amber-400",  bg: "from-amber-500/25 to-yellow-500/20",  label: "Unclaimed", value: loading ? "-" : String(unclaimed)        },
+    { icon: Clock,        iconColor: "text-indigo-400", bg: "from-indigo-500/25 to-violet-500/20", label: "Pending",   value: loading ? "-" : String(pending)          },
+    { icon: CheckCircle2, iconColor: "text-green-400",  bg: "from-green-500/25 to-teal-500/20",    label: "Paid Out",  value: loading ? "-" : fmtGhs(totalPaid)        },
   ];
 
   return (
@@ -315,7 +315,7 @@ export default function EarningsPage() {
             </button>
           </div>
 
-          {/* Stats — mobile toggle */}
+          {/* Stats, mobile toggle */}
           <div className="sm:hidden mt-4">
             <button onClick={() => setStatsOpen((o) => !o)}
               className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700/60 text-xs font-semibold text-slate-400 uppercase tracking-widest">
@@ -339,7 +339,7 @@ export default function EarningsPage() {
             )}
           </div>
 
-          {/* Stats — desktop */}
+          {/* Stats, desktop */}
           <div className="hidden sm:grid sm:grid-cols-4 gap-3 mt-6">
             {statItems.map((s) => (
               <div key={s.label} className="flex items-center gap-3 bg-slate-800/50 border border-slate-700/60 rounded-xl px-4 py-3">

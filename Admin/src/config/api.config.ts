@@ -225,27 +225,27 @@ export const FINANCE_ENDPOINTS = {
   //  Wallet 
   WALLET: `${API_BASE_URLS.FINANCE}/wallet`,                        // GET
   DEPOSIT: `${API_BASE_URLS.FINANCE}/deposit`,                      // POST
-  DEPOSIT_VERIFY: `${API_BASE_URLS.FINANCE}/deposit/verify`,        // GET — TheTeller redirect callback (no JWT)
+  DEPOSIT_VERIFY: `${API_BASE_URLS.FINANCE}/deposit/verify`,        // GET, TheTeller redirect callback (no JWT)
   TRANSACTIONS: `${API_BASE_URLS.FINANCE}/transactions`,            // GET
 
   //  Escrow (User) 
-  ESCROW_DEPOSIT: `${API_BASE_URLS.FINANCE}/escrow/deposit`,        // POST — organizer records prize pool deposit
+  ESCROW_DEPOSIT: `${API_BASE_URLS.FINANCE}/escrow/deposit`,        // POST, organizer records prize pool deposit
   ESCROW_STATUS: `${API_BASE_URLS.FINANCE}/escrow`,                 // + /:tournamentId (GET)
   ESCROW_SUBMIT_WINNERS: `${API_BASE_URLS.FINANCE}/escrow`,         // + /:tournamentId/winners (POST)
 
   // Escrow (Admin) 
-  ADMIN_ESCROW_PROCESSOR_RUN: `${API_BASE_URLS.FINANCE}/admin/escrow/processor/run`, // POST — manually trigger escrow processor
+  ADMIN_ESCROW_PROCESSOR_RUN: `${API_BASE_URLS.FINANCE}/admin/escrow/processor/run`, // POST, manually trigger escrow processor
   ADMIN_ESCROW_STATUS: `${API_BASE_URLS.FINANCE}/admin/escrow`,     // + /:tournamentId (GET)
   ADMIN_ESCROW_CANCEL: `${API_BASE_URLS.FINANCE}/admin/escrow`,     // + /:tournamentId/cancel (POST)
 
   //  Payouts (User)
-  PAYOUT_REQUEST: `${API_BASE_URLS.FINANCE}/payouts/request`,       // POST — submit withdrawal request
-  PAYOUT_MY_REQUESTS: `${API_BASE_URLS.FINANCE}/payouts/my-requests`, // GET — own requests
+  PAYOUT_REQUEST: `${API_BASE_URLS.FINANCE}/payouts/request`,       // POST, submit withdrawal request
+  PAYOUT_MY_REQUESTS: `${API_BASE_URLS.FINANCE}/payouts/my-requests`, // GET, own requests
   PAYOUT_DETAIL: `${API_BASE_URLS.FINANCE}/payouts`,                // + /:id (GET, DELETE)
 
   // Payouts (Admin)
-  ADMIN_PAYOUTS_ALL: `${API_BASE_URLS.FINANCE}/admin/payouts`,             // GET — all requests (status filter)
-  ADMIN_PAYOUTS_PENDING: `${API_BASE_URLS.FINANCE}/admin/payouts/pending`, // GET — all pending requests
+  ADMIN_PAYOUTS_ALL: `${API_BASE_URLS.FINANCE}/admin/payouts`,             // GET, all requests (status filter)
+  ADMIN_PAYOUTS_PENDING: `${API_BASE_URLS.FINANCE}/admin/payouts/pending`, // GET, all pending requests
   ADMIN_PAYOUT_DETAIL: `${API_BASE_URLS.FINANCE}/admin/payouts`,    // + /:id (GET)
   ADMIN_PAYOUT_APPROVE: `${API_BASE_URLS.FINANCE}/admin/payouts`,   // + /:id/approve (PATCH)
   ADMIN_PAYOUT_CONFIRM: `${API_BASE_URLS.FINANCE}/admin/payouts`,   // + /:id/confirm (PATCH)
@@ -254,8 +254,8 @@ export const FINANCE_ENDPOINTS = {
 } as const;
 
 export const WEBHOOK_ENDPOINTS = {
-  PAYSTACK: `${API_BASE_URLS.WEBHOOKS}/paystack`,                   // POST — called by Paystack gateway
-  FLUTTERWAVE: `${API_BASE_URLS.WEBHOOKS}/flutterwave`,             // POST — called by Flutterwave gateway
+  PAYSTACK: `${API_BASE_URLS.WEBHOOKS}/paystack`,                   // POST, called by Paystack gateway
+  FLUTTERWAVE: `${API_BASE_URLS.WEBHOOKS}/flutterwave`,             // POST, called by Flutterwave gateway
 } as const;
 
 export const HTTP_METHODS = {

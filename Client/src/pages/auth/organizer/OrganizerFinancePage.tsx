@@ -16,7 +16,7 @@ function fmtGhs(pesewas: number) {
 }
 
 function fmtDate(iso?: string) {
-  if (!iso) return "—";
+  if (!iso) return "-";
   return new Date(iso).toLocaleDateString("en-GH", { day: "numeric", month: "short", year: "numeric" });
 }
 
@@ -257,7 +257,7 @@ function ClaimModal({ earning, onClose, onClaimed }: { earning: Earning; onClose
         notes: notes.trim() || undefined,
       });
       if (!res.success) throw new Error((res as { error?: { message?: string } }).error?.message ?? "Claim failed.");
-      showSuccess("Earnings claim submitted — processed within 1–2 business days.");
+      showSuccess("Earnings claim submitted, processed within 1-2 business days.");
       onClaimed();
     } catch (e) { setError(e instanceof Error ? e.message : "Something went wrong."); }
     finally { setSubmitting(false); }
@@ -346,7 +346,7 @@ function ClaimModal({ earning, onClose, onClaimed }: { earning: Earning; onClose
 
           <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-slate-800/60 border border-slate-700/60 text-xs text-slate-400">
             <Clock className="w-3.5 h-3.5 shrink-0 mt-0.5 text-orange-400" />
-            Payment processed within 1–2 business days after admin review.
+            Payment processed within 1-2 business days after admin review.
           </div>
         </div>
 
@@ -417,7 +417,7 @@ export default function OrganizerFinancePage() {
     setCancelling(id);
     try {
       await organizerService.cancelPayoutRequest(id);
-      showSuccess("Request cancelled — balance refunded.");
+      showSuccess("Request cancelled, balance refunded.");
       void loadPayouts();
     } catch (e) { showError(e instanceof Error ? e.message : "Could not cancel."); }
     finally { setCancelling(null); }
@@ -437,17 +437,17 @@ export default function OrganizerFinancePage() {
 
   // ── Stats ─────────────────────────────────────────────────────────────────
   const payStats = [
-    { icon: DollarSign,   color: "text-orange-400",  bg: "from-orange-500/25 to-amber-500/20",   label: "Available",   value: payLoading  ? "—" : `GHS ${availableGhs.toFixed(2)}` },
-    { icon: ArrowDownToLine, color: "text-cyan-400", bg: "from-cyan-500/25 to-indigo-500/20",    label: "Requests",    value: payLoading  ? "—" : String(requests.length)           },
-    { icon: CheckCircle2, color: "text-emerald-400", bg: "from-emerald-500/25 to-teal-500/20",   label: "Total Paid",  value: payLoading  ? "—" : `GHS ${totalPaid.toFixed(2)}`     },
-    { icon: Clock3,       color: "text-amber-400",   bg: "from-amber-500/25 to-orange-500/20",   label: "Pending",     value: payLoading  ? "—" : `GHS ${totalPending.toFixed(2)}`  },
+    { icon: DollarSign,   color: "text-orange-400",  bg: "from-orange-500/25 to-amber-500/20",   label: "Available",   value: payLoading  ? "-" : `GHS ${availableGhs.toFixed(2)}` },
+    { icon: ArrowDownToLine, color: "text-cyan-400", bg: "from-cyan-500/25 to-indigo-500/20",    label: "Requests",    value: payLoading  ? "-" : String(requests.length)           },
+    { icon: CheckCircle2, color: "text-emerald-400", bg: "from-emerald-500/25 to-teal-500/20",   label: "Total Paid",  value: payLoading  ? "-" : `GHS ${totalPaid.toFixed(2)}`     },
+    { icon: Clock3,       color: "text-amber-400",   bg: "from-amber-500/25 to-orange-500/20",   label: "Pending",     value: payLoading  ? "-" : `GHS ${totalPending.toFixed(2)}`  },
   ];
 
   const earnStats = [
-    { icon: TrendingUp,   color: "text-orange-400",  bg: "from-orange-500/25 to-amber-500/20",   label: "Total",       value: earnLoading ? "—" : String(earnings.length)           },
-    { icon: Banknote,     color: "text-amber-400",   bg: "from-amber-500/25 to-yellow-500/20",   label: "Unclaimed",   value: earnLoading ? "—" : String(earnUnclaimed)              },
-    { icon: Clock3,       color: "text-indigo-400",  bg: "from-indigo-500/25 to-violet-500/20",  label: "Pending",     value: earnLoading ? "—" : String(earnPending)                },
-    { icon: CheckCircle2, color: "text-emerald-400", bg: "from-emerald-500/25 to-teal-500/20",   label: "Paid Out",    value: earnLoading ? "—" : fmtGhs(earnPaidTotal)        },
+    { icon: TrendingUp,   color: "text-orange-400",  bg: "from-orange-500/25 to-amber-500/20",   label: "Total",       value: earnLoading ? "-" : String(earnings.length)           },
+    { icon: Banknote,     color: "text-amber-400",   bg: "from-amber-500/25 to-yellow-500/20",   label: "Unclaimed",   value: earnLoading ? "-" : String(earnUnclaimed)              },
+    { icon: Clock3,       color: "text-indigo-400",  bg: "from-indigo-500/25 to-violet-500/20",  label: "Pending",     value: earnLoading ? "-" : String(earnPending)                },
+    { icon: CheckCircle2, color: "text-emerald-400", bg: "from-emerald-500/25 to-teal-500/20",   label: "Paid Out",    value: earnLoading ? "-" : fmtGhs(earnPaidTotal)        },
   ];
 
   const statItems = tab === "payouts" ? payStats : earnStats;
@@ -486,7 +486,7 @@ export default function OrganizerFinancePage() {
             </div>
           </div>
 
-          {/* Stats — mobile toggle */}
+          {/* Stats, mobile toggle */}
           <div className="sm:hidden mt-4">
             <button onClick={() => setStatsOpen(o => !o)}
               className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700/60 text-xs font-semibold text-slate-400 uppercase tracking-widest">
@@ -510,7 +510,7 @@ export default function OrganizerFinancePage() {
             )}
           </div>
 
-          {/* Stats — desktop */}
+          {/* Stats, desktop */}
           <div className="hidden sm:grid sm:grid-cols-4 gap-3 mt-6">
             {statItems.map(s => (
               <div key={s.label} className="flex items-center gap-3 bg-slate-800/50 border border-slate-700/60 rounded-xl px-4 py-3 hover:border-slate-600/60 transition-colors">
@@ -666,7 +666,7 @@ export default function OrganizerFinancePage() {
               </div>
               <div>
                 <p className="font-display text-lg font-semibold text-slate-300">No earnings yet</p>
-                <p className="text-sm text-slate-500 mt-1 max-w-sm">Earnings appear here when a <span className="text-slate-300 font-medium">paid tournament</span> you hosted completes — you receive 90% of all entry fees. Free tournaments generate no earnings.</p>
+                <p className="text-sm text-slate-500 mt-1 max-w-sm">Earnings appear here when a <span className="text-slate-300 font-medium">paid tournament</span> you hosted completes, you receive 90% of all entry fees. Free tournaments generate no earnings.</p>
               </div>
             </div>
           ) : (

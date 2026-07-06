@@ -159,7 +159,7 @@ export const communityService = {
     if (params.page) search.set('page', String(params.page));
     search.set('limit', String(params.limit ?? 20));
 
-    // Feed is public but sends viewer_vote when authenticated — keep auth on
+    // Feed is public but sends viewer_vote when authenticated, keep auth on
     const res = await apiGet(`${COMMUNITY_BASE}/posts?${search.toString()}`, { skipCache: true });
     if (!res.success) throw new Error(res.error?.message ?? 'Failed to load feed');
 

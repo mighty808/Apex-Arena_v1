@@ -85,7 +85,7 @@ const Dashboard = () => {
         setPlayerWallet(wallet);
       }
     } catch {
-      // silently fail — show empty states
+      // silently fail, show empty states
     } finally {
       setIsLoading(false);
     }
@@ -314,7 +314,7 @@ const Dashboard = () => {
                     </p>
                   ) : (
                     <p className="text-sm text-slate-500 mt-2">
-                      No tournaments yet — create your first one
+                      No tournaments yet, create your first one
                     </p>
                   )}
                 </div>
@@ -355,13 +355,13 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Stats strip — dropdown on mobile, grid on sm+ */}
+            {/* Stats strip, dropdown on mobile, grid on sm+ */}
             {(() => {
               const statItems = [
                 { icon: Trophy,   iconColor: "text-orange-400",  bg: "from-orange-500/15 to-amber-500/15",  label: "Tournaments",    value: String(organizerTournaments.length) },
                 { icon: Gamepad2, iconColor: "text-emerald-400", bg: "from-emerald-500/15 to-teal-500/15",  label: "Live / Active",  value: String(organizerLiveCount) },
                 { icon: Users,    iconColor: "text-cyan-400",    bg: "from-cyan-500/15 to-indigo-500/15",   label: "Total Entrants", value: String(organizerTotalParticipants) },
-                { icon: Wallet,   iconColor: "text-amber-400",   bg: "from-amber-500/15 to-orange-500/15",  label: "Wallet",         value: organizerWalletBalance === null ? "GHS —" : `GHS ${(organizerWalletBalance / 100).toFixed(2)}` },
+                { icon: Wallet,   iconColor: "text-amber-400",   bg: "from-amber-500/15 to-orange-500/15",  label: "Wallet",         value: organizerWalletBalance === null ? "GHS, " : `GHS ${(organizerWalletBalance / 100).toFixed(2)}` },
               ];
               return (
                 <>
@@ -642,7 +642,7 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Stats strip — grid on sm+, dropdown on mobile */}
+          {/* Stats strip, grid on sm+, dropdown on mobile */}
           {(() => {
             const statItems = [
               { icon: Trophy,   iconColor: "text-orange-400",  bg: "from-orange-500/15 to-amber-500/15",  label: "Tournaments", value: String(stats.joinedTournaments) },

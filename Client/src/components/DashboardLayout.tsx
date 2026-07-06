@@ -24,7 +24,7 @@ function relTime(iso?: string) {
   return `${Math.floor(hrs / 24)}d`;
 }
 
-// Icon varies by type for at-a-glance scanning — no color coding, flat dark theme only.
+// Icon varies by type for at-a-glance scanning, no color coding, flat dark theme only.
 const NOTIF_TYPE_ICON: Record<string, React.ElementType> = {
   tournament_registration: TrophyIcon,
   tournament_cancelled: TrophyIcon,
@@ -91,7 +91,7 @@ function DropdownNotifRow({
       className={`flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors group
         ${notif.isRead ? "hover:bg-slate-800/30" : "bg-slate-800/30 hover:bg-slate-800/40"}`}
     >
-      {/* Icon — flat, no per-type color */}
+      {/* Icon, flat, no per-type color */}
       <div className="shrink-0 w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center mt-0.5 ring-1 ring-inset ring-white/5">
         <Icon className="w-4 h-4 text-slate-300" />
       </div>
@@ -175,7 +175,7 @@ const DashboardLayout = () => {
         <header className="sticky top-0 z-30 px-4 sm:px-6 pt-3">
           <div className="flex items-center justify-between rounded-2xl border border-slate-800/80 bg-slate-950/70 backdrop-blur-xl px-4 sm:px-5 py-3 shadow-[0_14px_40px_-24px_rgba(14,165,233,0.35)]">
             <div className="flex items-center gap-3">
-              {/* Hamburger — mobile only */}
+              {/* Hamburger, mobile only */}
               <button
                 onClick={() => setMobileOpen(true)}
                 className="md:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors"

@@ -637,7 +637,7 @@ function ParticipantsSection({ tournamentId }: { tournamentId: string }) {
                 const profile     = (user.profile ?? {}) as Record<string, unknown>;
                 const firstName   = String(user.first_name ?? profile.first_name ?? "");
                 const lastName    = String(user.last_name ?? profile.last_name ?? "");
-                const displayName = `${firstName} ${lastName}`.trim() || String(user.username ?? p.username ?? "—");
+                const displayName = `${firstName} ${lastName}`.trim() || String(user.username ?? p.username ?? "-");
                 const username    = String(user.username ?? p.username ?? "");
                 const avatarUrl   = String(user.avatar_url ?? profile.avatar_url ?? p.avatar_url ?? "");
                 const inGameId    = String(p.in_game_id ?? p.inGameId ?? "");
@@ -674,7 +674,7 @@ function ParticipantsSection({ tournamentId }: { tournamentId: string }) {
                     {/* In-Game ID */}
                     <td className="px-5 py-3.5">
                       <span className="text-xs font-mono text-slate-300 bg-slate-800/60 px-2 py-1 rounded-md border border-slate-700/50">
-                        {inGameId || <span className="text-slate-600 italic">—</span>}
+                        {inGameId || <span className="text-slate-600 italic">-</span>}
                       </span>
                     </td>
                     {/* Status */}
@@ -685,7 +685,7 @@ function ParticipantsSection({ tournamentId }: { tournamentId: string }) {
                     </td>
                     {/* Registered At */}
                     <td className="px-5 py-3.5">
-                      <span className="text-xs text-slate-500">{registeredAt ? formatDate(registeredAt) : "—"}</span>
+                      <span className="text-xs text-slate-500">{registeredAt ? formatDate(registeredAt) : "-"}</span>
                     </td>
                     {/* Check-in */}
                     <td className="px-5 py-3.5">
@@ -694,7 +694,7 @@ function ParticipantsSection({ tournamentId }: { tournamentId: string }) {
                           <CheckCircle2 className="w-3.5 h-3.5" /> Checked in
                         </span>
                       ) : (
-                        <span className="text-[11px] text-slate-600">—</span>
+                        <span className="text-[11px] text-slate-600">-</span>
                       )}
                     </td>
                   </tr>
@@ -906,7 +906,7 @@ function BcMatchModal({ match, onClose, onOverrideComplete, isLeague = false }: 
   }, [onClose]);
 
   const fmtDate = (iso?: string) =>
-    iso ? new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—";
+    iso ? new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "-";
 
   const p          = match.participants ?? [];
   const p1         = p[0] ?? {};
@@ -995,7 +995,7 @@ function BcMatchModal({ match, onClose, onOverrideComplete, isLeague = false }: 
                     {/* Score */}
                     <div className="flex items-baseline gap-1.5 shrink-0">
                       <span className={`text-4xl font-black tabular-nums leading-none ${player.isWinner ? "text-white" : neither ? "text-slate-500" : "text-slate-700"}`}>
-                        {player.score ?? "—"}
+                        {player.score ?? "-"}
                       </span>
                       {player.penScore !== null && player.penScore !== undefined && (
                         <span className="text-xl font-bold text-amber-400 tabular-nums leading-none">
@@ -1016,9 +1016,9 @@ function BcMatchModal({ match, onClose, onOverrideComplete, isLeague = false }: 
                   <span className="text-[11px] font-bold text-amber-400 uppercase tracking-widest">Penalties</span>
                   <div className="flex items-center gap-2">
                     <span className={`text-base font-black tabular-nums ${pen.pen1 > pen.pen2 ? "text-amber-300" : "text-slate-500"}`}>{pen.pen1}</span>
-                    <span className="text-slate-600 text-sm">—</span>
+                    <span className="text-slate-600 text-sm">-</span>
                     <span className={`text-base font-black tabular-nums ${pen.pen2 > pen.pen1 ? "text-amber-300" : "text-slate-500"}`}>{pen.pen2}</span>
-                    <span className="text-[10px] text-slate-600 ml-2">RT: {pen.rt1}–{pen.rt2}</span>
+                    <span className="text-[10px] text-slate-600 ml-2">RT: {pen.rt1}-{pen.rt2}</span>
                   </div>
                 </div>
               )}
@@ -1174,10 +1174,10 @@ function BcMatchModal({ match, onClose, onOverrideComplete, isLeague = false }: 
                   </div>
                 </div>
 
-                {/* Penalty inputs — only when scores are equal, both filled, and not a league match */}
+                {/* Penalty inputs, only when scores are equal, both filled, and not a league match */}
                 {!isLeague && ovS1 !== "" && ovS2 !== "" && Number(ovS1) === Number(ovS2) && (
                   <div>
-                    <p className="text-[10px] text-amber-400 font-semibold uppercase tracking-widest mb-2">Tie — set penalty shootout scores</p>
+                    <p className="text-[10px] text-amber-400 font-semibold uppercase tracking-widest mb-2">Tie, set penalty shootout scores</p>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="block text-[11px] text-slate-500 mb-1">{p1Label} penalties</label>
@@ -1281,11 +1281,11 @@ function BcMatchCard({ match, isFinal, onClick }) {
   const scheduledAt = match.scheduled_at ?? match.scheduled_time ?? match.schedule?.scheduled_time;
 
   function renderScore(score, pen, isWinner) {
-    if (!hasScores) return <span className="text-slate-700">—</span>;
+    if (!hasScores) return <span className="text-slate-700">-</span>;
     if (pen !== null) {
       return (
         <div className="flex items-center gap-1 shrink-0">
-          <span className={`text-xs font-bold tabular-nums ${isWinner ? "text-orange-300" : "text-slate-500"}`}>{score ?? "—"}</span>
+          <span className={`text-xs font-bold tabular-nums ${isWinner ? "text-orange-300" : "text-slate-500"}`}>{score ?? "-"}</span>
           <span className="text-[9px] text-amber-500/80 font-bold tabular-nums">({pen})</span>
         </div>
       );
@@ -1293,14 +1293,14 @@ function BcMatchCard({ match, isFinal, onClick }) {
     if (decidedOnPen && isWinner) {
       return (
         <div className="flex items-center gap-1 shrink-0">
-          <span className="text-xs font-bold tabular-nums text-orange-300">{score ?? "—"}</span>
+          <span className="text-xs font-bold tabular-nums text-orange-300">{score ?? "-"}</span>
           <span className="text-[9px] text-amber-500/80 font-bold">(P)</span>
         </div>
       );
     }
     return (
       <span className={`text-xs font-bold tabular-nums shrink-0 ${isWinner ? "text-orange-300" : "text-slate-600"}`}>
-        {score ?? "—"}
+        {score ?? "-"}
       </span>
     );
   }
@@ -1587,7 +1587,7 @@ function AdminLeagueSection({ tournamentId }: { tournamentId: string }) {
             {/* Data rows */}
             {table.map((row: any, i: number) => {
               const pos  = Number(row.position ?? row.rank ?? i + 1);
-              const name = String(row.displayName ?? row.display_name ?? row.in_game_id ?? row.username ?? "—");
+              const name = String(row.displayName ?? row.display_name ?? row.in_game_id ?? row.username ?? "-");
               const st   = positionStyle(pos);
               const gd   = Number(row.goalDifference ?? row.goal_difference ?? 0);
               return (
@@ -1714,7 +1714,7 @@ function AdminLeagueSection({ tournamentId }: { tournamentId: string }) {
                             <span className={`text-xl font-black tabular-nums w-7 text-center ${p1Win ? "text-white" : "text-slate-400"}`}>
                               {p1Score}
                             </span>
-                            <span className="text-xs text-slate-600 font-bold">—</span>
+                            <span className="text-xs text-slate-600 font-bold">-</span>
                             <span className={`text-xl font-black tabular-nums w-7 text-center ${p2Win ? "text-white" : "text-slate-400"}`}>
                               {p2Score}
                             </span>
@@ -2004,16 +2004,16 @@ const TournamentDetail = () => {
   const prizePool       = Number(prizeStruct?.net_prize_pool ?? tournament.prizePool ?? 0);
   const platformFee     = Number(prizeStruct?.platform_fee_amount ?? 0);
   const fundingType     = String(tournament.funding_type ?? "free");
-  const format          = String(tournament.format ?? "—");
+  const format          = String(tournament.format ?? "-");
   const REGION_LABELS: Record<string, string> = {
     GLOBAL: "Global", GH: "Ghana", NG: "Nigeria", KE: "Kenya", ZA: "South Africa",
     NA: "North America", EU: "Europe", ASIA: "Asia", LATAM: "Latin America",
     OCE: "Oceania", ME: "Middle East",
   };
   const regionRaw       = String(tournament.region ?? "");
-  const region          = REGION_LABELS[regionRaw] ?? (regionRaw || "—");
+  const region          = REGION_LABELS[regionRaw] ?? (regionRaw || "-");
   const visibility      = String(tournament.visibility ?? "public");
-  const tournamentType  = String(tournament.tournament_type ?? "—");
+  const tournamentType  = String(tournament.tournament_type ?? "-");
   const fillPct         = maxParticipants > 0 ? Math.round((currentCount / maxParticipants) * 100) : 0;
   const id              = String(tournament._id ?? tournament.id ?? "");
 
@@ -2096,7 +2096,7 @@ const TournamentDetail = () => {
             </div>
           </div>
 
-          {/* Title block — centered on mobile, left on desktop */}
+          {/* Title block, centered on mobile, left on desktop */}
           <div className="flex flex-col items-center text-center gap-4 sm:flex-row sm:items-center sm:text-left">
             {/* Game icon */}
             <div className="w-14 h-14 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0 overflow-hidden">
@@ -2123,7 +2123,7 @@ const TournamentDetail = () => {
             </div>
           </div>
 
-          {/* Quick stat strip — collapsible on mobile, always visible on desktop */}
+          {/* Quick stat strip, collapsible on mobile, always visible on desktop */}
           <div className="mt-6">
             {/* Mobile toggle */}
             <button
@@ -2168,7 +2168,7 @@ const TournamentDetail = () => {
                 <StatTile icon={Users} label="Registered" value={currentCount}
                   sub={`of ${maxParticipants} slots`} accent="text-emerald-400" />
                 <StatTile icon={CheckCircle2} label="Checked In" value={checkedIn}
-                  sub={currentCount > 0 ? `${Math.round((checkedIn / currentCount) * 100)}% rate` : "—"} accent="text-cyan-400" />
+                  sub={currentCount > 0 ? `${Math.round((checkedIn / currentCount) * 100)}% rate` : "-"} accent="text-cyan-400" />
                 <StatTile icon={Activity} label="Waitlist" value={waitlistCount}
                   accent="text-violet-400" />
                 <StatTile icon={Eye} label="Visibility" value={visibility}
@@ -2345,7 +2345,7 @@ const TournamentDetail = () => {
                     {/* Info rows */}
                     <div className="space-y-1">
                       {country   && <InfoRow label="Country"      value={country} />}
-                      <InfoRow label="Phone" value={phone || "—"} />
+                      <InfoRow label="Phone" value={phone || "-"} />
                       {memberSince && <InfoRow label="Member Since" value={formatShortDate(memberSince)} />}
                       {lastLogin && <InfoRow label="Last Login"   value={formatDate(lastLogin)} />}
                       {organizer?._id && (

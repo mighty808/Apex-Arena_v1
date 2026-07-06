@@ -14,7 +14,7 @@ export const touchLastActive = () => {
 /** Returns true if the user has been inactive longer than INACTIVITY_TIMEOUT_MS. */
 export const isSessionInactive = (): boolean => {
   const raw = localStorage.getItem(LAST_ACTIVE_KEY);
-  if (!raw) return false; // no record yet — treat as active (first visit)
+  if (!raw) return false; // no record yet, treat as active (first visit)
   return Date.now() - Number(raw) > INACTIVITY_TIMEOUT_MS;
 };
 
@@ -49,7 +49,7 @@ export const startTokenRefreshTimer = (refreshFn: () => Promise<string | null>) 
         }
       }
     } catch {
-      // Token decode failed — let the next API call handle the 401
+      // Token decode failed, let the next API call handle the 401
     }
   }, 60_000);
 };

@@ -75,7 +75,7 @@ export default function OrganizerTournamentCard({ tournament }: Props) {
         {/* Bottom fade */}
         <div className="absolute inset-0 bg-linear-to-t from-slate-900 via-slate-900/20 to-transparent" />
 
-        {/* Status chip — top right */}
+        {/* Status chip, top right */}
         <div className="absolute top-2.5 right-2.5">
           <span className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full bg-slate-950/80 backdrop-blur-sm border border-white/10 ${meta.text}`}>
             <span className={`w-1.5 h-1.5 rounded-full ${meta.dot} ${tournament.status === "open" || tournament.status === "in_progress" ? "animate-pulse" : ""}`} />
@@ -83,7 +83,7 @@ export default function OrganizerTournamentCard({ tournament }: Props) {
           </span>
         </div>
 
-        {/* Game logo — bottom left */}
+        {/* Game logo, bottom left */}
         {tournament.game?.logoUrl && (
           <div className="absolute bottom-2.5 left-2.5 w-7 h-7 rounded-md overflow-hidden bg-slate-800 border border-white/15 shadow-md">
             <FadeImage
@@ -94,7 +94,7 @@ export default function OrganizerTournamentCard({ tournament }: Props) {
           </div>
         )}
 
-        {/* Prize pool — bottom right */}
+        {/* Prize pool, bottom right */}
         {prizeGhs && (
           <div className="absolute bottom-2.5 right-2.5">
             <span className="text-[11px] font-bold text-amber-300 bg-slate-950/80 backdrop-blur-sm px-2 py-0.5 rounded-full border border-amber-400/20">
@@ -139,7 +139,7 @@ export default function OrganizerTournamentCard({ tournament }: Props) {
           </div>
         </div>
 
-        {/* Prize pool — full width */}
+        {/* Prize pool, full width */}
         {prizeGhs && (
           <div className="flex items-center gap-1.5 pt-1 border-t border-slate-800">
             <Trophy className="w-3 h-3 text-amber-400 shrink-0" />

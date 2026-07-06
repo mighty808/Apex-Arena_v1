@@ -51,7 +51,7 @@ import OrganizerFinancePage from "./pages/auth/organizer/OrganizerFinancePage";
 
 // Admin
 
-/** Public layout — Navbar + Footer */
+/** Public layout, Navbar + Footer */
 const PublicLayout = () => {
   const location = useLocation();
 

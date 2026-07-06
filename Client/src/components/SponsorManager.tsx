@@ -74,7 +74,7 @@ export default function SponsorManager({
             type="url"
             value={sponsor.websiteUrl}
             onChange={(e) => update(i, { websiteUrl: e.target.value })}
-            placeholder="Website (optional) — https://…"
+            placeholder="Website (optional), https://…"
             className="w-full bg-slate-800/60 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-orange-500/70"
           />
 
@@ -98,7 +98,7 @@ export default function SponsorManager({
       )}
       <p className="text-[11px] text-slate-600">
         Sponsor logos appear on the tournament page, the bracket, and on all shareable
-        cards (summary + player journey cards) — up to {MAX_SPONSORS} sponsors.
+        cards (summary + player journey cards), up to {MAX_SPONSORS} sponsors.
       </p>
     </div>
   );

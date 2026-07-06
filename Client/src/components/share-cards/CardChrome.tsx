@@ -37,7 +37,7 @@ export function ApexBranding() {
   );
 }
 
-// Sponsor logos on shareable cards (spec §5.2) — organizer-set size controls
+// Sponsor logos on shareable cards (spec §5.2), organizer-set size controls
 // prominence within the fixed layout. Renders nothing when no sponsors.
 export function CardSponsorRow({
   sponsors,

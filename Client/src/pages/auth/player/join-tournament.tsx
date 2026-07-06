@@ -122,7 +122,7 @@ function ActiveTournamentCard({
 
         <div className="absolute inset-0 bg-linear-to-t from-slate-900 via-slate-900/40 to-transparent" />
 
-        {/* Status chip — top right */}
+        {/* Status chip, top right */}
         <div className="absolute top-2.5 right-2.5">
           <span className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full bg-slate-950/80 backdrop-blur-sm border border-white/10 ${meta.text}`}>
             <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${meta.dot}`} />
@@ -130,7 +130,7 @@ function ActiveTournamentCard({
           </span>
         </div>
 
-        {/* Game logo — bottom left */}
+        {/* Game logo, bottom left */}
         {registration.tournamentGameLogoUrl && (
           <div className="absolute bottom-2.5 left-2.5">
             <img
@@ -141,7 +141,7 @@ function ActiveTournamentCard({
           </div>
         )}
 
-        {/* Registration status — bottom left, offset when game logo present */}
+        {/* Registration status, bottom left, offset when game logo present */}
         <div className={`absolute bottom-2.5 ${registration.tournamentGameLogoUrl ? "left-11" : "left-3"}`}>
           <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold border backdrop-blur-sm bg-slate-800/80 text-slate-300 border-slate-600/40 capitalize">
             {registration.status.replace(/_/g, " ")}
@@ -396,12 +396,12 @@ const JoinTournament = () => {
             <p className="text-base text-slate-400 mt-3">Browse open tournaments, track your registrations, and compete.</p>
           </div>
 
-          {/* Stats strip — dropdown on mobile, grid on sm+ */}
+          {/* Stats strip, dropdown on mobile, grid on sm+ */}
           {(() => {
             const statItems = [
-              { icon: Trophy,       iconColor: "text-orange-400",  bg: "from-orange-500/15 to-amber-500/15",  label: "Available",        value: isLoading ? "—" : String(tournaments.length) },
-              { icon: Swords,       iconColor: "text-cyan-400",    bg: "from-cyan-500/15 to-indigo-500/15",   label: "My Registrations", value: isLoadingRegistrations ? "—" : String(upcomingRegistrations.length) },
-              { icon: CheckCircle2, iconColor: "text-emerald-400", bg: "from-emerald-500/15 to-teal-500/15",  label: "Active",           value: isLoadingRegistrations ? "—" : String(activeTournaments.length) },
+              { icon: Trophy,       iconColor: "text-orange-400",  bg: "from-orange-500/15 to-amber-500/15",  label: "Available",        value: isLoading ? "-" : String(tournaments.length) },
+              { icon: Swords,       iconColor: "text-cyan-400",    bg: "from-cyan-500/15 to-indigo-500/15",   label: "My Registrations", value: isLoadingRegistrations ? "-" : String(upcomingRegistrations.length) },
+              { icon: CheckCircle2, iconColor: "text-emerald-400", bg: "from-emerald-500/15 to-teal-500/15",  label: "Active",           value: isLoadingRegistrations ? "-" : String(activeTournaments.length) },
             ];
             return (
               <>
@@ -555,7 +555,7 @@ const JoinTournament = () => {
                 </div>
               )}
 
-              {/* Status pills — scrollable center */}
+              {/* Status pills, scrollable center */}
               <div className="flex items-center gap-1.5 overflow-x-auto flex-1 no-scrollbar">
                 {STATUS_PILLS.map((pill) => (
                   <button
@@ -572,7 +572,7 @@ const JoinTournament = () => {
                 ))}
               </div>
 
-              {/* Free/Paid toggle — segmented control */}
+              {/* Free/Paid toggle, segmented control */}
               <div className="flex items-center gap-1 bg-slate-800/60 border border-slate-700 rounded-full p-0.5 shrink-0">
                 {(["", "free", "paid"] as const).map((val) => (
                   <button

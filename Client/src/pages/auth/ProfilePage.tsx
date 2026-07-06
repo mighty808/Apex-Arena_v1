@@ -614,7 +614,7 @@ const ProfilePage = () => {
             </div>
           </div>
 
-          {/* Quick stats strip — dropdown on mobile, grid on sm+ */}
+          {/* Quick stats strip, dropdown on mobile, grid on sm+ */}
           {(() => {
             const statItems = [
               { label: "Joined",     value: statJoined,    color: "text-cyan-300"    },
@@ -689,12 +689,12 @@ const ProfilePage = () => {
         {/* ── Overview tab ── */}
         {tab === "overview" && (
           <div className="space-y-6">
-            {/* Earned badge strip — spec §2.2 (hidden until first badge) */}
+            {/* Earned badge strip, spec §2.2 (hidden until first badge) */}
             {user?.username && (
               <BadgeWall username={user.username} variant="strip" />
             )}
 
-            {/* Game tags — spec §1.2 */}
+            {/* Game tags, spec §1.2 */}
             <SectionCard icon={Gamepad2} title="Game Tags">
               {savedGameProfiles.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
@@ -710,12 +710,12 @@ const ProfilePage = () => {
                 </div>
               ) : (
                 <p className="text-sm text-slate-500">
-                  No games added yet — add your games in the Edit Profile tab.
+                  No games added yet, add your games in the Edit Profile tab.
                 </p>
               )}
             </SectionCard>
 
-            {/* Career stats — spec §1.3, live from the stats engine */}
+            {/* Career stats, spec §1.3, live from the stats engine */}
             <SectionCard icon={Trophy} title="Career Stats">
               {user?.username ? (
                 <CareerStatsGrid username={user.username} />
@@ -726,7 +726,7 @@ const ProfilePage = () => {
           </div>
         )}
 
-        {/* ── Badges tab — spec §2, live from the badge engine ── */}
+        {/* ── Badges tab, spec §2, live from the badge engine ── */}
         {tab === "badges" && (
           <SectionCard icon={Award} title="Badges & Achievements">
             {user?.username ? (
@@ -737,7 +737,7 @@ const ProfilePage = () => {
           </SectionCard>
         )}
 
-        {/* ── History tab — spec §1.1 ── */}
+        {/* ── History tab, spec §1.1 ── */}
         {tab === "history" && (
           <SectionCard icon={History} title="Tournament History">
             {registrations.length === 0 ? (
@@ -773,12 +773,12 @@ const ProfilePage = () => {
               </div>
             )}
             <p className="text-xs text-slate-500 mt-4 text-center">
-              Match outcomes and your Run-to-the-Final journey cards will appear here — coming soon.
+              Match outcomes and your Run-to-the-Final journey cards will appear here, coming soon.
             </p>
           </SectionCard>
         )}
 
-        {/* ── Head-to-Head tab — spec §1.1 ── */}
+        {/* ── Head-to-Head tab, spec §1.1 ── */}
         {tab === "h2h" && (
           <SectionCard icon={Swords} title="Head-to-Head">
             <div className="text-center py-10">

@@ -114,7 +114,7 @@ export function TournamentCard({
         {/* Bottom fade */}
         <div className="absolute inset-0 bg-linear-to-t from-slate-900 via-slate-900/40 to-transparent" />
 
-        {/* Tournament status chip — top right */}
+        {/* Tournament status chip, top right */}
         <div className="absolute top-2.5 right-2.5">
           <span className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full bg-slate-950/80 backdrop-blur-sm border border-white/10 ${meta.text}`}>
             <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${meta.dot}`} />
@@ -122,7 +122,7 @@ export function TournamentCard({
           </span>
         </div>
 
-        {/* Registration status chip — bottom left (only when registered) */}
+        {/* Registration status chip, bottom left (only when registered) */}
         {isAlreadyRegistered && regMeta && (
           <div className="absolute bottom-2.5 left-3">
             <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-semibold border backdrop-blur-sm ${regMeta.cls}`}>
@@ -131,7 +131,7 @@ export function TournamentCard({
           </div>
         )}
 
-        {/* Prize pool — bottom right */}
+        {/* Prize pool, bottom right */}
         {prizeGhs && (
           <div className={`absolute bottom-2.5 right-2.5`}>
             <span className="text-[11px] font-bold text-amber-300 bg-slate-950/80 backdrop-blur-sm px-2 py-0.5 rounded-full border border-amber-400/20">
@@ -185,7 +185,7 @@ export function TournamentCard({
           </div>
         )}
 
-        {/* Action — always pinned to bottom */}
+        {/* Action, always pinned to bottom */}
         <div className="mt-auto">
           {isLoadingRegistrations ? (
             <button disabled className="w-full py-2.5 rounded-xl text-sm font-bold bg-slate-800/60 text-slate-500 border border-slate-700 opacity-50 flex items-center justify-center">

@@ -35,7 +35,7 @@ const STATUS_META: Record<string, { label: string; dot: string; badge: string }>
 const LIVE_STATUSES = new Set(["open", "started", "ongoing", "in_progress"]);
 
 function formatDate(iso?: string) {
-  if (!iso) return "—";
+  if (!iso) return "-";
   return new Date(iso).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
@@ -144,7 +144,7 @@ function TournamentRow({
 
       {/* Format / Region */}
       <td className="px-4 py-4">
-        <p className="text-sm text-slate-200">{format || "—"}</p>
+        <p className="text-sm text-slate-200">{format || "-"}</p>
         {region && <p className="text-xs text-slate-500">{region}</p>}
       </td>
 
@@ -367,7 +367,7 @@ const TournamentManagement = () => {
         <div className="px-6 sm:px-8 pb-8 flex items-center justify-between">
           <p className="text-sm text-slate-400">
             {total > limit
-              ? `Showing ${start}–${end} of ${total}`
+              ? `Showing ${start}, ${end} of ${total}`
               : `${total} tournament${total !== 1 ? "s" : ""}`}
           </p>
           {totalPages > 1 && (

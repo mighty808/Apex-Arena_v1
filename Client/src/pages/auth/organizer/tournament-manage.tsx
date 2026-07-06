@@ -479,7 +479,7 @@ function RegistrantRow({
         <p className="text-xs text-slate-300">
           {registrant.registeredAt
             ? new Date(registrant.registeredAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-            : "—"}
+            : "-"}
         </p>
         <p className="text-[10px] text-slate-600 mt-0.5">
           {registrant.registeredAt
@@ -1115,7 +1115,7 @@ const TournamentManage = () => {
     setIsAllocatingWinnings(true);
     try {
       await apiPost(`${FINANCE_ENDPOINTS.ESCROW_ALLOCATE_WINNINGS}/${tournamentId}/allocate-winnings`, {});
-      showToast("success", "Winnings allocated — players can now see and claim their prizes.");
+      showToast("success", "Winnings allocated, players can now see and claim their prizes.");
     } catch (err) {
       showToast("error", err instanceof Error ? err.message : "Failed to allocate winnings.");
     } finally {
@@ -1128,7 +1128,7 @@ const TournamentManage = () => {
     setIsAllocatingEarnings(true);
     try {
       await apiPost(`${FINANCE_ENDPOINTS.ESCROW_ALLOCATE_EARNINGS}/${tournamentId}/allocate-earnings`, {});
-      showToast("success", "Earnings sent to Finance page — you can now claim them.");
+      showToast("success", "Earnings sent to Finance page, you can now claim them.");
     } catch (err) {
       showToast("error", err instanceof Error ? err.message : "Failed to send earnings.");
     } finally {
@@ -1182,7 +1182,7 @@ const TournamentManage = () => {
       if (s1 === s2) return;
       finalScore1 = s1;
       finalScore2 = s2;
-      reason = [setScoreInput.reason || `Penalty shootout: ${s1}–${s2}`].filter(Boolean).join(" · ");
+      reason = [setScoreInput.reason || `Penalty shootout: ${s1}, ${s2}`].filter(Boolean).join(" · ");
     } else {
       const isDraw = s1 === s2;
       const p1 = parseInt(setScoreInput.penalty1, 10);
@@ -1190,7 +1190,7 @@ const TournamentManage = () => {
       if (isDraw && (isNaN(p1) || isNaN(p2) || p1 < 0 || p2 < 0 || p1 === p2)) return;
       finalScore1 = isDraw ? p1 : s1;
       finalScore2 = isDraw ? p2 : s2;
-      const penaltyNote = isDraw ? `Regular time: ${s1}–${s2} · Penalties: ${p1}–${p2}` : "";
+      const penaltyNote = isDraw ? `Regular time: ${s1}, ${s2} · Penalties: ${p1}, ${p2}` : "";
       reason = [penaltyNote, setScoreInput.reason].filter(Boolean).join(" · ") || undefined;
     }
 
@@ -1373,7 +1373,7 @@ const TournamentManage = () => {
       );
       setEmptyWinnerIndices(missing);
       const missingPositions = [...missing].map(i => `#${winnerRows[i].position}`).join(", ");
-      showToast("error", `Position${missing.size > 1 ? "s" : ""} ${missingPositions} — select a player.`);
+      showToast("error", `Position${missing.size > 1 ? "s" : ""} ${missingPositions}, select a player.`);
       return;
     }
 
@@ -1632,7 +1632,7 @@ const TournamentManage = () => {
                   className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-500 text-slate-950 text-xs font-bold hover:bg-cyan-400 disabled:opacity-60 transition-colors">
                   {isAdvancingMatchweek ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
                   {isAdvancingMatchweek ? "…" : leagueSettings?.legs === 2
-                    ? `Wk ${(leagueSettings?.currentMatchweek ?? 0) + 1}–${(leagueSettings?.currentMatchweek ?? 0) + 2}`
+                    ? `Wk ${(leagueSettings?.currentMatchweek ?? 0) + 1}, ${(leagueSettings?.currentMatchweek ?? 0) + 2}`
                     : `Wk ${(leagueSettings?.currentMatchweek ?? 0) + 1}`}
                 </button>
               )}
@@ -1701,7 +1701,7 @@ const TournamentManage = () => {
                 <Trophy className="w-5 h-5 text-cyan-400" />
               </div>
               <div className="flex-1 min-w-0">
-                {/* Title + badge — same line, spread apart */}
+                {/* Title + badge, same line, spread apart */}
                 <div className="flex items-start justify-between gap-2">
                   <h1 className="font-display text-xl md:text-2xl font-bold text-white leading-tight break-words min-w-0">
                     {tournament.title}
@@ -1734,7 +1734,7 @@ const TournamentManage = () => {
                     {tournament.isFree ? "Free" : `GHS ${(tournament.entryFee / 100).toFixed(2)}`}
                   </span>
                   <span className="shrink-0 px-2.5 py-1 rounded-lg bg-slate-800/60 border border-slate-700/50 text-[11px] text-slate-400 capitalize">
-                    {(tournament.tournamentType ?? "—").replace(/_/g, " ")}
+                    {(tournament.tournamentType ?? "-").replace(/_/g, " ")}
                   </span>
                   {leagueSettings?.fixturesGenerated && !canGenerateLeagueFixtures && (
                     <span className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-[11px] font-semibold">
@@ -1745,7 +1745,7 @@ const TournamentManage = () => {
                       )}
                     </span>
                   )}
-                  {/* Stats toggle — sits at end of chips row on mobile */}
+                  {/* Stats toggle, sits at end of chips row on mobile */}
                   <button
                     onClick={() => setStatsOpen(v => !v)}
                     className="md:hidden shrink-0 ml-auto flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-slate-700 text-xs text-slate-300 hover:text-white hover:border-slate-600 transition-colors"
@@ -1757,7 +1757,7 @@ const TournamentManage = () => {
               </div>
             </div>
 
-            {/* Stats — mobile dropdown */}
+            {/* Stats, mobile dropdown */}
             {statsOpen && (
               <div className="md:hidden grid grid-cols-2 gap-2">
                 {[
@@ -1780,7 +1780,7 @@ const TournamentManage = () => {
               </div>
             )}
 
-            {/* Stats — desktop always visible */}
+            {/* Stats, desktop always visible */}
             <div className="hidden md:grid grid-cols-4 gap-3">
               {[
                 { icon: Users,       label: "Registrants", value: String(activeRegistrants.length), sub: `of ${tournament.maxParticipants} max`,        accent: "text-white",       iconColor: "text-slate-400",   iconBg: "bg-slate-800 border-slate-700/50"        },
@@ -1909,7 +1909,7 @@ const TournamentManage = () => {
                     {[
                       {
                         label: "Current Week",
-                        value: leagueSettings.currentMatchweek > 0 ? String(leagueSettings.currentMatchweek) : "—",
+                        value: leagueSettings.currentMatchweek > 0 ? String(leagueSettings.currentMatchweek) : "-",
                         accent: "text-cyan-400",
                       },
                       {
@@ -2097,7 +2097,7 @@ const TournamentManage = () => {
                   Completed
                 </span>
               </div>
-              {/* Action buttons — own row */}
+              {/* Action buttons, own row */}
               {tournament.entryFee > 0 && (
                 <div className="flex items-center gap-2">
                   {escrowSummary?.processingSchedule?.prizesDistributed && (
@@ -2140,7 +2140,7 @@ const TournamentManage = () => {
                     return { position: w.position, inGameId: w.inGameId, displayName: reg?.displayName ?? w.inGameId, prize: w.prizeAmountLabel ?? null };
                   });
               } else {
-                // Priority 2: bracket match outcomes — same source as the Results sidebar
+                // Priority 2: bracket match outcomes, same source as the Results sidebar
                 const gfRound = bracketRounds.find(r => r.bracket === "grand_final") ?? bracketRounds[bracketRounds.length - 1];
                 const gfMatch = gfRound?.matches?.find(m => m.status === "completed");
                 const bracketChampion = gfMatch?.participants?.find(p => p.result === "win");
@@ -2165,7 +2165,7 @@ const TournamentManage = () => {
                   effectiveStandings = (tournamentResults ?? []).map((e, idx) => ({
                     position: Number(e.position ?? e.final_placement ?? idx + 1),
                     inGameId: String(e.in_game_id ?? e.inGameId ?? ""),
-                    displayName: String(e.username ?? e.in_game_id ?? e.inGameId ?? "—"),
+                    displayName: String(e.username ?? e.in_game_id ?? e.inGameId ?? "-"),
                     prize: e.prize_amount_ghs ? `GHS ${String(e.prize_amount_ghs)}` : e.prize_percentage ? `${String(e.prize_percentage)}%` : null,
                   }));
                 }
@@ -2193,7 +2193,7 @@ const TournamentManage = () => {
 
               return (
                 <div className="p-4 sm:p-5 space-y-3 sm:space-y-4">
-                  {/* Podium — top 3 */}
+                  {/* Podium, top 3 */}
                   <div className="grid grid-cols-3 gap-1.5 sm:gap-3">
                     {[
                       { pos: 1, color: "from-amber-500/20 to-amber-500/5", border: "border-amber-500/30", badge: "text-amber-300 bg-amber-500/15 border-amber-500/30", medal: "🥇" },
@@ -2210,7 +2210,7 @@ const TournamentManage = () => {
                             <p className="text-[9px] text-slate-500 truncate mt-0.5">{entry.inGameId}</p>
                           )}
                           <p className={`text-[10px] font-semibold mt-1.5 px-1.5 py-0.5 rounded-full border inline-block ${badge}`}>
-                            {entry.prize ?? "—"}
+                            {entry.prize ?? "-"}
                           </p>
                         </div>
                       );
@@ -2237,7 +2237,7 @@ const TournamentManage = () => {
                                   <p className="text-xs text-slate-500">{entry.inGameId}</p>
                                 )}
                               </td>
-                              <td className="px-4 py-2.5 text-sm text-slate-400">{entry.prize ?? "—"}</td>
+                              <td className="px-4 py-2.5 text-sm text-slate-400">{entry.prize ?? "-"}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -2250,7 +2250,7 @@ const TournamentManage = () => {
           </div>
         )}
 
-          {/* Run-to-Final overview (spec §4.3) — organizer recap of every player's journey */}
+          {/* Run-to-Final overview (spec §4.3), organizer recap of every player's journey */}
           {tournament.status === "completed" && (
             <div className="rounded-2xl border border-slate-800 bg-slate-900 overflow-hidden">
               <div className="flex items-center gap-2.5 px-4 py-3 md:px-5 md:py-4 border-b border-slate-800/60 bg-slate-950/20">
@@ -2258,7 +2258,7 @@ const TournamentManage = () => {
                   <Share2 className="w-4 h-4 text-orange-400" />
                 </div>
                 <div>
-                  <h2 className="font-display text-sm font-bold text-white leading-tight">Run to the Final — All Players</h2>
+                  <h2 className="font-display text-sm font-bold text-white leading-tight">Run to the Final, All Players</h2>
                   <p className="text-[11px] text-slate-500 mt-0.5">Export journey cards for your recap content</p>
                 </div>
               </div>
@@ -2318,7 +2318,7 @@ const TournamentManage = () => {
               </div>
             ) : (
               <>
-                {/* Mobile card list — visible below md */}
+                {/* Mobile card list, visible below md */}
                 <div className="md:hidden p-3 space-y-2">
                   {pagedRegistrants.map(r => (
                     <div key={r.registrationId} className="bg-slate-800/30 border border-slate-700/50 rounded-xl p-3.5 flex items-start gap-3">
@@ -2383,7 +2383,7 @@ const TournamentManage = () => {
                     </div>
                   ))}
                 </div>
-                {/* Desktop table — visible from md up */}
+                {/* Desktop table, visible from md up */}
                 <div className="hidden md:block overflow-x-auto">
                   <table className="w-full min-w-160">
                     <thead>
@@ -2413,7 +2413,7 @@ const TournamentManage = () => {
                 {registrantsTotalPages > 1 && (
                   <div className="flex items-center justify-between gap-3 px-5 py-3 border-t border-slate-800/60 bg-slate-950/10">
                     <p className="text-[11px] text-slate-500">
-                      {(registrantsPage - 1) * REGISTRANTS_PAGE_SIZE + 1}–{Math.min(registrantsPage * REGISTRANTS_PAGE_SIZE, filteredRegistrants.length)} of {filteredRegistrants.length}
+                      {(registrantsPage - 1) * REGISTRANTS_PAGE_SIZE + 1}-{Math.min(registrantsPage * REGISTRANTS_PAGE_SIZE, filteredRegistrants.length)} of {filteredRegistrants.length}
                     </p>
                     <div className="flex items-center gap-1">
                       <button
@@ -2480,11 +2480,11 @@ const TournamentManage = () => {
             </button>
             <div className={`p-4 space-y-2.5 ${tournamentInfoOpen ? "block" : "hidden"} lg:block`}>
               {[
-                { label: "Game", value: tournament.game?.name ?? "—" },
-                { label: "Type", value: (tournament.tournamentType ?? "—").replace(/_/g, " ") },
-                { label: "Format", value: tournament.format ?? "—" },
+                { label: "Game", value: tournament.game?.name ?? "-" },
+                { label: "Type", value: (tournament.tournamentType ?? "-").replace(/_/g, " ") },
+                { label: "Format", value: tournament.format ?? "-" },
                 { label: "Entry", value: tournament.isFree ? "Free" : `GHS ${(tournament.entryFee / 100).toFixed(2)}` },
-                { label: "Prize Pool", value: tournament.prizePool ? `GHS ${(tournament.prizePool / 100).toFixed(2)}` : "—" },
+                { label: "Prize Pool", value: tournament.prizePool ? `GHS ${(tournament.prizePool / 100).toFixed(2)}` : "-" },
                 { label: "Reg. Closes", value: formatDate(tournament.schedule.registrationEnd) },
                 { label: "Starts", value: formatDate(tournament.schedule.tournamentStart) },
               ].map(({ label, value }) => (
@@ -2696,7 +2696,7 @@ const TournamentManage = () => {
                         {icon} {label}
                       </span>
                       <span className={`text-sm truncate text-right ${nameClass}`}>
-                        {player ? getParticipantLabel(player) : "—"}
+                        {player ? getParticipantLabel(player) : "-"}
                       </span>
                     </div>
                   ))}
@@ -2919,7 +2919,7 @@ const TournamentManage = () => {
                         <p className="text-xs text-red-300">
                           <span className="font-semibold">Needs attention · </span>
                           {disputedWinners.length > 0
-                            ? "Submitted winner IDs could not be matched to registered players. The escrow is locked — contact support with the correct IDs shown below."
+                            ? "Submitted winner IDs could not be matched to registered players. The escrow is locked, contact support with the correct IDs shown below."
                             : `Status: ${normalizeEscrowStatusLabel(escrowSummary.status)}. Check payment flow.`}
                         </p>
                       </div>
@@ -2969,7 +2969,7 @@ const TournamentManage = () => {
                                       )}
                                     </td>
                                     <td className="px-3 py-2 text-slate-400">
-                                      {winner.prizeAmountLabel ?? "—"}
+                                      {winner.prizeAmountLabel ?? "-"}
                                     </td>
                                   </tr>
                                 );
@@ -3092,7 +3092,7 @@ const TournamentManage = () => {
                 <div className="rounded-xl border border-amber-500/25 bg-amber-500/8 px-3 py-2.5 flex gap-2.5">
                   <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                   <p className="text-xs text-amber-300">
-                    Escrow is <span className="font-semibold">disputed</span> — previous winner IDs could not be matched. Select the correct players below and re-submit to resolve.
+                    Escrow is <span className="font-semibold">disputed</span>, previous winner IDs could not be matched. Select the correct players below and re-submit to resolve.
                   </p>
                 </div>
               )}
@@ -3568,7 +3568,7 @@ const TournamentManage = () => {
                 <div>
                   <h3 className="font-display text-sm font-bold text-white">{isPenaltySubmission ? "Penalty Shootout" : "Set Match Score"}</h3>
                   <p className="text-[11px] text-slate-500 mt-0.5">
-                    R{setScoreTarget.round} · M{setScoreTarget.matchNumber} · {isPenaltySubmission ? "Aggregate level — enter penalty scores" : "Manual override"}
+                    R{setScoreTarget.round} · M{setScoreTarget.matchNumber} · {isPenaltySubmission ? "Aggregate level, enter penalty scores" : "Manual override"}
                   </p>
                 </div>
               </div>
@@ -3580,7 +3580,7 @@ const TournamentManage = () => {
               </button>
             </div>
             <div className="px-5 py-4 space-y-3">
-              {/* Quick outcome shortcuts — hidden when submitting penalties */}
+              {/* Quick outcome shortcuts, hidden when submitting penalties */}
               {!isPenaltySubmission && <div>
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Quick Set</p>
                 <div className="grid grid-cols-3 gap-1.5">
@@ -3620,7 +3620,7 @@ const TournamentManage = () => {
                 </div>
               </div>}
 
-              {/* Manual score inputs — hidden when submitting penalties */}
+              {/* Manual score inputs, hidden when submitting penalties */}
               {!isPenaltySubmission && <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest truncate">
@@ -3653,7 +3653,7 @@ const TournamentManage = () => {
               {/* Penalty-only mode: aggregate level after two legs */}
               {isPenaltySubmission && (
                 <div className="rounded-xl border border-amber-500/25 bg-amber-500/5 p-3 space-y-2.5">
-                  <p className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">Penalty Shootout — Required</p>
+                  <p className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">Penalty Shootout, Required</p>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
                       <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest truncate">
@@ -3686,7 +3686,7 @@ const TournamentManage = () => {
                     const p1 = parseInt(setScoreInput.score1, 10);
                     const p2 = parseInt(setScoreInput.score2, 10);
                     if (!isNaN(p1) && !isNaN(p2) && setScoreInput.score1 !== "" && setScoreInput.score2 !== "") {
-                      if (p1 === p2) return <p className="text-[11px] text-rose-400">Penalty scores must not be equal — a winner is required.</p>;
+                      if (p1 === p2) return <p className="text-[11px] text-rose-400">Penalty scores must not be equal, a winner is required.</p>;
                       const winner = p1 > p2 ? setScoreTarget.participants[0]?.inGameId || "Player 1" : setScoreTarget.participants[1]?.inGameId || "Player 2";
                       return <p className="text-[11px] text-cyan-300 font-semibold">{winner} wins on penalties</p>;
                     }
@@ -3709,7 +3709,7 @@ const TournamentManage = () => {
                     : setScoreTarget.participants[1]?.inGameId || "Player 2")
                   : null;
                 const resultText = isDraw
-                  ? penaltyWinner ? `${penaltyWinner} wins (on penalties)` : "Draw — enter penalties below"
+                  ? penaltyWinner ? `${penaltyWinner} wins (on penalties)` : "Draw, enter penalties below"
                   : s1 > s2
                     ? `${setScoreTarget.participants[0]?.inGameId || "Player 1"} wins`
                     : `${setScoreTarget.participants[1]?.inGameId || "Player 2"} wins`;
@@ -3729,7 +3729,7 @@ const TournamentManage = () => {
                     {isDraw && (
                       <div className="rounded-xl border border-amber-500/25 bg-amber-500/5 p-3 space-y-2.5">
                         <p className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">
-                          Penalty Shootout{(setScoreTarget.format?.best_of ?? 1) === 1 ? " — Required" : ""}
+                          Penalty Shootout{(setScoreTarget.format?.best_of ?? 1) === 1 ? ", Required" : ""}
                         </p>
                         <div className="grid grid-cols-2 gap-3">
                           <div className="space-y-1.5">
@@ -3760,7 +3760,7 @@ const TournamentManage = () => {
                           </div>
                         </div>
                         {penaltiesEntered && p1 === p2 && (
-                          <p className="text-[11px] text-rose-400">Penalty scores must not be equal — a winner is required.</p>
+                          <p className="text-[11px] text-rose-400">Penalty scores must not be equal, a winner is required.</p>
                         )}
                       </div>
                     )}

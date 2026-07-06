@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { BarChart3, Loader2, Shield, ShieldCheck, Swords, Target } from "lucide-react";
 import { statsService, type TournamentStats, type TournamentStatRow } from "../../services/stats.service";
 
-// Per-tournament stats panel (spec §3.1) — visible to participants and
+// Per-tournament stats panel (spec §3.1), visible to participants and
 // spectators, during and after the tournament. Aggregated server-side from
 // the tournament's completed matches.
 

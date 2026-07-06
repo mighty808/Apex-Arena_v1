@@ -48,7 +48,7 @@ interface Dispute {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function timeAgo(iso?: string) {
-  if (!iso) return "—";
+  if (!iso) return "-";
   const diff = Date.now() - new Date(iso).getTime();
   const m = Math.floor(diff / 60000);
   if (m < 1) return "just now";
@@ -232,7 +232,7 @@ function ResolveModal({ dispute, onClose, onResolved }: { dispute: Dispute; onCl
               onChange={(e) => setResolution(e.target.value)}
               rows={3}
               maxLength={500}
-              placeholder="Explain your decision — players will be notified (min 10 characters)…"
+              placeholder="Explain your decision, players will be notified (min 10 characters)…"
               className="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-orange-500/60 transition-colors resize-none"
             />
             <div className="flex items-center justify-between">
@@ -436,14 +436,14 @@ export default function OrganizerDisputesPage() {
           </div>
           <p className="text-sm text-slate-500 -mt-2">Review and resolve disputed matches across your tournaments.</p>
 
-          {/* Stats — mobile dropdown */}
+          {/* Stats, mobile dropdown */}
           {statsOpen && (
             <div className="sm:hidden grid grid-cols-2 gap-2">
               {[
                 { icon: ShieldAlert,   label: "Total",           value: String(disputes.length),  accent: "text-white",       iconColor: "text-slate-400",   iconBg: "bg-slate-800 border-slate-700/50"        },
                 { icon: AlertTriangle, label: "Pending",         value: String(pending.length),   accent: "text-amber-400",   iconColor: "text-amber-400",   iconBg: "bg-amber-500/10 border-amber-500/20"     },
                 { icon: CheckCircle2,  label: "Resolved",        value: String(resolved.length),  accent: "text-emerald-400", iconColor: "text-emerald-400", iconBg: "bg-emerald-500/10 border-emerald-500/20" },
-                { icon: Gavel,         label: "Rate",            value: disputes.length > 0 ? `${Math.round((resolved.length / disputes.length) * 100)}%` : "—", accent: "text-cyan-400", iconColor: "text-cyan-400", iconBg: "bg-cyan-500/10 border-cyan-500/20" },
+                { icon: Gavel,         label: "Rate",            value: disputes.length > 0 ? `${Math.round((resolved.length / disputes.length) * 100)}%` : "-", accent: "text-cyan-400", iconColor: "text-cyan-400", iconBg: "bg-cyan-500/10 border-cyan-500/20" },
               ].map(({ icon: Icon, label, value, accent, iconColor, iconBg }) => (
                 <div key={label} className="flex items-center gap-2.5 bg-slate-800/40 border border-slate-700/40 rounded-xl px-3 py-3">
                   <div className={`w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 ${iconBg}`}>
@@ -458,13 +458,13 @@ export default function OrganizerDisputesPage() {
             </div>
           )}
 
-          {/* Stats — desktop always visible */}
+          {/* Stats, desktop always visible */}
           <div className="hidden sm:grid grid-cols-4 gap-3">
             {[
               { icon: ShieldAlert,   label: "Total",           value: String(disputes.length),  accent: "text-white",       iconColor: "text-slate-400",   iconBg: "bg-slate-800 border-slate-700/50"        },
               { icon: AlertTriangle, label: "Pending",         value: String(pending.length),   accent: "text-amber-400",   iconColor: "text-amber-400",   iconBg: "bg-amber-500/10 border-amber-500/20"     },
               { icon: CheckCircle2,  label: "Resolved",        value: String(resolved.length),  accent: "text-emerald-400", iconColor: "text-emerald-400", iconBg: "bg-emerald-500/10 border-emerald-500/20" },
-              { icon: Gavel,         label: "Resolution Rate", value: disputes.length > 0 ? `${Math.round((resolved.length / disputes.length) * 100)}%` : "—", accent: "text-cyan-400", iconColor: "text-cyan-400", iconBg: "bg-cyan-500/10 border-cyan-500/20" },
+              { icon: Gavel,         label: "Resolution Rate", value: disputes.length > 0 ? `${Math.round((resolved.length / disputes.length) * 100)}%` : "-", accent: "text-cyan-400", iconColor: "text-cyan-400", iconBg: "bg-cyan-500/10 border-cyan-500/20" },
             ].map(({ icon: Icon, label, value, accent, iconColor, iconBg }) => (
               <div key={label} className="flex items-center gap-3 bg-slate-800/40 border border-slate-700/40 rounded-2xl px-4 py-3.5 hover:border-slate-600/60 transition-colors">
                 <div className={`w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 ${iconBg}`}>

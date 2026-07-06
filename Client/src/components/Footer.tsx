@@ -27,7 +27,7 @@ const Footer = () => {
           </Link>
           <p className="text-sm text-slate-400 leading-relaxed max-w-xs">
             Ghana's escrow-backed esports tournament platform. Compete with
-            confidence — every time.
+            confidence, every time.
           </p>
           <div className="flex items-center gap-3 mt-5">
             {[

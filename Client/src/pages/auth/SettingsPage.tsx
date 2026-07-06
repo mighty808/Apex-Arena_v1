@@ -28,13 +28,13 @@ interface Session {
 }
 
 function fmtDate(iso?: string) {
-  if (!iso) return "—";
+  if (!iso) return "-";
   return new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
 // ─── Device name parsing ──────────────────────────────────────────────────────
 // The API returns device_info as an object { user_agent, ip_address,
-// device_type?, device_name? } — stringifying it shows "[object Object]".
+// device_type?, device_name? }, stringifying it shows "[object Object]".
 // Derive a human name from the UA when no explicit device_name is set.
 
 function browserFromUA(ua: string): string {
@@ -267,7 +267,7 @@ export default function SettingsPage() {
           <Settings className="w-6 h-6 text-cyan-400" /> Settings
         </h1>
         <p className="text-sm text-slate-400 mt-1">
-          Private account controls. Your public identity — photo, bio, games, stats — lives on your Profile.
+          Private account controls. Your public identity, photo, bio, games, stats, lives on your Profile.
         </p>
       </div>
 
@@ -464,7 +464,7 @@ export default function SettingsPage() {
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-white font-medium">Tournament alerts</p>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Get notified when a tournament opens for a game you play — even when
+                  Get notified when a tournament opens for a game you play, even when
                   Apex Arenas is closed. Applies to this browser/device only.
                 </p>
               </div>

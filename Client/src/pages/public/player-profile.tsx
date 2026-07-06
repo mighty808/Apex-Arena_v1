@@ -6,10 +6,10 @@ import { AUTH_ENDPOINTS } from "../../config/api.config";
 import CareerStatsGrid from "../../components/CareerStatsGrid";
 import BadgeWall from "../../components/BadgeWall";
 
-// Public player profile — spec §1: "public-facing profile page that serves as
+// Public player profile, spec §1: "public-facing profile page that serves as
 // their identity on the platform". Read-only twin of the auth Profile page.
 // Career stats/badges render as placeholders until the stats engine lands
-// (new_build.md Phase 1–2).
+// (new_build.md Phase 1-2).
 
 interface PublicProfile {
   username: string;
@@ -176,7 +176,7 @@ export default function PublicPlayerProfile() {
           )}
         </div>
 
-        {/* Career stats — live from the stats engine */}
+        {/* Career stats, live from the stats engine */}
         <div className="rounded-2xl border border-slate-800/60 bg-slate-900/60 p-6">
           <div className="flex items-center gap-3 mb-5">
             <div className="w-8 h-8 rounded-full bg-orange-500/15 border border-orange-500/30 flex items-center justify-center shrink-0">
@@ -187,7 +187,7 @@ export default function PublicPlayerProfile() {
           <CareerStatsGrid username={profile.username} />
         </div>
 
-        {/* Badges — spec §2 */}
+        {/* Badges, spec §2 */}
         <div className="rounded-2xl border border-slate-800/60 bg-slate-900/60 p-6">
           <div className="flex items-center gap-3 mb-5">
             <div className="w-8 h-8 rounded-full bg-orange-500/15 border border-orange-500/30 flex items-center justify-center shrink-0">

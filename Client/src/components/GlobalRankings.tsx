@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Crown, Loader2, ShieldCheck, Target, Medal } from "lucide-react";
 import { statsService, type LeaderboardEntry, type LeaderboardMetric } from "../services/stats.service";
 
-// Platform-wide leaderboards (spec §6.4) — all-time top scorers, most
+// Platform-wide leaderboards (spec §6.4), all-time top scorers, most
 // tournament wins, longest clean-sheet streak, most podium finishes.
 // Backed by the Phase 1 stats engine; usernames link to public profiles.
 
@@ -63,7 +63,7 @@ export default function GlobalRankings({ gameId }: { gameId?: string }) {
           </div>
         ) : entries.length === 0 ? (
           <p className="text-sm text-slate-500 text-center py-8">
-            No records yet — rankings build up as matches are completed.
+            No records yet, rankings build up as matches are completed.
           </p>
         ) : (
           <div className="divide-y divide-slate-800/60">

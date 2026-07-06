@@ -22,7 +22,7 @@ const JOBS: { id: SchedulerJob; label: string; description: string }[] = [
 ];
 
 function formatDate(iso?: string) {
-  if (!iso) return '—';
+  if (!iso) return '-';
   return new Date(iso).toLocaleString();
 }
 

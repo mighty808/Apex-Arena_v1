@@ -181,14 +181,14 @@ export default function AnalyticsPage() {
           </div>
           <p className="text-sm text-slate-500 -mt-2">Performance overview across all your tournaments.</p>
 
-          {/* Stats — mobile dropdown */}
+          {/* Stats, mobile dropdown */}
           {statsOpen && (
             <div className="sm:hidden grid grid-cols-2 gap-2">
               {[
-                { icon: BarChart2,    iconColor: "text-orange-400",  bg: "from-orange-500/15 to-amber-500/15",  label: "Tournaments",     value: loading ? "—" : String(total) },
-                { icon: Users,        iconColor: "text-cyan-400",    bg: "from-cyan-500/15 to-indigo-500/15",   label: "Total Players",   value: loading ? "—" : String(totalPlayers) },
-                { icon: CheckCircle2, iconColor: "text-emerald-400", bg: "from-emerald-500/15 to-teal-500/15", label: "Completion Rate", value: loading ? "—" : `${completionRate}%` },
-                { icon: Trophy,       iconColor: "text-amber-400",   bg: "from-amber-500/15 to-orange-500/15", label: "Prize Pool",      value: loading ? "—" : (totalPrize > 0 ? fmtGhs(totalPrize) : "—") },
+                { icon: BarChart2,    iconColor: "text-orange-400",  bg: "from-orange-500/15 to-amber-500/15",  label: "Tournaments",     value: loading ? "-" : String(total) },
+                { icon: Users,        iconColor: "text-cyan-400",    bg: "from-cyan-500/15 to-indigo-500/15",   label: "Total Players",   value: loading ? "-" : String(totalPlayers) },
+                { icon: CheckCircle2, iconColor: "text-emerald-400", bg: "from-emerald-500/15 to-teal-500/15", label: "Completion Rate", value: loading ? "-" : `${completionRate}%` },
+                { icon: Trophy,       iconColor: "text-amber-400",   bg: "from-amber-500/15 to-orange-500/15", label: "Prize Pool",      value: loading ? "-" : (totalPrize > 0 ? fmtGhs(totalPrize) : "-") },
               ].map((s) => (
                 <div key={s.label} className="flex items-center gap-2.5 bg-slate-800/50 border border-slate-700/60 rounded-xl px-3 py-3">
                   <div className={`w-7 h-7 rounded-lg bg-linear-to-br ${s.bg} flex items-center justify-center shrink-0`}>
@@ -203,13 +203,13 @@ export default function AnalyticsPage() {
             </div>
           )}
 
-          {/* Stats — desktop always visible */}
+          {/* Stats, desktop always visible */}
           <div className="hidden sm:grid grid-cols-4 gap-3">
             {[
-              { icon: BarChart2,    iconColor: "text-orange-400",  bg: "from-orange-500/15 to-amber-500/15",  label: "Tournaments",     value: loading ? "—" : String(total) },
-              { icon: Users,        iconColor: "text-cyan-400",    bg: "from-cyan-500/15 to-indigo-500/15",   label: "Total Players",   value: loading ? "—" : String(totalPlayers) },
-              { icon: CheckCircle2, iconColor: "text-emerald-400", bg: "from-emerald-500/15 to-teal-500/15", label: "Completion Rate", value: loading ? "—" : `${completionRate}%` },
-              { icon: Trophy,       iconColor: "text-amber-400",   bg: "from-amber-500/15 to-orange-500/15", label: "Prize Pool",      value: loading ? "—" : (totalPrize > 0 ? fmtGhs(totalPrize) : "—") },
+              { icon: BarChart2,    iconColor: "text-orange-400",  bg: "from-orange-500/15 to-amber-500/15",  label: "Tournaments",     value: loading ? "-" : String(total) },
+              { icon: Users,        iconColor: "text-cyan-400",    bg: "from-cyan-500/15 to-indigo-500/15",   label: "Total Players",   value: loading ? "-" : String(totalPlayers) },
+              { icon: CheckCircle2, iconColor: "text-emerald-400", bg: "from-emerald-500/15 to-teal-500/15", label: "Completion Rate", value: loading ? "-" : `${completionRate}%` },
+              { icon: Trophy,       iconColor: "text-amber-400",   bg: "from-amber-500/15 to-orange-500/15", label: "Prize Pool",      value: loading ? "-" : (totalPrize > 0 ? fmtGhs(totalPrize) : "-") },
             ].map((s) => (
               <div key={s.label} className="flex items-center gap-3 bg-slate-800/50 border border-slate-700/60 rounded-xl px-4 py-3">
                 <div className={`w-8 h-8 rounded-lg bg-linear-to-br ${s.bg} flex items-center justify-center shrink-0`}>
@@ -346,8 +346,8 @@ export default function AnalyticsPage() {
                 {[
                   { label: "Avg. fill rate",      value: `${avgFillRate}%`,                             accent: "text-cyan-400" },
                   { label: "Live right now",       value: String(live),                                  accent: live > 0 ? "text-orange-400" : "text-slate-400" },
-                  { label: "Revenue estimate",     value: revenueEstimate > 0 ? fmtGhs(revenueEstimate) : "—", accent: "text-emerald-400" },
-                  { label: "Most popular game",    value: topGame?.[0] ?? "—",                           accent: "text-white" },
+                  { label: "Revenue estimate",     value: revenueEstimate > 0 ? fmtGhs(revenueEstimate) : "-", accent: "text-emerald-400" },
+                  { label: "Most popular game",    value: topGame?.[0] ?? "-",                           accent: "text-white" },
                   { label: "Cancelled",            value: `${cancelled} tournament${cancelled !== 1 ? "s" : ""}`, accent: cancelled > 0 ? "text-red-400" : "text-slate-400" },
                 ].map(row => (
                   <div key={row.label} className="flex items-center justify-between px-5 py-3">

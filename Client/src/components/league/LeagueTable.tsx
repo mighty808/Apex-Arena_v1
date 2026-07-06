@@ -207,7 +207,7 @@ export function LeagueTable({ table, highlightUserId }: LeagueTableProps) {
                       <div className="flex items-center gap-0.5 justify-center">
                         {row.form.length > 0
                           ? row.form.slice(-5).map((r, i) => <FormBadge key={i} result={r} />)
-                          : <span className="text-[10px] text-slate-600">—</span>}
+                          : <span className="text-[10px] text-slate-600">-</span>}
                       </div>
                     </td>
                   </tr>

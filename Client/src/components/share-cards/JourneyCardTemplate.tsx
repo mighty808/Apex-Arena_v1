@@ -3,7 +3,7 @@ import { Loader2 } from "lucide-react";
 import { statsService, type PlayerJourney } from "../../services/stats.service";
 import { ApexBranding, CardBackground, CardAvatar, CardSponsorRow } from "./CardChrome";
 
-// Run to the Final journey card (spec §4) — every participant gets one.
+// Run to the Final journey card (spec §4), every participant gets one.
 // 9:16 design size 360×640 → 1080×1920 export (Instagram Stories).
 
 export default function JourneyCardTemplate({
@@ -108,7 +108,7 @@ export default function JourneyCardTemplate({
                     <span className={`font-display text-sm font-bold shrink-0 ${
                       step.outcome === "win" ? "text-emerald-300" : step.outcome === "draw" ? "text-amber-300" : "text-red-300"
                     }`}>
-                      {step.my_score}–{step.opponent_score}
+                      {step.my_score}-{step.opponent_score}
                     </span>
                   </div>
                 </div>

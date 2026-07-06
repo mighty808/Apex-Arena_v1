@@ -54,7 +54,7 @@ export function useTournamentChat(tournamentId: string): UseTournamentChatResult
     }
   }, []);
 
-  // Initial history + roster load, and mark-as-read — once per tournament
+  // Initial history + roster load, and mark-as-read, once per tournament
   useEffect(() => {
     if (!tournamentId || bootedRef.current === tournamentId) return;
     bootedRef.current = tournamentId;

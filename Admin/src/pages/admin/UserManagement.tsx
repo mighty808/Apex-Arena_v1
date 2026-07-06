@@ -649,7 +649,7 @@ export default function UserManagement() {
                                   year: "numeric",
                                 },
                               )
-                            : "—"}
+                            : "-"}
                         </td>
                         {/* Actions */}
                         <td className="px-5 py-3.5 text-right">
@@ -710,7 +710,7 @@ export default function UserManagement() {
               <p className="text-xs text-slate-500">
                 Showing{" "}
                 <span className="text-slate-300 font-semibold">
-                  {(pagination.page - 1) * pagination.limit + 1}–
+                  {(pagination.page - 1) * pagination.limit + 1}
                   {Math.min(
                     pagination.page * pagination.limit,
                     pagination.total,

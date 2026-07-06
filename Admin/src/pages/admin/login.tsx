@@ -147,7 +147,7 @@ const AdminLogin = () => {
 
     try {
       if (step === "2fa-setup") {
-        // Setup verification — returns backup codes, no tokens
+        // Setup verification, returns backup codes, no tokens
         const result = await adminAuthService.verify2FASetup({
           userId: pendingUserId,
           code: twoFACode,
@@ -158,7 +158,7 @@ const AdminLogin = () => {
           setStep("2fa-backup");
         }
       } else {
-        // Login verification — returns tokens
+        // Login verification, returns tokens
         const result = await adminAuthService.verify2FA({
           userId: pendingUserId,
           code: twoFACode,
@@ -388,7 +388,7 @@ const AdminLogin = () => {
                   ) : (
                     <div className="w-52 h-52 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center mx-auto">
                       <p className="text-xs text-slate-500 text-center px-4">
-                        QR code unavailable — use the manual key below
+                        QR code unavailable, use the manual key below
                       </p>
                     </div>
                   )}
@@ -501,7 +501,7 @@ const AdminLogin = () => {
                 whileHover={reduceMotion ? undefined : { y: -1 }}
                 whileTap={reduceMotion ? undefined : { scale: 0.98 }}
               >
-                I've saved my codes — Continue to Login
+                I've saved my codes, Continue to Login
               </motion.button>
             </div>
           )}

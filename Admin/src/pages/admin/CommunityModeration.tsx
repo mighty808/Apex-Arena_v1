@@ -9,7 +9,7 @@ import { API_BASE_URLS } from '../../config/api.config';
 import { toast } from 'react-toastify';
 
 // Community moderation (new_build.md Phase 5B): admins keep full authority
-// over the social feed — review flagged posts, override-remove any abusive
+// over the social feed, review flagged posts, override-remove any abusive
 // post (owner-delete stays with the author in the Client app), pin
 // announcements, and manage the keyword filter that scrubs every post.
 
@@ -34,7 +34,8 @@ interface ModPost {
   status: string;
   isPinned: boolean;
   isFlagged: boolean;
-  score: number;
+  upvotes: number;
+  downvotes: number;
   commentCount: number;
   createdAt?: string;
 }
@@ -49,7 +50,8 @@ function mapPost(raw: Record<string, unknown>): ModPost {
     status: String(raw.status ?? 'active'),
     isPinned: Boolean(raw.is_pinned ?? false),
     isFlagged: Boolean(raw.is_flagged ?? false),
-    score: Number(raw.score ?? 0),
+    upvotes: Number(raw.upvotes ?? 0),
+    downvotes: Number(raw.downvotes ?? 0),
     commentCount: Number(raw.comment_count ?? 0),
     createdAt: raw.created_at ? String(raw.created_at) : undefined,
   };
@@ -128,7 +130,7 @@ function PostRow({ post, onChanged }: { post: ModPost; onChanged: () => void }) 
           </div>
           <p className="text-sm font-semibold text-white mt-1.5 break-words">{post.title}</p>
           <p className="text-sm text-slate-400 mt-0.5 line-clamp-3 break-words">{post.content}</p>
-          <p className="text-[11px] text-slate-600 mt-1.5">score {post.score} · {post.commentCount} comments</p>
+          <p className="text-[11px] text-slate-600 mt-1.5">▲ {post.upvotes} · ▼ {post.downvotes} · {post.commentCount} comments</p>
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
@@ -167,7 +169,7 @@ function PostRow({ post, onChanged }: { post: ModPost; onChanged: () => void }) 
           <input
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder="Reason for removal (min 5 characters) — shown in the audit log"
+            placeholder="Reason for removal (min 5 characters), shown in the audit log"
             className={inputCls}
           />
           <div className="flex gap-2">
@@ -324,7 +326,7 @@ export default function CommunityModeration() {
           <div className="text-center py-16 rounded-xl border border-slate-800 bg-slate-900/40">
             <CheckCircle2 className="w-8 h-8 text-slate-600 mx-auto" />
             <p className="text-sm text-slate-400 mt-3">
-              {tab === 'flagged' ? 'No flagged posts — all clear.' : 'No posts yet.'}
+              {tab === 'flagged' ? 'No flagged posts, all clear.' : 'No posts yet.'}
             </p>
           </div>
         ) : (

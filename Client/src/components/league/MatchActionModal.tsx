@@ -61,7 +61,7 @@ function ProofGallery({ shots }: { shots: { label: string; url: string }[] }) {
         <span className="ml-auto text-[10px] text-slate-600">submitted by players</span>
       </div>
 
-      {/* Switch buttons — one per screenshot */}
+      {/* Switch buttons, one per screenshot */}
       {multi && (
         <div className="flex items-center gap-1.5 px-3 pt-3 flex-wrap">
           {shots.map((s, i) => (
@@ -213,7 +213,7 @@ function ScoreDisplay({ s1, s2, n1, n2, p1Won, p2Won, reason }: {
   // For penalty matches show regular time scores; otherwise show stored scores as-is
   const rt1 = penalty ? penalty.rt1 : s1;
   const rt2 = penalty ? penalty.rt2 : s2;
-  // Highlight the higher-scoring side — winner badge on PlayerCard already conveys who won.
+  // Highlight the higher-scoring side, winner badge on PlayerCard already conveys who won.
   // When scores are equal the winner (decided on penalties) gets the highlight instead.
   const h1 = rt1 !== rt2 ? rt1 > rt2 : (p1Won ?? false);
   const h2 = rt1 !== rt2 ? rt2 > rt1 : (p2Won ?? false);
@@ -227,7 +227,7 @@ function ScoreDisplay({ s1, s2, n1, n2, p1Won, p2Won, reason }: {
           <span className={`font-display text-5xl font-bold tabular-nums leading-none ${h1 ? 'text-amber-300' : 'text-slate-500'}`}>{rt1}</span>
         </div>
         <div className="flex flex-col items-center justify-center px-3 border-x border-slate-700/60">
-          <span className="text-slate-600 font-bold text-sm">—</span>
+          <span className="text-slate-600 font-bold text-sm">-</span>
         </div>
         <div className={`flex flex-col items-center py-4 px-3 gap-1 ${h2 ? 'bg-amber-500/6' : ''}`}>
           <p className="text-[10px] text-slate-500 uppercase tracking-widest truncate w-full text-center">{n2}</p>
@@ -235,7 +235,7 @@ function ScoreDisplay({ s1, s2, n1, n2, p1Won, p2Won, reason }: {
         </div>
       </div>
 
-      {/* Penalty scores — full breakdown when data exists */}
+      {/* Penalty scores, full breakdown when data exists */}
       {penalty ? (
         <div className="grid grid-cols-[1fr_auto_1fr] border-t border-amber-500/20 bg-amber-500/5">
           <div className="flex flex-col items-center py-2.5 px-3 gap-0.5">
@@ -243,7 +243,7 @@ function ScoreDisplay({ s1, s2, n1, n2, p1Won, p2Won, reason }: {
             <span className={`font-display text-2xl font-bold tabular-nums ${penalty.pen1 > penalty.pen2 ? 'text-amber-300' : 'text-slate-500'}`}>{penalty.pen1}</span>
           </div>
           <div className="flex items-center justify-center px-3 border-x border-amber-500/20">
-            <span className="text-amber-700 font-bold text-xs">—</span>
+            <span className="text-amber-700 font-bold text-xs">-</span>
           </div>
           <div className="flex flex-col items-center py-2.5 px-3 gap-0.5">
             <p className="text-[9px] text-amber-500/70 uppercase tracking-widest">Penalties</p>
@@ -251,7 +251,7 @@ function ScoreDisplay({ s1, s2, n1, n2, p1Won, p2Won, reason }: {
           </div>
         </div>
       ) : rt1 === rt2 && (p1Won || p2Won) ? (
-        /* Equal scores but a winner exists — decided on penalties, exact scores not recorded */
+        /* Equal scores but a winner exists, decided on penalties, exact scores not recorded */
         <div className="flex items-center justify-center gap-2 border-t border-amber-500/20 bg-amber-500/5 py-2">
           <span className="text-[10px] text-amber-400 font-bold uppercase tracking-widest">
             {p1Won ? n1 : n2} won on penalties
@@ -300,7 +300,7 @@ export function MatchActionModal({ matchId, currentUserId, currentMatchweek, isO
       if (isNaN(p1) || isNaN(p2) || p1 < 0 || p2 < 0 || p1 === p2) return;
       finalS1 = p1 > p2 ? 1 : 0;
       finalS2 = p2 > p1 ? 1 : 0;
-      const penaltyNote = `Regular time: ${s1}–${s2} · Penalties: ${p1}–${p2}`;
+      const penaltyNote = `Regular time: ${s1}, ${s2} · Penalties: ${p1}, ${p2}`;
       reason = [penaltyNote, overrideReason].filter(Boolean).join(' · ') || undefined;
     }
     setOverriding(true);
@@ -330,7 +330,7 @@ export function MatchActionModal({ matchId, currentUserId, currentMatchweek, isO
     if (isNaN(s1) || isNaN(s2) || s1 < 0 || s2 < 0) return;
     const isPen = match.status === 'awaiting_penalties';
     if (isPen && s1 === s2) return;
-    // leg is always 1 or 2 — the server determines penalty handling from match.status
+    // leg is always 1 or 2, the server determines penalty handling from match.status
     const leg: 1 | 2 = match.status === 'pending' ? 1 : 2;
     setOrgSubmitting(true);
     setOrgError(null);
@@ -470,7 +470,7 @@ export function MatchActionModal({ matchId, currentUserId, currentMatchweek, isO
               <input type="number" min="0" value={score1} onChange={e => setScore1(e.target.value)} placeholder="0"
                 className={`w-full text-center bg-slate-800/60 border border-slate-700 rounded-xl px-2 py-2.5 text-sm text-white focus:outline-none focus:border-${accentColor}-500/70 transition-colors`} />
             </div>
-            <span className="text-slate-600 font-bold text-sm shrink-0 mt-5">—</span>
+            <span className="text-slate-600 font-bold text-sm shrink-0 mt-5">-</span>
             <div className="flex-1 space-y-1">
               <p className="text-[10px] text-slate-500 text-center truncate">{match!.player2Name}</p>
               <input type="number" min="0" value={score2} onChange={e => setScore2(e.target.value)} placeholder="0"
@@ -495,7 +495,7 @@ export function MatchActionModal({ matchId, currentUserId, currentMatchweek, isO
           </button>
         )}
 
-        {/* Penalty shootout — single-leg non-league only; two-leg draws advance to leg 3 server-side */}
+        {/* Penalty shootout, single-leg non-league only; two-leg draws advance to leg 3 server-side */}
         {scoresEqual && !isTwoLeg && !isLeague && (() => {
           const p1 = parseInt(penaltyScore1, 10);
           const p2 = parseInt(penaltyScore2, 10);
@@ -516,7 +516,7 @@ export function MatchActionModal({ matchId, currentUserId, currentMatchweek, isO
                     className="w-full text-center bg-slate-800/60 border border-amber-500/30 rounded-xl px-2 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400/60 transition-colors"
                   />
                 </div>
-                <span className="text-slate-600 font-bold text-sm shrink-0 mt-5">—</span>
+                <span className="text-slate-600 font-bold text-sm shrink-0 mt-5">-</span>
                 <div className="flex-1 space-y-1">
                   <p className="text-[10px] text-slate-500 text-center truncate">{match!.player2Name}</p>
                   <input
@@ -531,7 +531,7 @@ export function MatchActionModal({ matchId, currentUserId, currentMatchweek, isO
                 </div>
               </div>
               {penaltiesEntered && p1 === p2 && (
-                <p className="text-[11px] text-rose-400">Penalty scores must not be equal — a winner is required.</p>
+                <p className="text-[11px] text-rose-400">Penalty scores must not be equal, a winner is required.</p>
               )}
               {penaltiesEntered && p1 !== p2 && (
                 <p className="text-[11px] text-amber-300 font-semibold">
@@ -544,7 +544,7 @@ export function MatchActionModal({ matchId, currentUserId, currentMatchweek, isO
         {/* Two-leg draw hint */}
         {scoresEqual && isTwoLeg && currentLeg !== 3 && (
           <p className="text-[11px] text-slate-500 text-center">
-            Equal scores — select "It was a Draw" to record this leg as a draw.
+            Equal scores, select "It was a Draw" to record this leg as a draw.
           </p>
         )}
 
@@ -673,7 +673,7 @@ export function MatchActionModal({ matchId, currentUserId, currentMatchweek, isO
                 className={`w-full bg-slate-900/80 border rounded-xl px-3 py-3 text-2xl font-bold text-white text-center focus:outline-none transition-colors placeholder:text-slate-700 ${isPenalties ? 'border-amber-500/30 focus:border-amber-400' : 'border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20'}`}
               />
             </div>
-            <div className="pb-3 text-slate-600 font-bold text-xl select-none">–</div>
+            <div className="pb-3 text-slate-600 font-bold text-xl select-none">-</div>
             <div className="flex-1 space-y-1.5">
               <p className="text-[11px] font-semibold text-slate-400 text-center truncate">{match.player2Name}</p>
               <input
@@ -685,7 +685,7 @@ export function MatchActionModal({ matchId, currentUserId, currentMatchweek, isO
             </div>
           </div>
           {isPenalties && penaltiesEqual && (
-            <p className="text-[11px] text-rose-400">Penalty scores must not be equal — a winner is required.</p>
+            <p className="text-[11px] text-rose-400">Penalty scores must not be equal, a winner is required.</p>
           )}
           {orgError && (
             <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{orgError}</p>
@@ -732,7 +732,7 @@ export function MatchActionModal({ matchId, currentUserId, currentMatchweek, isO
                   className="w-full bg-slate-900/80 border border-slate-700 rounded-xl px-3 py-3 text-2xl font-bold text-white text-center focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-colors placeholder:text-slate-700"
                 />
               </div>
-              <div className="pb-3 text-slate-600 font-bold text-xl select-none">–</div>
+              <div className="pb-3 text-slate-600 font-bold text-xl select-none">-</div>
               <div className="flex-1 space-y-1.5">
                 <p className="text-[11px] font-semibold text-slate-400 text-center truncate">{match.player2Name}</p>
                 <input
@@ -762,7 +762,7 @@ export function MatchActionModal({ matchId, currentUserId, currentMatchweek, isO
                         className="w-full bg-slate-900/80 border border-amber-500/30 rounded-xl px-3 py-3 text-2xl font-bold text-white text-center focus:outline-none focus:border-amber-400 transition-colors placeholder:text-slate-700"
                       />
                     </div>
-                    <div className="pb-3 text-slate-600 font-bold text-xl select-none">–</div>
+                    <div className="pb-3 text-slate-600 font-bold text-xl select-none">-</div>
                     <div className="flex-1 space-y-1.5">
                       <p className="text-[11px] font-semibold text-slate-400 text-center truncate">{match.player2Name}</p>
                       <input type="number" min={0} value={overridePenalty2}
@@ -772,7 +772,7 @@ export function MatchActionModal({ matchId, currentUserId, currentMatchweek, isO
                     </div>
                   </div>
                   {penaltiesEntered && p1 === p2 && (
-                    <p className="text-[11px] text-rose-400">Penalty scores must not be equal — a winner is required.</p>
+                    <p className="text-[11px] text-rose-400">Penalty scores must not be equal, a winner is required.</p>
                   )}
                 </div>
               );
@@ -865,7 +865,7 @@ export function MatchActionModal({ matchId, currentUserId, currentMatchweek, isO
             <PlayerCard name={match.player2Name} isWinner={p2Won} isLoser={p1Won} highlight={isP2} />
           </div>
 
-          {/* Score display — only show for non-two-leg (two-leg breakdown is in the persistent panel) */}
+          {/* Score display, only show for non-two-leg (two-leg breakdown is in the persistent panel) */}
           {!isTwoLeg && (
             <ScoreDisplay s1={match.player1Score} s2={match.player2Score} n1={match.player1Name} n2={match.player2Name} p1Won={p1Won} p2Won={p2Won} reason={match.reason} />
           )}
@@ -874,7 +874,7 @@ export function MatchActionModal({ matchId, currentUserId, currentMatchweek, isO
             {p1Won ? `${match.player1Name} advances` : p2Won ? `${match.player2Name} advances` : 'Match finalised'}
           </p>
 
-          {/* Organizer score override — rendered by the outer modal body for all statuses */}
+          {/* Organizer score override, rendered by the outer modal body for all statuses */}
         </div>
       );
     }
@@ -1060,7 +1060,7 @@ export function MatchActionModal({ matchId, currentUserId, currentMatchweek, isO
                 <div className="flex items-center gap-1.5 font-bold tabular-nums">
                   <span className={leg1P1 > (leg1P2 ?? 0) ? 'text-amber-300' : 'text-slate-400'}>{match.player1Name}</span>
                   <span className={`px-2 py-0.5 rounded-md text-sm font-black ${leg1P1 > (leg1P2 ?? 0) ? 'bg-amber-500/15 text-amber-300' : 'bg-slate-800 text-slate-300'}`}>{leg1P1}</span>
-                  <span className="text-slate-700">–</span>
+                  <span className="text-slate-700">-</span>
                   <span className={`px-2 py-0.5 rounded-md text-sm font-black ${(leg1P2 ?? 0) > leg1P1 ? 'bg-amber-500/15 text-amber-300' : 'bg-slate-800 text-slate-300'}`}>{leg1P2 ?? 0}</span>
                   <span className={(leg1P2 ?? 0) > leg1P1 ? 'text-amber-300' : 'text-slate-400'}>{match.player2Name}</span>
                 </div>
@@ -1072,7 +1072,7 @@ export function MatchActionModal({ matchId, currentUserId, currentMatchweek, isO
                 <div className="flex items-center gap-1.5 font-bold tabular-nums">
                   <span className={leg2P1 > (leg2P2 ?? 0) ? 'text-amber-300' : 'text-slate-400'}>{match.player1Name}</span>
                   <span className={`px-2 py-0.5 rounded-md text-sm font-black ${leg2P1 > (leg2P2 ?? 0) ? 'bg-amber-500/15 text-amber-300' : 'bg-slate-800 text-slate-300'}`}>{leg2P1}</span>
-                  <span className="text-slate-700">–</span>
+                  <span className="text-slate-700">-</span>
                   <span className={`px-2 py-0.5 rounded-md text-sm font-black ${(leg2P2 ?? 0) > leg2P1 ? 'bg-amber-500/15 text-amber-300' : 'bg-slate-800 text-slate-300'}`}>{leg2P2 ?? 0}</span>
                   <span className={(leg2P2 ?? 0) > leg2P1 ? 'text-amber-300' : 'text-slate-400'}>{match.player2Name}</span>
                 </div>
@@ -1084,7 +1084,7 @@ export function MatchActionModal({ matchId, currentUserId, currentMatchweek, isO
                 <div className="flex items-center gap-1.5 font-bold tabular-nums">
                   <span className={(aggP1 ?? 0) > (aggP2 ?? 0) ? 'text-white' : (aggP2 ?? 0) > (aggP1 ?? 0) ? 'text-slate-500' : 'text-amber-400'}>{match.player1Name}</span>
                   <span className={`px-2 py-0.5 rounded-md text-sm font-black bg-slate-800 ${(aggP1 ?? 0) === (aggP2 ?? 0) ? 'text-amber-400' : 'text-slate-200'}`}>{aggP1 ?? 0}</span>
-                  <span className="text-slate-700">–</span>
+                  <span className="text-slate-700">-</span>
                   <span className={`px-2 py-0.5 rounded-md text-sm font-black bg-slate-800 ${(aggP1 ?? 0) === (aggP2 ?? 0) ? 'text-amber-400' : 'text-slate-200'}`}>{aggP2 ?? 0}</span>
                   <span className={(aggP2 ?? 0) > (aggP1 ?? 0) ? 'text-white' : (aggP1 ?? 0) > (aggP2 ?? 0) ? 'text-slate-500' : 'text-amber-400'}>{match.player2Name}</span>
                 </div>
@@ -1092,7 +1092,7 @@ export function MatchActionModal({ matchId, currentUserId, currentMatchweek, isO
             )}
             {aggP1 !== null && aggP2 !== null && aggP1 === aggP2 && penP1 === null && (
               <p className="text-[11px] text-amber-400 text-center font-semibold pt-1">
-                Aggregate level — decide by Penalties
+                Aggregate level, decide by Penalties
               </p>
             )}
             {penP1 !== null && (
@@ -1101,7 +1101,7 @@ export function MatchActionModal({ matchId, currentUserId, currentMatchweek, isO
                 <div className="flex items-center gap-1.5 font-bold tabular-nums">
                   <span className={penP1 > (penP2 ?? 0) ? 'text-amber-300' : 'text-slate-400'}>{match.player1Name}</span>
                   <span className={`px-2 py-0.5 rounded-md text-sm font-black ${penP1 > (penP2 ?? 0) ? 'bg-amber-500/20 text-amber-300' : 'bg-slate-800 text-slate-300'}`}>{penP1}</span>
-                  <span className="text-slate-700">–</span>
+                  <span className="text-slate-700">-</span>
                   <span className={`px-2 py-0.5 rounded-md text-sm font-black ${(penP2 ?? 0) > penP1 ? 'bg-amber-500/20 text-amber-300' : 'bg-slate-800 text-slate-300'}`}>{penP2 ?? 0}</span>
                   <span className={(penP2 ?? 0) > penP1 ? 'text-amber-300' : 'text-slate-400'}>{match.player2Name}</span>
                 </div>
@@ -1151,7 +1151,7 @@ export function MatchActionModal({ matchId, currentUserId, currentMatchweek, isO
             </div>
           ) : (
             <div className="space-y-4">
-              {/* Crowd hype (spec §6.3) — anyone viewing the match can back a player */}
+              {/* Crowd hype (spec §6.3), anyone viewing the match can back a player */}
               {match && (match.player1Id || match.player2Id) && (
                 <HypePanel
                   matchId={matchId}

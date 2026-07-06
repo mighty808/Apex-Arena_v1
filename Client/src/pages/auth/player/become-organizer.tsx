@@ -49,7 +49,7 @@ function StatusBanner({ info }: { info: OrganizerVerificationInfo }) {
       iconColor: "text-blue-400",
       title: "Under Review",
       titleColor: "text-blue-200",
-      desc: "Our team is reviewing your verification request. This usually takes 1–3 business days.",
+      desc: "Our team is reviewing your verification request. This usually takes 1-3 business days.",
       descColor: "text-blue-300/70",
     },
     approved: {
@@ -271,11 +271,11 @@ function VerificationForm({ onSubmitted, isResubmission }: {
               <option value="esports_team">Esports Team</option>
             </select>
           </Field>
-          <Field label="Registration Number" hint="Optional — business registration number">
+          <Field label="Registration Number" hint="Optional, business registration number">
             <input type="text" value={form.registrationNumber} onChange={(e) => set("registrationNumber", e.target.value)}
               placeholder="Optional" className={inputCls} />
           </Field>
-          <Field label="Tax ID" hint="Optional — tax identification number">
+          <Field label="Tax ID" hint="Optional, tax identification number">
             <input type="text" value={form.taxId} onChange={(e) => set("taxId", e.target.value)}
               placeholder="Optional" className={inputCls} />
           </Field>
@@ -345,7 +345,7 @@ const PERKS = [
 
 const STEPS = [
   { n: "01", label: "Submit Application",  desc: "Fill in your business details and upload identity documents."        },
-  { n: "02", label: "Admin Review",        desc: "Our team reviews your application within 1–3 business days."        },
+  { n: "02", label: "Admin Review",        desc: "Our team reviews your application within 1-3 business days."        },
   { n: "03", label: "Start Hosting",       desc: "Once approved, create and host tournaments immediately."             },
 ];
 
@@ -423,7 +423,7 @@ const BecomeOrganizer = () => {
             <div>
               <h3 className="font-display text-xl font-bold text-white mb-2">Request Submitted!</h3>
               <p className="text-sm text-emerald-300/80 max-w-sm mx-auto">
-                Your verification request has been received. We'll review it within 1–3 business days and notify you of the outcome.
+                Your verification request has been received. We'll review it within 1-3 business days and notify you of the outcome.
               </p>
             </div>
           </div>

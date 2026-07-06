@@ -4,7 +4,7 @@ import { statsService, type PlayerBadgeItem } from "../services/stats.service";
 
 // Badge display (spec §2.2) shared by the Profile Badges tab, the Overview
 // strip, and the public player page. Earned badges render in colour with
-// counts; unearned ones stay locked/grey. Badges are game-specific — the
+// counts; unearned ones stay locked/grey. Badges are game-specific, the
 // same badge earned in two games shows both game names.
 
 export const BADGE_CATALOGUE = [
@@ -70,7 +70,7 @@ export default function BadgeWall({
     );
   }
 
-  // ── Strip: earned badges only, compact — hidden entirely when none ──
+  // ── Strip: earned badges only, compact, hidden entirely when none ──
   if (variant === "strip") {
     if (earned.size === 0) return null;
     return (
@@ -80,7 +80,7 @@ export default function BadgeWall({
           return (
             <span
               key={b.type}
-              title={`${b.name}${info.games.length ? ` — ${info.games.join(", ")}` : ""}`}
+              title={`${b.name}${info.games.length ? `, ${info.games.join(", ")}` : ""}`}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-sm"
             >
               <span>{b.emoji}</span>
@@ -136,7 +136,7 @@ export default function BadgeWall({
       </div>
       {earned.size === 0 && (
         <p className="text-xs text-slate-500 mt-4 text-center">
-          Badges unlock automatically as you compete — win tournaments, keep clean sheets, and stay consistent.
+          Badges unlock automatically as you compete, win tournaments, keep clean sheets, and stay consistent.
         </p>
       )}
     </div>

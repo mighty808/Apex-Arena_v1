@@ -176,7 +176,7 @@ export const AdminAuthProvider = ({ children }: PropsWithChildren) => {
     };
   }, []);
 
-  // Proactive background token refresh — checks every 60 s, refreshes when
+  // Proactive background token refresh, checks every 60 s, refreshes when
   // the access token has less than 2 minutes remaining.
   useEffect(() => {
     const id = setInterval(async () => {
@@ -200,7 +200,7 @@ export const AdminAuthProvider = ({ children }: PropsWithChildren) => {
           setSession(freshTokens, adminRef.current);
         }
       } catch {
-        // silent — reactive 401 handling in api.utils.ts is the fallback
+        // silent, reactive 401 handling in api.utils.ts is the fallback
       }
     }, 60_000);
 

@@ -1,4 +1,4 @@
-// Sponsor logo strip (spec §5.1) — tournament page, bracket header.
+// Sponsor logo strip (spec §5.1), tournament page, bracket header.
 // `size` set by the organizer controls prominence.
 
 export interface SponsorDisplay {

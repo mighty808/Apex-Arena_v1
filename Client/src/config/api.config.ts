@@ -97,7 +97,7 @@ export const AUTH_ENDPOINTS = {
   // Auth Status
   ME: `${API_BASE_URLS.AUTH}/me`,
 
-  // Public player profile (no auth) — + /:username
+  // Public player profile (no auth), + /:username
   PUBLIC_PROFILE: `${API_BASE_URLS.AUTH}/user/public`,
 } as const;
 
@@ -161,7 +161,7 @@ export const TOURNAMENT_ENDPOINTS = {
   TEAM_MEMBER_REMOVE: `${API_BASE_URLS.TOURNAMENT}/teams`,                // + /:teamId/members/:userId
   TEAM_LEAVE: `${API_BASE_URLS.TOURNAMENT}/teams`,                        // + /:teamId/leave
 
-  // Team Recruitment — mounted at /teams-recruit on the server
+  // Team Recruitment, mounted at /teams-recruit on the server
   RECRUITMENT_POSTS: `${API_BASE_URLS.TOURNAMENT}/teams-recruit`,                     // GET list (?team_id=), POST + /:teamId/recruitment
   RECRUITMENT_POST_DETAIL: `${API_BASE_URLS.TOURNAMENT}/teams-recruit/recruitment`,   // + /:postId (PATCH, DELETE)
   RECRUITMENT_APPLY: `${API_BASE_URLS.TOURNAMENT}/teams-recruit/recruitment`,         // + /:postId/apply
@@ -187,7 +187,7 @@ export const TOURNAMENT_ENDPOINTS = {
   GAME_REQUEST_ADMIN_REVIEW: `${API_BASE_URLS.TOURNAMENT}/game-requests/admin`, // + /:requestId/review
   GAME_REQUEST_ADMIN_MARK_DUPLICATE: `${API_BASE_URLS.TOURNAMENT}/game-requests/admin`, // + /:requestId/mark-duplicate
 
-  // Stats (public — career stats, tournament stats panel, leaderboards)
+  // Stats (public, career stats, tournament stats panel, leaderboards)
   STATS_PLAYER: `${API_BASE_URLS.TOURNAMENT}/stats/players`,          // + /:username
   STATS_TOURNAMENT: `${API_BASE_URLS.TOURNAMENT}/stats/tournaments`,  // + /:tournamentId
   STATS_LEADERBOARD: `${API_BASE_URLS.TOURNAMENT}/stats/leaderboard`, // ?metric=&game_id=&page=&limit=
@@ -236,7 +236,7 @@ export const TOURNAMENT_ENDPOINTS = {
   CO_ORGANIZER_ACCEPT: `${API_BASE_URLS.TOURNAMENT}/co-organizers`,              // POST /:tournamentId/accept
   CO_ORGANIZER_DECLINE: `${API_BASE_URLS.TOURNAMENT}/co-organizers`,             // POST /:tournamentId/decline
   CO_ORGANIZER_REMOVE: `${API_BASE_URLS.TOURNAMENT}/co-organizers`,              // DELETE /:tournamentId/:userId
-  CO_ORGANIZER_MANAGING: `${API_BASE_URLS.TOURNAMENT}/co-organizers/managing`,   // GET — tournaments I'm co-organizing
+  CO_ORGANIZER_MANAGING: `${API_BASE_URLS.TOURNAMENT}/co-organizers/managing`,   // GET, tournaments I'm co-organizing
 } as const;
 
 
@@ -244,8 +244,8 @@ export const FINANCE_ENDPOINTS = {
 
   //  Wallet
   WALLET: `${API_BASE_URLS.FINANCE}/wallet`,                        // GET
-  DEPOSIT: `${API_BASE_URLS.FINANCE}/deposit`,                      // POST (410 Gone — direct-pay era)
-  DEPOSIT_VERIFY: `${API_BASE_URLS.FINANCE}/deposit/verify`,        // GET — TheTeller redirect callback (no JWT)
+  DEPOSIT: `${API_BASE_URLS.FINANCE}/deposit`,                      // POST (410 Gone, direct-pay era)
+  DEPOSIT_VERIFY: `${API_BASE_URLS.FINANCE}/deposit/verify`,        // GET, TheTeller redirect callback (no JWT)
   TRANSACTIONS: `${API_BASE_URLS.FINANCE}/transactions`,            // GET
 
   //  Tournament Payments (Direct-Pay)
@@ -254,25 +254,25 @@ export const FINANCE_ENDPOINTS = {
   TOURNAMENT_PAYMENT_BY_REGISTRATION: `${API_BASE_URLS.FINANCE}/tournament-payment`,         // GET + /:registration_id
 
   //  Escrow (User)
-  ESCROW_INITIATE_DEPOSIT: `${API_BASE_URLS.FINANCE}/escrow/initiate-deposit`, // POST — organizer funds prize pool in a single call
-  ESCROW_DEPOSIT: `${API_BASE_URLS.FINANCE}/escrow/deposit`,        // POST — organizer records prize pool deposit
+  ESCROW_INITIATE_DEPOSIT: `${API_BASE_URLS.FINANCE}/escrow/initiate-deposit`, // POST, organizer funds prize pool in a single call
+  ESCROW_DEPOSIT: `${API_BASE_URLS.FINANCE}/escrow/deposit`,        // POST, organizer records prize pool deposit
   ESCROW_STATUS: `${API_BASE_URLS.FINANCE}/escrow`,                 // + /:tournamentId (GET)
   ESCROW_SUBMIT_WINNERS: `${API_BASE_URLS.FINANCE}/escrow`,         // + /:tournamentId/winners (POST)
   ESCROW_ALLOCATE_WINNINGS: `${API_BASE_URLS.FINANCE}/escrow`,     // + /:tournamentId/allocate-winnings (POST)
   ESCROW_ALLOCATE_EARNINGS: `${API_BASE_URLS.FINANCE}/escrow`,    // + /:tournamentId/allocate-earnings (POST)
 
   // Escrow (Admin)
-  ADMIN_ESCROW_PROCESSOR_RUN: `${API_BASE_URLS.FINANCE}/admin/escrow/processor/run`, // POST — manually trigger escrow processor
+  ADMIN_ESCROW_PROCESSOR_RUN: `${API_BASE_URLS.FINANCE}/admin/escrow/processor/run`, // POST, manually trigger escrow processor
   ADMIN_ESCROW_STATUS: `${API_BASE_URLS.FINANCE}/admin/escrow`,     // + /:tournamentId (GET)
   ADMIN_ESCROW_CANCEL: `${API_BASE_URLS.FINANCE}/admin/escrow`,     // + /:tournamentId/cancel (POST)
 
   //  Payouts (User)
-  PAYOUT_REQUEST: `${API_BASE_URLS.FINANCE}/payouts/request`,       // POST — submit withdrawal request
-  PAYOUT_MY_REQUESTS: `${API_BASE_URLS.FINANCE}/payouts/my-requests`, // GET — own requests
+  PAYOUT_REQUEST: `${API_BASE_URLS.FINANCE}/payouts/request`,       // POST, submit withdrawal request
+  PAYOUT_MY_REQUESTS: `${API_BASE_URLS.FINANCE}/payouts/my-requests`, // GET, own requests
   PAYOUT_DETAIL: `${API_BASE_URLS.FINANCE}/payouts`,                // + /:id (GET, DELETE)
 
   // Payouts (Admin)
-  ADMIN_PAYOUTS_PENDING: `${API_BASE_URLS.FINANCE}/admin/payouts/pending`, // GET — all pending requests
+  ADMIN_PAYOUTS_PENDING: `${API_BASE_URLS.FINANCE}/admin/payouts/pending`, // GET, all pending requests
   ADMIN_PAYOUT_DETAIL: `${API_BASE_URLS.FINANCE}/admin/payouts`,    // + /:id (GET)
   ADMIN_PAYOUT_APPROVE: `${API_BASE_URLS.FINANCE}/admin/payouts`,   // + /:id/approve (PATCH)
   ADMIN_PAYOUT_REJECT: `${API_BASE_URLS.FINANCE}/admin/payouts`,    // + /:id/reject (PATCH)
@@ -284,8 +284,8 @@ export const SUPPORT_ENDPOINTS = {
 } as const;
 
 export const WEBHOOK_ENDPOINTS = {
-  PAYSTACK: `${API_BASE_URLS.WEBHOOKS}/paystack`,                   // POST — called by Paystack gateway
-  FLUTTERWAVE: `${API_BASE_URLS.WEBHOOKS}/flutterwave`,             // POST — called by Flutterwave gateway
+  PAYSTACK: `${API_BASE_URLS.WEBHOOKS}/paystack`,                   // POST, called by Paystack gateway
+  FLUTTERWAVE: `${API_BASE_URLS.WEBHOOKS}/flutterwave`,             // POST, called by Flutterwave gateway
 } as const;
 
 const COMMUNITY_BASE = 'https://api-apexarenas.onrender.com/api/v1/community';

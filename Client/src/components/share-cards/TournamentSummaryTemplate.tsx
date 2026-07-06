@@ -14,7 +14,7 @@ function HighlightLine({ label, highlight }: { label: string; highlight?: MatchH
     <div className="flex items-center justify-between gap-2 rounded-lg border border-slate-800 bg-slate-900/70 px-3 py-2">
       <span className="text-[9px] text-slate-500 uppercase tracking-wider shrink-0">{label}</span>
       <span className="text-[11px] text-white truncate">
-        {a?.username ?? "?"} <span className="font-bold text-orange-300">{a?.score}–{b?.score}</span> {b?.username ?? "?"}
+        {a?.username ?? "?"} <span className="font-bold text-orange-300">{a?.score}-{b?.score}</span> {b?.username ?? "?"}
       </span>
     </div>
   );

@@ -5,7 +5,7 @@ import { showError, showSuccess } from "../../utils/toast.utils";
 
 // Hosts any share-card template: live preview (scaled to fit) + Download /
 // Share actions. The template renders at design size inside `cardRef`;
-// html-to-image exports it at 3× (spec §4.2 — story-ready PNGs).
+// html-to-image exports it at 3× (spec §4.2, story-ready PNGs).
 
 export default function ShareCardModal({
   open,
@@ -46,9 +46,9 @@ export default function ShareCardModal({
     try {
       const shared = await shareCardPng(cardRef.current, filename, shareText, shareUrl);
       if (!shared) {
-        // Desktop browsers mostly can't share files — fall back to download
+        // Desktop browsers mostly can't share files, fall back to download
         await downloadCardPng(cardRef.current, filename);
-        showSuccess("Sharing isn't supported here — card downloaded instead.");
+        showSuccess("Sharing isn't supported here, card downloaded instead.");
       }
     } catch {
       showError("Failed to share the card.");
@@ -87,7 +87,7 @@ export default function ShareCardModal({
           </button>
         </div>
 
-        {/* Card at design size — this exact node gets exported */}
+        {/* Card at design size, this exact node gets exported */}
         <div className="rounded-xl overflow-hidden border border-slate-800 w-fit mx-auto">
           <div ref={cardRef}>{children}</div>
         </div>

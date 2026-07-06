@@ -140,7 +140,7 @@ function mapRecruitmentPost(raw: Record<string, unknown>): RecruitmentPost {
 
 function mapApplication(raw: Record<string, unknown>): RecruitmentApplication {
   // The applications endpoint returns populated user docs directly
-  // ({_id, username, profile}), not wrapper objects — treat the row itself
+  // ({_id, username, profile}), not wrapper objects, treat the row itself
   // as the user when it carries a username.
   const user = (raw.username ? raw : (raw.user_id ?? raw.user ?? {})) as Record<string, unknown>;
   const profile = (user.profile ?? {}) as Record<string, unknown>;
@@ -303,7 +303,7 @@ export const teamService = {
   // ─── Team Recruitment ──────────────────────────────────────────────────────
 
   async getRecruitmentPosts(teamId: string): Promise<RecruitmentPost[]> {
-    // Server has no per-team GET route — the public list endpoint filters by team_id
+    // Server has no per-team GET route, the public list endpoint filters by team_id
     const response = await apiGet(`${TOURNAMENT_ENDPOINTS.RECRUITMENT_POSTS}?team_id=${encodeURIComponent(teamId)}`, { skipCache: true });
     if (!response.success) return [];
     const data = response.data as Record<string, unknown>;

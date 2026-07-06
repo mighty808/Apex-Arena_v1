@@ -246,7 +246,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
     }
   }, [setSession]);
 
-  // Bootstrap: validate stored session on mount — runs exactly once
+  // Bootstrap: validate stored session on mount, runs exactly once
   useEffect(() => {
     let active = true;
 
@@ -298,7 +298,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
           (error.status === 401 || error.status === 403);
 
         if (isAuthError && stored.tokens.refreshToken && !isSessionInactive()) {
-          // Token expired — try refreshing directly (don't go through the
+          // Token expired, try refreshing directly (don't go through the
           // callback so we avoid any state-timing issues during init)
           try {
             const refreshResult = await authService.refreshToken(
@@ -363,7 +363,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
     return () => stopTokenRefreshTimer();
   }, [tokens?.accessToken, refreshAccessToken]);
 
-  // Track user activity — update lastActive on any interaction while logged in
+  // Track user activity, update lastActive on any interaction while logged in
   useEffect(() => {
     if (!tokens?.accessToken) return;
     const events = ['mousedown', 'keydown', 'touchstart', 'scroll'] as const;
