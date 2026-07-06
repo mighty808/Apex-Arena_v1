@@ -16,6 +16,7 @@ import {
   Swords,
   Trophy,
   Share2,
+  UsersRound,
 } from "lucide-react";
 import { useAuth } from "../../lib/auth-context";
 import { authService } from "../../services/auth.service";
@@ -32,6 +33,7 @@ import CareerStatsGrid from "../../components/CareerStatsGrid";
 import BadgeWall from "../../components/BadgeWall";
 import { SOCIAL_PLATFORMS } from "../../utils/social.utils";
 import HeadToHeadPanel from "../../components/HeadToHeadPanel";
+import FollowListsPanel from "../../components/FollowListsPanel";
 import ShareCardModal from "../../components/share-cards/ShareCardModal";
 import PlayerCardTemplate, { publicProfileUrl } from "../../components/share-cards/PlayerCardTemplate";
 
@@ -224,7 +226,7 @@ interface GameOption {
   name: string;
 }
 
-type ProfileTab = "overview" | "badges" | "history" | "h2h" | "edit";
+type ProfileTab = "overview" | "badges" | "history" | "h2h" | "social" | "edit";
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 
@@ -666,6 +668,7 @@ const ProfilePage = () => {
             { id: "badges",   label: "Badges",       icon: Award },
             { id: "history",  label: "History",      icon: History },
             { id: "h2h",      label: "Head-to-Head", icon: Swords },
+            { id: "social",   label: "Followers",    icon: UsersRound },
             { id: "edit",     label: "Edit Profile", icon: Edit3 },
           ] as { id: ProfileTab; label: string; icon: React.ElementType }[]).map(({ id, label, icon: Icon }) => (
             <button
@@ -784,6 +787,17 @@ const ProfilePage = () => {
               <HeadToHeadPanel username={user.username} />
             ) : (
               <p className="text-sm text-slate-500">Head-to-head unavailable.</p>
+            )}
+          </SectionCard>
+        )}
+
+        {/* ── Social tab: followers/following management ── */}
+        {tab === "social" && (
+          <SectionCard icon={UsersRound} title="Followers & Following">
+            {user?.id ? (
+              <FollowListsPanel userId={user.id} />
+            ) : (
+              <p className="text-sm text-slate-500">Unavailable.</p>
             )}
           </SectionCard>
         )}

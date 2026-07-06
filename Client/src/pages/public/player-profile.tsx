@@ -19,6 +19,10 @@ import { SOCIAL_PLATFORMS, socialUrl, socialDisplay, type SocialPlatform } from 
 interface PublicProfile {
   userId: string;
   username: string;
+  isPrivate: boolean;
+  showFollowLists: boolean;
+  followersCount?: number;
+  followingCount?: number;
   role: string;
   firstName: string;
   lastName: string;
@@ -36,6 +40,10 @@ function mapProfile(raw: Record<string, unknown>): PublicProfile {
   return {
     userId: String(raw.user_id ?? ""),
     username: String(raw.username ?? ""),
+    isPrivate: Boolean(raw.is_private ?? false),
+    showFollowLists: raw.show_follow_lists !== false && !raw.is_private,
+    followersCount: typeof raw.followers_count === "number" ? raw.followers_count : undefined,
+    followingCount: typeof raw.following_count === "number" ? raw.following_count : undefined,
     role: String(raw.role ?? "player"),
     firstName: String(profile.first_name ?? ""),
     lastName: String(profile.last_name ?? ""),
@@ -134,6 +142,23 @@ export default function PublicPlayerProfile() {
     );
   }
 
+  // Private players expose only their identity header
+  if (profile.isPrivate) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4">
+        <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-slate-800 bg-slate-900 flex items-center justify-center">
+          {profile.avatarUrl ? (
+            <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <span className="font-display text-2xl font-bold text-white">{profile.username[0]?.toUpperCase()}</span>
+          )}
+        </div>
+        <h1 className="font-display text-xl font-bold text-white mt-4">@{profile.username}</h1>
+        <p className="text-sm text-slate-500 mt-1.5">This profile is private.</p>
+      </div>
+    );
+  }
+
   const displayName = `${profile.firstName} ${profile.lastName}`.trim() || profile.username;
   const initials = (profile.firstName[0] ?? "").toUpperCase() + (profile.lastName[0] ?? "").toUpperCase()
     || profile.username[0]?.toUpperCase() || "?";
@@ -185,6 +210,12 @@ export default function PublicPlayerProfile() {
                   </>
                 )}
               </div>
+              {profile.showFollowLists && profile.followersCount !== undefined && (
+                <div className="flex items-center justify-center sm:justify-start gap-4 mt-1.5 text-sm">
+                  <span className="text-slate-300"><span className="font-bold text-white">{profile.followersCount}</span> followers</span>
+                  <span className="text-slate-300"><span className="font-bold text-white">{profile.followingCount ?? 0}</span> following</span>
+                </div>
+              )}
               {profile.bio && <p className="text-sm text-slate-400 mt-1.5">{profile.bio}</p>}
             </div>
 

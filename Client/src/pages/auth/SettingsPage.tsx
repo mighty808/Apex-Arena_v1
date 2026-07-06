@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  AlertCircle, AlertTriangle, Bell, CheckCircle2, CreditCard, KeyRound,
+  AlertCircle, AlertTriangle, Bell, CheckCircle2, CreditCard, Eye, KeyRound,
   Loader2, LogOut, Monitor, Settings, Smartphone, Tablet, UserCog, X,
 } from "lucide-react";
-import { apiGet, apiPut, apiPost, apiDelete } from "../../utils/api.utils";
+import { apiGet, apiPut, apiPost, apiPatch, apiDelete } from "../../utils/api.utils";
 import { AUTH_ENDPOINTS } from "../../config/api.config";
 import { useAuth } from "../../lib/auth-context";
 import {
@@ -15,7 +15,7 @@ import {
   unsubscribeFromPush,
 } from "../../lib/push";
 
-type Tab = "account" | "security" | "notifications" | "payment";
+type Tab = "account" | "security" | "notifications" | "privacy" | "payment";
 
 interface Session {
   sessionId: string;
@@ -132,6 +132,12 @@ export default function SettingsPage() {
   const [loadingSessions, setLoadingSessions] = useState(false);
   const [revokingId, setRevokingId] = useState<string | null>(null);
 
+  // Privacy
+  const [isPrivate, setIsPrivate] = useState(false);
+  const [showFollowLists, setShowFollowLists] = useState(true);
+  const [privacyLoaded, setPrivacyLoaded] = useState(false);
+  const [privacyBusy, setPrivacyBusy] = useState<string | null>(null);
+
   // Push notifications
   const [pushEnabled, setPushEnabled] = useState(false);
   const [pushBusy, setPushBusy] = useState(false);
@@ -162,6 +168,34 @@ export default function SettingsPage() {
   useEffect(() => {
     if (tab === "security") void loadSessions();
   }, [tab, loadSessions]);
+
+  useEffect(() => {
+    if (tab !== "privacy" || privacyLoaded) return;
+    setPrivacyLoaded(true);
+    apiGet(AUTH_ENDPOINTS.PROFILE, { skipCache: true })
+      .then((res) => {
+        if (!res.success) return;
+        const privacy = ((res.data as Record<string, unknown>).privacy ?? {}) as Record<string, unknown>;
+        setIsPrivate(Boolean(privacy.is_private));
+        setShowFollowLists(privacy.show_follow_lists !== false);
+      })
+      .catch(() => {});
+  }, [tab, privacyLoaded]);
+
+  const savePrivacy = async (field: "is_private" | "show_follow_lists", value: boolean) => {
+    setPrivacyBusy(field);
+    try {
+      const res = await apiPatch(AUTH_ENDPOINTS.PRIVACY, { [field]: value });
+      if (!res.success) throw new Error((res as { error?: { message?: string } }).error?.message ?? "Update failed");
+      if (field === "is_private") setIsPrivate(value);
+      else setShowFollowLists(value);
+      showMsg("Privacy updated.");
+    } catch (e) {
+      showMsg(e instanceof Error ? e.message : "Failed to update privacy.", true);
+    } finally {
+      setPrivacyBusy(null);
+    }
+  };
 
   useEffect(() => {
     if (tab !== "notifications" || pushChecked) return;
@@ -256,6 +290,7 @@ export default function SettingsPage() {
     { id: "account", label: "Account", icon: <UserCog className="w-4 h-4" /> },
     { id: "security", label: "Security", icon: <KeyRound className="w-4 h-4" /> },
     { id: "notifications", label: "Notifications", icon: <Bell className="w-4 h-4" /> },
+    { id: "privacy", label: "Privacy", icon: <Eye className="w-4 h-4" /> },
     { id: "payment", label: "Payment", icon: <CreditCard className="w-4 h-4" /> },
   ];
 
@@ -489,6 +524,68 @@ export default function SettingsPage() {
                 )}
               </button>
             </div>
+          )}
+        </div>
+      )}
+
+      {/* Privacy tab */}
+      {tab === "privacy" && (
+        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-6 space-y-6">
+          <h2 className="font-semibold text-white">Privacy</h2>
+
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-white font-medium">Private profile</p>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Hide your public profile completely. Visitors see only your username and avatar,
+                no stats, badges, games, or socials.
+              </p>
+            </div>
+            <button
+              onClick={() => void savePrivacy("is_private", !isPrivate)}
+              disabled={privacyBusy !== null}
+              role="switch"
+              aria-checked={isPrivate}
+              className={`relative shrink-0 w-11 h-6 rounded-full transition-colors disabled:opacity-50 ${
+                isPrivate ? "bg-cyan-500" : "bg-slate-700"
+              }`}
+            >
+              {privacyBusy === "is_private" ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white" />
+              ) : (
+                <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all ${isPrivate ? "left-[22px]" : "left-0.5"}`} />
+              )}
+            </button>
+          </div>
+
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-white font-medium">Show followers and following</p>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Let visitors see your follower/following counts and lists. Turn off to keep them
+                to yourself, you can always see your own.
+              </p>
+            </div>
+            <button
+              onClick={() => void savePrivacy("show_follow_lists", !showFollowLists)}
+              disabled={privacyBusy !== null || isPrivate}
+              role="switch"
+              aria-checked={showFollowLists}
+              className={`relative shrink-0 w-11 h-6 rounded-full transition-colors disabled:opacity-50 ${
+                showFollowLists && !isPrivate ? "bg-cyan-500" : "bg-slate-700"
+              }`}
+            >
+              {privacyBusy === "show_follow_lists" ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white" />
+              ) : (
+                <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all ${showFollowLists && !isPrivate ? "left-[22px]" : "left-0.5"}`} />
+              )}
+            </button>
+          </div>
+          {isPrivate && (
+            <p className="text-[11px] text-slate-600">
+              Follower lists are already hidden while your profile is private.
+            </p>
           )}
         </div>
       )}
