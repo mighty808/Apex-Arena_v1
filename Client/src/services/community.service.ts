@@ -31,6 +31,9 @@ export interface CommunityPost {
   viewerVote: 'up' | 'down' | null;
   isPinned: boolean;
   createdAt?: string;
+  /** For mirrored posts (team recruitment etc.): the source record's id */
+  referenceId?: string;
+  referenceType?: string;
 }
 
 export interface FeedResult {
@@ -110,6 +113,8 @@ function mapPost(raw: Record<string, unknown>): CommunityPost {
     viewerVote: (raw.viewer_vote as 'up' | 'down' | null | undefined) ?? null,
     isPinned: Boolean(raw.is_pinned ?? false),
     createdAt: raw.created_at ? String(raw.created_at) : undefined,
+    referenceId: raw.reference_id ? String(raw.reference_id) : undefined,
+    referenceType: raw.reference_type ? String(raw.reference_type) : undefined,
   };
 }
 

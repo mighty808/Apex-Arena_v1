@@ -303,6 +303,10 @@ export const TOURNAMENT_CHAT_ENDPOINTS = {
   BASE: `${COMMUNITY_BASE}/tournaments`, // + /:tournamentId/chat/messages, + /:messageId for delete
 } as const;
 
+export const TEAM_CHAT_ENDPOINTS = {
+  BASE: `${COMMUNITY_BASE}/teams`, // + /:teamId/chat/messages, + /:messageId for delete
+} as const;
+
 export const PUSH_ENDPOINTS = {
   VAPID_PUBLIC_KEY: `${COMMUNITY_BASE}/push/vapid-public-key`, // GET, no auth
   SUBSCRIBE: `${COMMUNITY_BASE}/push/subscribe`,                // POST, DELETE

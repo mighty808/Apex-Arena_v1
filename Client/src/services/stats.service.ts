@@ -112,7 +112,51 @@ export interface PlayerBadgeItem {
   awarded_at: string;
 }
 
+export interface HeadToHead {
+  player: { username: string; avatar_url?: string };
+  opponent: { username: string; avatar_url?: string };
+  summary: { played: number; wins: number; draws: number; losses: number; goals_for: number; goals_against: number };
+  matches: {
+    tournament_title?: string;
+    round_label: string;
+    my_score: number;
+    opponent_score: number;
+    outcome: 'win' | 'loss' | 'draw';
+    date?: string;
+  }[];
+}
+
+export interface PlayerSearchResult {
+  username: string;
+  role?: string;
+  avatar_url?: string;
+  country?: string;
+}
+
+const PLAYER_SEARCH_URL = 'https://api-apexarenas.onrender.com/api/v1/auth/user/public-search';
+
 export const statsService = {
+  async getHeadToHead(username: string, opponent: string): Promise<HeadToHead | null> {
+    const res = await apiGet(
+      `${TOURNAMENT_ENDPOINTS.STATS_PLAYER}/${encodeURIComponent(username)}/h2h/${encodeURIComponent(opponent)}`,
+      { skipAuth: true },
+    );
+    if (!res.success) return null;
+    return res.data as HeadToHead;
+  },
+
+  async searchPlayers(query: string): Promise<PlayerSearchResult[]> {
+    const q = query.trim();
+    if (q.length < 2) return [];
+    const res = await apiGet(`${PLAYER_SEARCH_URL}?q=${encodeURIComponent(q)}`, {
+      skipAuth: true,
+      skipCache: true,
+    });
+    if (!res.success) return [];
+    const data = res.data as { players?: PlayerSearchResult[] };
+    return data.players ?? [];
+  },
+
   async getPlayerBadges(username: string): Promise<PlayerBadgeItem[]> {
     const res = await apiGet(
       `${TOURNAMENT_ENDPOINTS.STATS_PLAYER}/${encodeURIComponent(username)}/badges`,

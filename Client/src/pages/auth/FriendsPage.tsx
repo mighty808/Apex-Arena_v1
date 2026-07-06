@@ -3,10 +3,11 @@ import {
   Users, Loader2, Plus, Pencil, Trash2, Check, X,
   ChevronDown, ChevronUp, UserCircle, Search,
 } from "lucide-react";
-import { teamService, type Team, type RecruitmentPost } from "../../services/team.service";
+import { teamService, type Team, type RecruitmentPost, type RecruitmentApplication } from "../../services/team.service";
 import { useAuth } from "../../lib/auth-context";
 import { apiGet } from "../../utils/api.utils";
 import { TOURNAMENT_ENDPOINTS } from "../../config/api.config";
+import TeamChatPanel from "../../components/TeamChatPanel";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -137,13 +138,14 @@ function RecruitmentForm({
 
 // ─── Recruitment posts section (captain view) ─────────────────────────────────
 
-function RecruitmentSection({ teamId }: { teamId: string }) {
+function RecruitmentSection({ teamId, gameId }: { teamId: string; gameId?: string }) {
   const [posts, setPosts] = useState<RecruitmentPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [applicantsOpenId, setApplicantsOpenId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -162,6 +164,7 @@ function RecruitmentSection({ teamId }: { teamId: string }) {
         description: draft.description || undefined,
         roles: draft.roles.split(",").map((r) => r.trim()).filter(Boolean),
         skillLevel: draft.skillLevel,
+        gameId,
       });
       setPosts((prev) => [post, ...prev]);
       setShowCreate(false);
@@ -276,7 +279,16 @@ function RecruitmentSection({ teamId }: { teamId: string }) {
                 <div className="flex items-center gap-3 mt-1 text-[11px] text-slate-500 flex-wrap">
                   {post.roles.length > 0 && <span>Roles: {post.roles.join(", ")}</span>}
                   {post.skillLevel && post.skillLevel !== "any" && <span className="capitalize">{post.skillLevel}</span>}
-                  <span>{post.applicantCount} applicant{post.applicantCount !== 1 ? "s" : ""}</span>
+                  {post.applicantCount > 0 ? (
+                    <button
+                      onClick={() => setApplicantsOpenId(applicantsOpenId === post.id ? null : post.id)}
+                      className="font-semibold text-cyan-400 hover:text-cyan-300 transition-colors"
+                    >
+                      {post.applicantCount} applicant{post.applicantCount !== 1 ? "s" : ""} · {applicantsOpenId === post.id ? "hide" : "review"}
+                    </button>
+                  ) : (
+                    <span>No applicants yet</span>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
@@ -301,8 +313,101 @@ function RecruitmentSection({ teamId }: { teamId: string }) {
                 </button>
               </div>
             </div>
+
+            {/* Applicant review: captain accepts (joins the team) or declines */}
+            {applicantsOpenId === post.id && (
+              <ApplicantsPanel
+                postId={post.id}
+                onResolved={() =>
+                  setPosts((prev) =>
+                    prev.map((p) =>
+                      p.id === post.id ? { ...p, applicantCount: Math.max(0, p.applicantCount - 1) } : p,
+                    ),
+                  )
+                }
+              />
+            )}
           </div>
         ),
+      )}
+    </div>
+  );
+}
+
+// ─── Applicant review (captain accepts/declines) ──────────────────────────────
+
+function ApplicantsPanel({ postId, onResolved }: { postId: string; onResolved: () => void }) {
+  const [applications, setApplications] = useState<RecruitmentApplication[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    teamService.getRecruitmentApplications(postId)
+      .then(setApplications)
+      .catch(() => setApplications([]))
+      .finally(() => setLoading(false));
+  }, [postId]);
+
+  const respond = async (applicantUserId: string, accept: boolean) => {
+    setBusyId(applicantUserId);
+    setError(null);
+    try {
+      await teamService.respondToApplication(postId, applicantUserId, accept);
+      setApplications((prev) => prev.filter((a) => a.userId !== applicantUserId));
+      onResolved();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to respond to the application.");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  return (
+    <div className="mt-2 pt-2.5 border-t border-slate-800/60 space-y-2">
+      {error && (
+        <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{error}</p>
+      )}
+      {loading ? (
+        <div className="flex justify-center py-3">
+          <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
+        </div>
+      ) : applications.length === 0 ? (
+        <p className="text-xs text-slate-500 py-1">No pending applications.</p>
+      ) : (
+        applications.map((app) => (
+          <div key={app.userId} className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-full overflow-hidden bg-slate-800 border border-slate-700 shrink-0 flex items-center justify-center">
+              {app.avatarUrl ? (
+                <img src={app.avatarUrl} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-[10px] font-bold text-slate-400">
+                  {(app.username[0] ?? "?").toUpperCase()}
+                </span>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-white truncate">{app.displayName || app.username}</p>
+              <p className="text-[10px] text-slate-500 truncate">@{app.username}</p>
+            </div>
+            <button
+              onClick={() => void respond(app.userId, true)}
+              disabled={busyId !== null}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 hover:bg-emerald-500/25 disabled:opacity-50 transition-colors"
+            >
+              {busyId === app.userId ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+              Accept
+            </button>
+            <button
+              onClick={() => void respond(app.userId, false)}
+              disabled={busyId !== null}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-red-400 border border-red-500/25 hover:bg-red-500/10 disabled:opacity-50 transition-colors"
+            >
+              <X className="w-3 h-3" />
+              Decline
+            </button>
+          </div>
+        ))
       )}
     </div>
   );
@@ -363,8 +468,9 @@ function BrowseTeamCard({ team, currentUserId }: { team: Team; currentUserId?: s
           <div className="flex items-center gap-2 flex-wrap">
             <p className="text-sm font-semibold text-white truncate">{team.name}</p>
             {team.tag && <span className="text-[10px] text-slate-500 font-mono">[{team.tag}]</span>}
-            {!team.isOpen && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-700/60 text-slate-400 font-semibold">Closed</span>
+            {/* Positive signal only: show Recruiting when true, nothing otherwise */}
+            {team.isOpen && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 font-semibold">Recruiting</span>
             )}
             {isMember && (
               <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-400 font-semibold">
@@ -486,6 +592,8 @@ export default function FriendsPage() {
   const [loadingMine, setLoadingMine] = useState(false);
   const [expandedTeamId, setExpandedTeamId] = useState<string | null>(null);
   const [myTeamsFetched, setMyTeamsFetched] = useState(false);
+  const [deleteTeamId, setDeleteTeamId] = useState<string | null>(null);
+  const [deletingTeamId, setDeletingTeamId] = useState<string | null>(null);
 
   // Create team state, any player with a game profile for the chosen game
   // can create a team and automatically becomes its captain.
@@ -531,6 +639,20 @@ export default function FriendsPage() {
       })
       .catch(() => {});
   }, []);
+
+  const handleDeleteTeam = async (teamId: string) => {
+    setDeletingTeamId(teamId);
+    try {
+      await teamService.deleteTeam(teamId);
+      setMyTeams((prev) => prev.filter((t) => t.id !== teamId));
+      setAllTeams((prev) => prev.filter((t) => t.id !== teamId));
+      setDeleteTeamId(null);
+    } catch (e) {
+      setCreateError(e instanceof Error ? e.message : "Failed to delete the team.");
+    } finally {
+      setDeletingTeamId(null);
+    }
+  };
 
   const handleCreateTeam = async () => {
     if (!newName.trim() || !newTag.trim() || !newGameId) {
@@ -742,6 +864,18 @@ export default function FriendsPage() {
                         {team.gameName ? ` · ${team.gameName}` : ""}
                       </p>
                     </div>
+                    {team.captainId === user?.id && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteTeamId(deleteTeamId === team.id ? null : team.id);
+                        }}
+                        className="p-1.5 rounded-lg text-slate-600 hover:text-red-400 hover:bg-red-500/10 transition-colors shrink-0"
+                        title="Delete team"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                     {expandedTeamId === team.id ? (
                       <ChevronUp className="w-4 h-4 text-slate-500 shrink-0" />
                     ) : (
@@ -749,10 +883,39 @@ export default function FriendsPage() {
                     )}
                   </div>
 
-                  {/* Recruitment posts, captain only */}
-                  {expandedTeamId === team.id && team.captainId === user?.id && (
-                    <div className="border-t border-slate-800 px-4 py-4">
-                      <RecruitmentSection teamId={team.id} />
+                  {/* Delete confirmation, captain only */}
+                  {deleteTeamId === team.id && (
+                    <div className="border-t border-red-500/20 bg-red-950/10 px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
+                      <p className="text-xs text-slate-400">
+                        Delete <span className="text-white font-semibold">{team.name}</span>? This removes the team, its recruitment posts, and cannot be undone.
+                      </p>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          onClick={() => void handleDeleteTeam(team.id)}
+                          disabled={deletingTeamId === team.id}
+                          className="px-3 py-1.5 rounded-lg bg-red-500 text-white text-xs font-bold hover:bg-red-400 disabled:opacity-50 transition-colors"
+                        >
+                          {deletingTeamId === team.id ? "Deleting…" : "Delete Team"}
+                        </button>
+                        <button
+                          onClick={() => setDeleteTeamId(null)}
+                          className="px-3 py-1.5 rounded-lg border border-slate-700 text-xs text-slate-400 hover:text-white transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {expandedTeamId === team.id && (
+                    <div className="border-t border-slate-800 px-4 py-4 space-y-4">
+                      {/* Every member gets the squad chat */}
+                      <TeamChatPanel teamId={team.id} />
+
+                      {/* Recruitment posts, captain only */}
+                      {team.captainId === user?.id && (
+                        <RecruitmentSection teamId={team.id} gameId={team.gameId} />
+                      )}
                     </div>
                   )}
                 </div>

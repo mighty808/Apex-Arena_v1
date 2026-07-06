@@ -12,6 +12,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { useAuth } from "../../lib/auth-context";
+import PlayerSearch from "../../components/PlayerSearch";
 import {
   dashboardService,
   type DashboardData,
@@ -625,20 +626,26 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0 flex-wrap justify-center sm:justify-end">
-              <Link
-                to="/auth/player/join-tournament"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-linear-to-r from-orange-400 to-amber-400 text-slate-950 text-sm font-bold hover:shadow-lg hover:shadow-orange-500/25 transition-all"
-              >
-                <Swords className="w-4 h-4" />
-                Find Tournaments
-              </Link>
-              <Link
-                to="/auth/player/profile"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-700 text-slate-300 text-sm font-medium hover:border-slate-600 hover:bg-slate-800/60 transition-all"
-              >
-                Profile
-              </Link>
+            <div className="flex flex-col gap-2 shrink-0 items-center sm:items-end">
+              <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-end">
+                <Link
+                  to="/auth/player/join-tournament"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-linear-to-r from-orange-400 to-amber-400 text-slate-950 text-sm font-bold hover:shadow-lg hover:shadow-orange-500/25 transition-all"
+                >
+                  <Swords className="w-4 h-4" />
+                  Find Tournaments
+                </Link>
+                <Link
+                  to="/auth/player/profile"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-700 text-slate-300 text-sm font-medium hover:border-slate-600 hover:bg-slate-800/60 transition-all"
+                >
+                  Profile
+                </Link>
+              </div>
+              {/* Find players, sits right under Find Tournaments */}
+              <div className="w-full sm:w-72">
+                <PlayerSearch placeholder="Find players…" />
+              </div>
             </div>
           </div>
 

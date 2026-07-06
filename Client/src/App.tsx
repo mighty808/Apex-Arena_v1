@@ -97,7 +97,7 @@ const App = () => {
           "--toastify-color-dark": "#1e293b",
           "--toastify-color-light": "#94a3b8",
           "--toastify-color-info": "#0ea5e9",
-          "--toastify-color-success": "#10b981",
+          "--toastify-color-success": "#0ea5e9",
           "--toastify-color-warning": "#f59e0b",
           "--toastify-color-error": "#ef4444",
           "--toastify-text-color-light": "#f1f5f9",

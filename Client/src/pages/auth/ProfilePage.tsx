@@ -30,6 +30,8 @@ import type {
 import { tournamentService, type MyTournamentRegistration } from "../../services/tournament.service";
 import CareerStatsGrid from "../../components/CareerStatsGrid";
 import BadgeWall from "../../components/BadgeWall";
+import { SOCIAL_PLATFORMS } from "../../utils/social.utils";
+import HeadToHeadPanel from "../../components/HeadToHeadPanel";
 import ShareCardModal from "../../components/share-cards/ShareCardModal";
 import PlayerCardTemplate, { publicProfileUrl } from "../../components/share-cards/PlayerCardTemplate";
 
@@ -206,6 +208,7 @@ interface GameEntry {
   gameName: string;
   inGameId: string;
   skillLevel: string;
+  rank: string;
 }
 
 interface SavedGameProfile {
@@ -213,6 +216,7 @@ interface SavedGameProfile {
   gameName: string;
   inGameId: string;
   skillLevel: string;
+  rank: string;
 }
 
 interface GameOption {
@@ -226,15 +230,6 @@ type ProfileTab = "overview" | "badges" | "history" | "h2h" | "edit";
 
 const ProfilePage = () => {
   const { user, setSession, tokens } = useAuth();
-
-  function isValidHttpUrl(value: string): boolean {
-    try {
-      const url = new URL(value);
-      return url.protocol === "http:" || url.protocol === "https:";
-    } catch {
-      return false;
-    }
-  }
 
   const [form, setForm] = useState<ProfileForm>({
     firstName: "",
@@ -273,6 +268,7 @@ const ProfilePage = () => {
         gameName: String(gameObj.name ?? item.game_name ?? item.gameName ?? ""),
         inGameId: String(item.in_game_id ?? item.inGameId ?? ""),
         skillLevel: String(item.skill_level ?? item.skillLevel ?? "beginner"),
+        rank: String(item.rank ?? ""),
       };
     },
     [],
@@ -287,6 +283,7 @@ const ProfilePage = () => {
           gameName: String(g.gameName ?? ""),
           inGameId: String(g.inGameId ?? ""),
           skillLevel: String(g.skillLevel ?? "beginner"),
+          rank: "",
         }));
     },
     [],
@@ -414,10 +411,12 @@ const ProfilePage = () => {
         country: form.country || undefined,
         phone: form.phone || undefined,
         avatarUrl: form.avatarUrl || undefined,
-        discord: form.discord && isValidHttpUrl(form.discord) ? form.discord : undefined,
-        twitter: form.twitter && isValidHttpUrl(form.twitter) ? form.twitter : undefined,
-        twitch: form.twitch && isValidHttpUrl(form.twitch) ? form.twitch : undefined,
-        youtube: form.youtube && isValidHttpUrl(form.youtube) ? form.youtube : undefined,
+        // Handles, not URLs (Phase 6): we store the username and construct the
+        // public link ourselves. Legacy full URLs still pass through.
+        discord: form.discord.trim() || undefined,
+        twitter: form.twitter.trim() || undefined,
+        twitch: form.twitch.trim() || undefined,
+        youtube: form.youtube.trim() || undefined,
       };
       const result = await authService.updateProfile(payload);
       if (result.user && tokens) setSession(tokens, result.user);
@@ -430,7 +429,7 @@ const ProfilePage = () => {
   };
 
   const addGame = () => {
-    setGames((prev) => [...prev, { gameId: "", gameName: "", inGameId: "", skillLevel: "beginner" }]);
+    setGames((prev) => [...prev, { gameId: "", gameName: "", inGameId: "", skillLevel: "beginner", rank: "" }]);
   };
 
   const updateGame = (index: number, field: keyof GameEntry, value: string) => {
@@ -464,14 +463,14 @@ const ProfilePage = () => {
       const nextProfiles = exists
         ? savedGameProfiles.map((profile) =>
             profile.gameId === draft.gameId
-              ? { ...profile, gameName: resolvedGameName, inGameId: draft.inGameId, skillLevel: draft.skillLevel }
+              ? { ...profile, gameName: resolvedGameName, inGameId: draft.inGameId, skillLevel: draft.skillLevel, rank: draft.rank }
               : profile,
           )
-        : [...savedGameProfiles, { gameId: draft.gameId, gameName: resolvedGameName, inGameId: draft.inGameId, skillLevel: draft.skillLevel }];
+        : [...savedGameProfiles, { gameId: draft.gameId, gameName: resolvedGameName, inGameId: draft.inGameId, skillLevel: draft.skillLevel, rank: draft.rank }];
 
       const response = exists
-        ? await apiPut(`${TOURNAMENT_ENDPOINTS.GAME_PROFILE_DETAIL}/${encodeURIComponent(draft.gameId)}`, { in_game_id: draft.inGameId, skill_level: draft.skillLevel })
-        : await apiPost(TOURNAMENT_ENDPOINTS.GAME_PROFILES, { game_id: draft.gameId, in_game_id: draft.inGameId, skill_level: draft.skillLevel });
+        ? await apiPut(`${TOURNAMENT_ENDPOINTS.GAME_PROFILE_DETAIL}/${encodeURIComponent(draft.gameId)}`, { in_game_id: draft.inGameId, skill_level: draft.skillLevel, rank: draft.rank })
+        : await apiPost(TOURNAMENT_ENDPOINTS.GAME_PROFILES, { game_id: draft.gameId, in_game_id: draft.inGameId, skill_level: draft.skillLevel, rank: draft.rank });
 
       if (!response.success) {
         try {
@@ -495,7 +494,7 @@ const ProfilePage = () => {
   };
 
   const startEditSavedGameProfile = (profile: SavedGameProfile) => {
-    setGames([{ gameId: profile.gameId, gameName: profile.gameName, inGameId: profile.inGameId, skillLevel: profile.skillLevel }]);
+    setGames([{ gameId: profile.gameId, gameName: profile.gameName, inGameId: profile.inGameId, skillLevel: profile.skillLevel, rank: profile.rank }]);
   };
 
   const deleteSavedGameProfile = async (gameId: string) => {
@@ -704,7 +703,7 @@ const ProfilePage = () => {
                       className="px-3 py-1.5 rounded-full bg-slate-800/80 border border-slate-700 text-sm text-white"
                     >
                       {gp.gameName || "Unknown Game"}
-                      <span className="ml-2 text-xs text-orange-400 capitalize">{gp.skillLevel}</span>
+                      <span className="ml-2 text-xs text-orange-400 capitalize">{gp.rank || gp.skillLevel}</span>
                     </span>
                   ))}
                 </div>
@@ -778,16 +777,14 @@ const ProfilePage = () => {
           </SectionCard>
         )}
 
-        {/* ── Head-to-Head tab, spec §1.1 ── */}
+        {/* ── Head-to-Head tab, spec §1.1, live ── */}
         {tab === "h2h" && (
           <SectionCard icon={Swords} title="Head-to-Head">
-            <div className="text-center py-10">
-              <Swords className="w-10 h-10 text-slate-700 mx-auto" />
-              <p className="text-sm text-slate-400 mt-4 font-medium">Head-to-head records are coming soon</p>
-              <p className="text-xs text-slate-500 mt-1.5 max-w-sm mx-auto">
-                Once the stats engine is live you'll be able to search any opponent and see your full record against them across every tournament.
-              </p>
-            </div>
+            {user?.username ? (
+              <HeadToHeadPanel username={user.username} />
+            ) : (
+              <p className="text-sm text-slate-500">Head-to-head unavailable.</p>
+            )}
           </SectionCard>
         )}
 
@@ -835,15 +832,13 @@ const ProfilePage = () => {
               </div>
             </SectionCard>
 
-            {/* Social Links */}
+            {/* Social Links: just usernames, we build the public link */}
             <SectionCard icon={Globe} title="Social Links">
+              <p className="text-xs text-slate-500 -mt-2 mb-4">
+                Type just your username per platform. We turn it into the public link on your profile.
+              </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {([
-                  { key: "discord", label: "Discord",      placeholder: "Your Discord tag" },
-                  { key: "twitter", label: "Twitter / X",  placeholder: "https://twitter.com/you" },
-                  { key: "twitch",  label: "Twitch",       placeholder: "https://twitch.tv/you" },
-                  { key: "youtube", label: "YouTube",      placeholder: "https://youtube.com/@you" },
-                ] as { key: keyof ProfileForm; label: string; placeholder: string }[]).map(({ key, label, placeholder }) => (
+                {SOCIAL_PLATFORMS.map(({ key, label, placeholder }) => (
                   <Field key={key} label={label}>
                     <Input value={form[key] as string} onChange={(v) => setField(key, v)} placeholder={placeholder} />
                   </Field>
@@ -894,7 +889,7 @@ const ProfilePage = () => {
                             {profile.gameName || "Unknown Game"}
                           </p>
                           <p className="text-xs text-slate-400 truncate mt-0.5">
-                            {profile.inGameId} · <span className="capitalize">{profile.skillLevel}</span>
+                            {profile.inGameId} · <span className="capitalize">{profile.skillLevel}</span>{profile.rank ? ` · ${profile.rank}` : ""}
                           </p>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
@@ -952,6 +947,14 @@ const ProfilePage = () => {
                           <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
                         ))}
                       </select>
+                      <input
+                        type="text"
+                        value={g.rank}
+                        onChange={(e) => updateGame(i, "rank", e.target.value)}
+                        placeholder="Rank / division (optional), e.g. FIFA Div 3"
+                        maxLength={40}
+                        className={inputCls}
+                      />
                       <div className="flex gap-2">
                         <button
                           onClick={() => void saveGameProfile(i)}

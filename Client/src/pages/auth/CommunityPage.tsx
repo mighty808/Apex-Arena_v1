@@ -15,6 +15,7 @@ import { apiGet } from "../../utils/api.utils";
 import { TOURNAMENT_ENDPOINTS } from "../../config/api.config";
 import { showError, showSuccess } from "../../utils/toast.utils";
 import { useAuth } from "../../lib/auth-context";
+import PlayerSearch from "../../components/PlayerSearch";
 
 // Community hub (spec §6, new_build.md Phase 5): social feed (posts, votes,
 // comments, backend already live) + LFG board (team recruitment).
@@ -167,7 +168,24 @@ function PostCard({
   const [voting, setVoting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [applying, setApplying] = useState(false);
+  const [applied, setApplied] = useState(false);
   const isOwner = Boolean(viewerId && post.author.id === viewerId);
+  const isRecruitment = post.postType === "team_recruitment" && Boolean(post.referenceId);
+
+  const applyFromFeed = async () => {
+    if (!post.referenceId) return;
+    setApplying(true);
+    try {
+      await communityService.applyToLfgPost(post.referenceId);
+      setApplied(true);
+      showSuccess("Application sent, the captain will respond.");
+    } catch (e) {
+      showError(e instanceof Error ? e.message : "Failed to apply.");
+    } finally {
+      setApplying(false);
+    }
+  };
 
   const deletePost = async () => {
     setDeleting(true);
@@ -246,6 +264,11 @@ function PostCard({
             <span>·</span>
             <span>{timeAgo(post.createdAt)}</span>
             {post.isPinned && <Pin className="w-3 h-3 text-amber-400" />}
+            {isRecruitment && (
+              <span className="px-1.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[9px] font-bold uppercase tracking-wide">
+                Recruiting
+              </span>
+            )}
             {/* Delete, strictly the owner here; admins moderate from the Admin app */}
             {isOwner && (
               <span className="ml-auto flex items-center gap-1.5">
@@ -287,13 +310,35 @@ function PostCard({
               ))}
             </div>
           )}
-          <button
-            onClick={() => setCommentsOpen((o) => !o)}
-            className="flex items-center gap-1.5 mt-3 text-xs text-slate-500 hover:text-white transition-colors"
-          >
-            <MessageSquare className="w-3.5 h-3.5" />
-            {post.commentCount} {post.commentCount === 1 ? "comment" : "comments"}
-          </button>
+          <div className="flex items-center gap-3 mt-3 flex-wrap">
+            <button
+              onClick={() => setCommentsOpen((o) => !o)}
+              className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-white transition-colors"
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+              {post.commentCount} {post.commentCount === 1 ? "comment" : "comments"}
+            </button>
+
+            {/* Recruitment posts: apply right here or open the Teams board */}
+            {isRecruitment && !isOwner && (
+              applied ? (
+                <span className="text-xs text-emerald-400 font-semibold">Applied!</span>
+              ) : (
+                <button
+                  onClick={() => void applyFromFeed()}
+                  disabled={applying}
+                  className="px-3 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold hover:bg-emerald-500/25 disabled:opacity-50 transition-colors"
+                >
+                  {applying ? "Applying…" : "Apply"}
+                </button>
+              )
+            )}
+            {isRecruitment && (
+              <Link to="/auth/teams" className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors">
+                Open Teams board →
+              </Link>
+            )}
+          </div>
 
           {commentsOpen && (
             <CommentsSection
@@ -451,6 +496,9 @@ export default function CommunityPage() {
           </button>
         )}
       </div>
+
+      {/* Find players (spec §1 "searchable"), opens their public profile */}
+      <PlayerSearch />
 
       {/* Tabs */}
       <div className="flex items-center gap-1 bg-slate-900/60 border border-slate-800 rounded-xl p-1 w-fit">

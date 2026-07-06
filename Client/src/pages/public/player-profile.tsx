@@ -5,6 +5,7 @@ import { apiGet } from "../../utils/api.utils";
 import { AUTH_ENDPOINTS } from "../../config/api.config";
 import CareerStatsGrid from "../../components/CareerStatsGrid";
 import BadgeWall from "../../components/BadgeWall";
+import { SOCIAL_PLATFORMS, socialUrl, socialDisplay, type SocialPlatform } from "../../utils/social.utils";
 
 // Public player profile, spec §1: "public-facing profile page that serves as
 // their identity on the platform". Read-only twin of the auth Profile page.
@@ -208,18 +209,21 @@ export default function PublicPlayerProfile() {
               <h2 className="font-display text-base font-bold text-white">Socials</h2>
             </div>
             <div className="flex flex-wrap gap-2">
-              {socialEntries.map(([key, value]) =>
-                value.startsWith("http") ? (
-                  <a key={key} href={value} target="_blank" rel="noopener noreferrer"
-                    className="px-3 py-1.5 rounded-full bg-slate-800/80 border border-slate-700 text-sm text-cyan-300 hover:border-cyan-500/50 capitalize transition-colors">
-                    {key}
+              {socialEntries.map(([key, value]) => {
+                const platform = SOCIAL_PLATFORMS.find((p) => p.key === key);
+                const label = platform?.label ?? key;
+                const url = socialUrl((key as SocialPlatform) ?? "twitter", value);
+                return url ? (
+                  <a key={key} href={url} target="_blank" rel="noopener noreferrer"
+                    className="px-3 py-1.5 rounded-full bg-slate-800/80 border border-slate-700 text-sm text-cyan-300 hover:border-cyan-500/50 transition-colors">
+                    {label}: <span className="text-white">{socialDisplay(value)}</span>
                   </a>
                 ) : (
-                  <span key={key} className="px-3 py-1.5 rounded-full bg-slate-800/80 border border-slate-700 text-sm text-white capitalize">
-                    {key}: <span className="text-slate-300">{value}</span>
+                  <span key={key} className="px-3 py-1.5 rounded-full bg-slate-800/80 border border-slate-700 text-sm text-white">
+                    {label}: <span className="text-slate-300">{socialDisplay(value)}</span>
                   </span>
-                ),
-              )}
+                );
+              })}
             </div>
           </div>
         )}

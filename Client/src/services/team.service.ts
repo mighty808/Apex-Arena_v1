@@ -113,7 +113,10 @@ function mapTeam(raw: Record<string, unknown>): Team {
     maxSize: raw.max_size as number | undefined,
     gameId: typeof game === 'object' ? String(game._id ?? game.id ?? '') : String(game ?? ''),
     gameName: typeof game === 'object' ? (game.name as string | undefined) : undefined,
-    isOpen: Boolean(raw.is_open ?? raw.isOpen ?? false),
+    // The server stores this as settings.is_recruiting; is_open never existed
+    isOpen: Boolean(
+      (raw.settings as Record<string, unknown> | undefined)?.is_recruiting ?? raw.is_open ?? raw.isOpen ?? false
+    ),
     createdAt: String(raw.created_at ?? raw.createdAt ?? ''),
   };
 }
@@ -199,7 +202,8 @@ export const teamService = {
       logo_url: payload.logoUrl,
       game_id: payload.gameId,
       max_size: payload.maxSize,
-      is_open: payload.isOpen ?? false,
+      // Server field is is_recruiting (the old is_open was silently ignored)
+      is_recruiting: payload.isOpen ?? false,
     });
     if (!response.success) {
       const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to create team';
