@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Award, Gamepad2, Globe, Loader2, Trophy, UserX } from "lucide-react";
-import { apiGet } from "../../utils/api.utils";
+import { Award, Gamepad2, Globe, Loader2, Trophy, UserCheck, UserPlus, UserX } from "lucide-react";
+import { apiGet, apiPost, apiDelete } from "../../utils/api.utils";
 import { AUTH_ENDPOINTS } from "../../config/api.config";
+import { useAuth } from "../../lib/auth-context";
+import { showError } from "../../utils/toast.utils";
+
+const COMMUNITY_USERS = "https://api-apexarenas.onrender.com/api/v1/community/users";
 import CareerStatsGrid from "../../components/CareerStatsGrid";
 import BadgeWall from "../../components/BadgeWall";
 import { SOCIAL_PLATFORMS, socialUrl, socialDisplay, type SocialPlatform } from "../../utils/social.utils";
@@ -13,6 +17,7 @@ import { SOCIAL_PLATFORMS, socialUrl, socialDisplay, type SocialPlatform } from 
 // (new_build.md Phase 1-2).
 
 interface PublicProfile {
+  userId: string;
   username: string;
   role: string;
   firstName: string;
@@ -29,6 +34,7 @@ function mapProfile(raw: Record<string, unknown>): PublicProfile {
   const profile = (raw.profile ?? {}) as Record<string, unknown>;
   const games = (raw.game_profiles ?? []) as Record<string, unknown>[];
   return {
+    userId: String(raw.user_id ?? ""),
     username: String(raw.username ?? ""),
     role: String(raw.role ?? "player"),
     firstName: String(profile.first_name ?? ""),
@@ -51,9 +57,41 @@ function mapProfile(raw: Record<string, unknown>): PublicProfile {
 
 export default function PublicPlayerProfile() {
   const { username } = useParams<{ username: string }>();
+  const { user } = useAuth();
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followBusy, setFollowBusy] = useState(false);
+
+  // Follow status once we know who this profile belongs to
+  useEffect(() => {
+    if (!profile?.userId || !user || user.id === profile.userId) return;
+    let cancelled = false;
+    apiGet(`${COMMUNITY_USERS}/${profile.userId}/follow/status`, { skipCache: true })
+      .then((res) => {
+        if (cancelled || !res.success) return;
+        setIsFollowing(Boolean((res.data as { is_following?: boolean }).is_following));
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [profile?.userId, user]);
+
+  const toggleFollow = async () => {
+    if (!profile?.userId || followBusy) return;
+    setFollowBusy(true);
+    try {
+      const res = isFollowing
+        ? await apiDelete(`${COMMUNITY_USERS}/${profile.userId}/follow`)
+        : await apiPost(`${COMMUNITY_USERS}/${profile.userId}/follow`, {});
+      if (!res.success) throw new Error(res.error?.message ?? "Failed to update follow");
+      setIsFollowing((f) => !f);
+    } catch (e) {
+      showError(e instanceof Error ? e.message : "Failed to update follow.");
+    } finally {
+      setFollowBusy(false);
+    }
+  };
 
   useEffect(() => {
     if (!username) return;
@@ -149,6 +187,24 @@ export default function PublicPlayerProfile() {
               </div>
               {profile.bio && <p className="text-sm text-slate-400 mt-1.5">{profile.bio}</p>}
             </div>
+
+            {/* Follow (spec §6.2), only for logged-in visitors, never on your own profile */}
+            {user && profile.userId && user.id !== profile.userId && (
+              <div className="sm:ml-auto sm:pb-1 shrink-0">
+                <button
+                  onClick={() => void toggleFollow()}
+                  disabled={followBusy}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 ${
+                    isFollowing
+                      ? "border border-slate-700 text-slate-300 hover:border-red-500/40 hover:text-red-400"
+                      : "bg-linear-to-r from-orange-500 to-amber-400 text-slate-950 font-bold hover:from-orange-400 hover:to-amber-300"
+                  }`}
+                >
+                  {isFollowing ? <UserCheck className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
+                  {followBusy ? "…" : isFollowing ? "Following" : "Follow"}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
