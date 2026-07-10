@@ -2,8 +2,25 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/apex-logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Block all search engine crawlers — admin is private -->
+    <meta name="robots" content="noindex, nofollow" />
+
+    <!-- Google Fonts via preconnect instead of CSS @import (faster LCP) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Allerta+Stencil&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/apex-logo.png" />
+    <link rel="apple-touch-icon" href="/apex-logo.png" />
+
+    <!-- PWA basics -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#020617" />
+
     <title>Apex Arenas — Admin</title>
   </head>
   <body>
