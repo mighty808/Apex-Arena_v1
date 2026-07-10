@@ -17,6 +17,7 @@ import { useGoogleAuth } from "../../lib/use-google-auth";
 import { ApiRequestError } from "../../services/auth.service";
 import { apiGet } from "../../utils/api.utils";
 import { AUTH_ENDPOINTS } from "../../config/api.config";
+import { SEOHead } from "../../components/SEOHead";
 
 type FieldStatus = "idle" | "checking" | "available" | "taken";
 
@@ -269,6 +270,8 @@ const Register = () => {
 
   return (
     <div className="relative min-h-screen bg-slate-950 text-white flex items-center justify-center p-4 overflow-hidden">
+      {/* noIndex — account pages should not appear in search results */}
+      <SEOHead title="Sign Up" noIndex />
       {/* Background glows */}
       <div className="absolute inset-0 pointer-events-none" style={{background:"radial-gradient(ellipse 60% 50% at -10% 0%, rgba(249,115,22,0.12), transparent)"}} />
       <div className="absolute inset-0 pointer-events-none" style={{background:"radial-gradient(ellipse 50% 60% at 110% 100%, rgba(139,92,246,0.10), transparent)"}} />
