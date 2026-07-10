@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, ClipboardList, ShieldCheck, Upload } from "lucide-react";
+import { SEOHead } from "../../components/SEOHead";
 
 const STEPS = [
   {
@@ -22,6 +23,12 @@ const STEPS = [
 const DisputeResolution = () => {
   return (
     <div className="bg-slate-950 text-white">
+      <SEOHead
+        title="Dispute Resolution"
+        description="Learn how Apex Arenas handles match disputes — submit evidence, get a fair review, and protect your results."
+        keywords="esports dispute resolution, match dispute Ghana, apex arenas disputes"
+        canonicalPath="/support/dispute-resolution"
+      />
       <section className="border-b border-slate-800/60 bg-slate-950">
         <div className="mx-auto max-w-5xl px-6 py-8 sm:py-10">
           <div className="flex items-center gap-2 mb-3">
