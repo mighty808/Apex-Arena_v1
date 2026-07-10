@@ -14,6 +14,8 @@ import {
   Gamepad2, ArrowUpRight,
 } from "lucide-react";
 import { tournamentService, type Tournament } from "../../services/tournament.service";
+import { SEOHead } from "../../components/SEOHead";
+import { organizationSchema, webSiteSchema } from "../../lib/seo-schemas";
 
 // ─── constants ────────────────────────────────────────────────────────────────
 
@@ -199,6 +201,17 @@ const Landing = () => {
 
   return (
     <div className="text-white overflow-x-hidden">
+      {/*
+        No title/description passed here — SEOHead falls back to the default
+        site title and description, which is exactly right for the homepage.
+        structuredData injects Organization + WebSite JSON-LD for Google's
+        Knowledge Panel and Sitelinks Searchbox.
+      */}
+      <SEOHead
+        canonicalPath="/"
+        keywords="esports Ghana, online tournament Ghana, FIFA tournament, gaming competition, prize pool, Mobile Money esports"
+        structuredData={[organizationSchema, webSiteSchema]}
+      />
 
       {/* ── Hero ────────────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden bg-slate-950">
