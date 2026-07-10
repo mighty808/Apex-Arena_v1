@@ -1,5 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Allerta+Stencil&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+/* Fonts loaded via <link rel="preconnect"> in index.html — faster than @import */
 @import "tailwindcss";
 
 .font-display {
