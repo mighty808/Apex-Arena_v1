@@ -5,6 +5,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useAuth } from "../../lib/auth-context";
 import { useGoogleAuth } from "../../lib/use-google-auth";
 import { ApiRequestError } from "../../services/auth.service";
+import { SEOHead } from "../../components/SEOHead";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -188,6 +189,8 @@ const Login = () => {
 
   return (
     <div className="relative bg-slate-950 flex items-start justify-center py-24 px-4 overflow-hidden">
+      {/* noIndex — account pages should not appear in search results */}
+      <SEOHead title="Log In" noIndex />
       {/* Background glows */}
       <div className="absolute inset-0 pointer-events-none" style={{background:"radial-gradient(ellipse 60% 50% at -10% 0%, rgba(249,115,22,0.12), transparent)"}} />
       <div className="absolute inset-0 pointer-events-none" style={{background:"radial-gradient(ellipse 50% 60% at 110% 100%, rgba(139,92,246,0.10), transparent)"}} />
