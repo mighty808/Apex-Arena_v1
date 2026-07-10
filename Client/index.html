@@ -2,26 +2,60 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/apex-logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Apex Arenas — Ghana's Esports Tournament Platform</title>
-    <meta name="description" content="Compete in escrow-backed esports tournaments. Verified results, instant Mobile Money payouts. Ghana's most trusted tournament platform." />
 
-    <!-- Open Graph -->
+    <!--
+      Google Fonts — loaded here instead of via @import in CSS.
+      Why: @import inside a CSS file is a blocking chain:
+        1. Browser fetches index.html
+        2. Browser fetches the bundled CSS
+        3. CSS parser sees @import → fetches Google Fonts CSS  ← extra round-trip
+        4. Google Fonts CSS references font files → fetches fonts
+      Moving to HTML reduces this to two parallel fetches from the start:
+        1. preconnect establishes the DNS + TCP + TLS connection immediately
+        2. <link rel="stylesheet"> fires in parallel with other page resources
+      Result: fonts typically appear 200-400ms sooner, directly improving LCP.
+    -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Allerta+Stencil&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/apex-logo.png" />
+    <link rel="apple-touch-icon" href="/apex-logo.png" />
+
+    <!-- Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#020617" />
+
+    <!-- PRERENDER:START -->
+    <!-- Fallback title/meta for bots that don't execute JS.
+         The seoPrerender Vite plugin replaces this block per-route at build time,
+         emitting dist/{route}/index.html files with correct meta for each page.
+         react-helmet-async overrides these at runtime once React hydrates. -->
+    <title>Apex Arenas — Ghana's Esports Tournament Platform</title>
+    <meta name="description" content="Ghana's premier esports tournament platform. Compete in FIFA, CODM, PUBG Mobile, and more. Escrow-backed prize pools, instant MoMo payouts, and fair bracket systems." />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://apex-arenas.com/" />
+
+    <!-- Fallback Open Graph -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Apex Arenas" />
     <meta property="og:title" content="Apex Arenas — Ghana's Esports Tournament Platform" />
-    <meta property="og:description" content="Compete in escrow-backed esports tournaments. Verified results, instant Mobile Money payouts. Ghana's most trusted tournament platform." />
-    <meta property="og:image" content="https://images.unsplash.com/photo-1560253023-3ec5d502959f?q=80&w=1200&auto=format&fit=crop" />
+    <meta property="og:description" content="Ghana's premier esports tournament platform. Escrow-backed prize pools, instant MoMo payouts." />
+    <meta property="og:image" content="https://apex-arenas.com/platform-preview.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:url" content="https://apex-arenas.com" />
+    <meta property="og:locale" content="en_GH" />
 
-    <!-- Twitter / X Card -->
+    <!-- Fallback Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Apex Arenas — Ghana's Esports Tournament Platform" />
-    <meta name="twitter:description" content="Compete in escrow-backed esports tournaments. Verified results, instant Mobile Money payouts." />
-    <meta name="twitter:image" content="https://images.unsplash.com/photo-1560253023-3ec5d502959f?q=80&w=1200&auto=format&fit=crop" />
+    <meta name="twitter:description" content="Ghana's premier esports tournament platform. Escrow-backed prize pools, instant MoMo payouts." />
+    <meta name="twitter:image" content="https://apex-arenas.com/platform-preview.png" />
+    <!-- PRERENDER:END -->
   </head>
   <body>
     <div id="root"></div>
