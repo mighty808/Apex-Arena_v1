@@ -5,6 +5,7 @@ import { LeagueTable } from "../../components/league/LeagueTable";
 import { useAuth } from "../../lib/auth-context";
 import { apiGet } from "../../utils/api.utils";
 import { TOURNAMENT_ENDPOINTS } from "../../config/api.config";
+import { SEOHead } from "../../components/SEOHead";
 
 interface Game {
   id: string;
@@ -263,6 +264,17 @@ export default function LeaderboardPage() {
 
   return (
     <div className="min-h-screen">
+      {/*
+        This component is used on both /leaderboard (public) and /auth/leaderboard.
+        noIndex is false so the public leaderboard gets indexed by Google.
+        The /auth/ version is unreachable by bots anyway (ProtectedRoute redirects them).
+      */}
+      <SEOHead
+        title="Leaderboard"
+        description="See the top-ranked esports players competing on Apex Arenas in Ghana. Live rankings updated after every tournament."
+        keywords="esports leaderboard Ghana, top gamers Ghana, gaming rankings, FIFA ranking"
+        canonicalPath="/leaderboard"
+      />
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <div className="relative bg-slate-900 border-b border-slate-800/60 overflow-hidden">
         <div className="absolute -top-40 right-0 w-175 h-100 rounded-full bg-amber-500/5 blur-3xl pointer-events-none" />

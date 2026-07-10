@@ -1,6 +1,8 @@
 import { Mail, PhoneCall, MessageCircle } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { submitSupportMessage } from "../../services/support.service";
+import { SEOHead } from "../../components/SEOHead";
+import { contactPageSchema } from "../../lib/seo-schemas";
 
 type FormErrors = {
   name?: string;
@@ -96,6 +98,13 @@ const ContactUs = () => {
   };
   return (
     <div className="min-h-screen">
+      <SEOHead
+        title="Contact Us"
+        description="Get in touch with the Apex Arenas support team. We're here to help with tournaments, payments, and account issues."
+        keywords="apex arenas contact, esports support Ghana, contact gaming platform"
+        canonicalPath="/support/contact-us"
+        structuredData={contactPageSchema}
+      />
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <div className="relative bg-slate-900 border-b border-slate-800/60 overflow-hidden">
         <div className="absolute -top-40 right-0 w-175 h-100 rounded-full bg-violet-500/5 blur-3xl pointer-events-none" />

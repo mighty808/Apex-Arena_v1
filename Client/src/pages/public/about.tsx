@@ -1,6 +1,14 @@
+import { SEOHead } from "../../components/SEOHead";
+
 const About = () => {
   return (
     <div className="bg-slate-950 text-white">
+      <SEOHead
+        title="About Us"
+        description="Learn about Apex Arenas — the team building Ghana's competitive gaming ecosystem and professionalising esports in West Africa."
+        keywords="apex arenas, esports Ghana, gaming company Ghana, West Africa esports"
+        canonicalPath="/about"
+      />
       {/* Hero */}
       <section className="border-b border-slate-800/70">
         <div className="mx-auto max-w-5xl px-6 py-16">

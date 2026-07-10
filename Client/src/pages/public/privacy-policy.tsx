@@ -1,3 +1,5 @@
+import { SEOHead } from "../../components/SEOHead";
+
 const SECTIONS = [
   {
     title: "Information we collect",
@@ -77,6 +79,8 @@ const SECTIONS = [
 const PrivacyPolicy = () => {
   return (
     <div className="bg-slate-950 text-white">
+      {/* noIndex — legal page, no SEO value in indexing it */}
+      <SEOHead title="Privacy Policy" noIndex />
       {/* Hero */}
       <section className="border-b border-slate-800/70">
         <div className="mx-auto max-w-5xl px-6 py-16">

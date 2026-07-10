@@ -3,6 +3,7 @@ import { Mail } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion, useReducedMotion } from "framer-motion";
 import { ApiRequestError, authService } from "../../services/auth.service";
+import { SEOHead } from "../../components/SEOHead";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -43,6 +44,8 @@ const ForgotPassword = () => {
 
   return (
     <div className="relative min-h-screen bg-slate-950 flex items-center justify-center py-12 px-4 text-white overflow-hidden">
+      {/* noIndex — account pages should not appear in search results */}
+      <SEOHead title="Reset Password" noIndex />
       <div className="absolute inset-0 pointer-events-none" style={{background:"radial-gradient(ellipse 60% 50% at -10% 0%, rgba(249,115,22,0.12), transparent)"}} />
       <div className="absolute inset-0 pointer-events-none" style={{background:"radial-gradient(ellipse 50% 60% at 110% 100%, rgba(139,92,246,0.10), transparent)"}} />
       <div className="absolute inset-0 pointer-events-none" style={{backgroundImage:"linear-gradient(rgba(148,163,184,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(148,163,184,0.03) 1px, transparent 1px)",backgroundSize:"48px 48px"}} />

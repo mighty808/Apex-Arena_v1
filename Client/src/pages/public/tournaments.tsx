@@ -19,6 +19,7 @@ import { TOURNAMENT_ENDPOINTS } from "../../config/api.config";
 import { apiGet } from "../../utils/api.utils";
 import { useAuth } from "../../lib/auth-context";
 import { TournamentCard, RegisterModal } from "../../components/join-tournament";
+import { SEOHead } from "../../components/SEOHead";
 
 interface GameFilter {
   id: string;
@@ -131,6 +132,12 @@ const PublicTournaments = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+      <SEOHead
+        title="Browse Tournaments"
+        description="Find and join esports tournaments in Ghana. FIFA, Call of Duty Mobile, PUBG Mobile and more. Free and paid entry brackets with escrow-backed prize pools."
+        keywords="esports tournaments Ghana, join tournament, FIFA tournament online, CODM tournament, PUBG Mobile Ghana"
+        canonicalPath="/tournaments"
+      />
 
       {/* Hero */}
       <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 px-8 py-8">

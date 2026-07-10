@@ -1,10 +1,13 @@
 import { Link, useLocation } from "react-router-dom";
+import { SEOHead } from "../../components/SEOHead";
 
 const NotFound = () => {
   const location = useLocation();
 
   return (
     <div className="relative min-h-[calc(100vh-80px)] bg-slate-950 flex items-center justify-center overflow-hidden px-6">
+      {/* noIndex — 404 pages should never appear in search results */}
+      <SEOHead title="Page Not Found" noIndex />
       {/* Background glows */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full bg-orange-500/6 blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/4 left-1/4 w-[300px] h-[200px] rounded-full bg-cyan-500/5 blur-3xl pointer-events-none" />

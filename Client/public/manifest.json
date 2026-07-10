@@ -1,0 +1,16 @@
+{
+  "name": "Apex Arenas",
+  "short_name": "Apex Arenas",
+  "description": "Ghana's premier esports tournament platform",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#020617",
+  "icons": [
+    {
+      "src": "/apex-logo.png",
+      "sizes": "any",
+      "type": "image/png"
+    }
+  ]
+}

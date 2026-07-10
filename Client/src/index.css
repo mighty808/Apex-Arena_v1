@@ -1,5 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Allerta+Stencil&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+/* Fonts are loaded in index.html via <link rel="preconnect"> + <link rel="stylesheet">
+   instead of @import here. Moving them to HTML lets the browser start the DNS lookup
+   and TCP connection immediately (before CSS is even parsed), cutting 200-400ms off
+   the time before text first appears on screen. */
 @import "tailwindcss";
 
 @theme {

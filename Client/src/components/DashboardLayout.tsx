@@ -7,7 +7,7 @@ import {
   CheckCheck, X, Trophy as TrophyIcon, ShieldAlert, Star, Zap, Users,
   Check, Info,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useNotifications } from "../lib/notification-context";
 import { NotificationDetailModal } from "./NotificationDetailModal";
 import type { NotificationItem } from "../services/notification.service";
@@ -315,7 +315,14 @@ const DashboardLayout = () => {
 
         {/* Page content */}
         <main className="flex-1 min-h-0 overflow-y-auto pt-3 pb-20 md:pb-6">
-          <Outlet />
+          {/*
+            Suspense here keeps the sidebar, header, and bottom nav visible
+            while a lazy dashboard page chunk is downloading.
+            Only the <main> content area shows the fallback placeholder.
+          */}
+          <Suspense fallback={<div className="min-h-screen bg-slate-950" aria-hidden="true" />}>
+            <Outlet />
+          </Suspense>
         </main>
 
         {/* ── Mobile bottom nav ── md:hidden ─────────────────────── */}

@@ -6,6 +6,7 @@ import {
   MessageSquare,
   ArrowRight,
 } from "lucide-react";
+import { SEOHead } from "../../components/SEOHead";
 
 const SUPPORT_LINKS = [
   {
@@ -49,6 +50,12 @@ const SUPPORT_LINKS = [
 const Support = () => {
   return (
     <div className="bg-slate-950 text-white">
+      <SEOHead
+        title="Support"
+        description="Get help with Apex Arenas — browse the Help Center, read tournament rules, learn about dispute resolution, or contact the team."
+        keywords="apex arenas support, esports help Ghana, tournament support"
+        canonicalPath="/support"
+      />
       <section className="relative overflow-hidden border-b border-slate-800/70">
         <div
           className="absolute inset-0"

@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
 import { Search, ArrowRight, LifeBuoy, ShieldCheck } from "lucide-react";
+import { SEOHead } from "../../components/SEOHead";
+import { helpCenterFaqSchema } from "../../lib/seo-schemas";
 
 const FAQS = [
   {
@@ -23,6 +25,13 @@ const FAQS = [
 const HelpCenter = () => {
   return (
     <div className="bg-slate-950 text-white">
+      <SEOHead
+        title="Help Center"
+        description="Find answers to common questions about Apex Arenas tournaments, payouts, disputes, and account management."
+        keywords="apex arenas help, esports FAQ Ghana, tournament questions, payout help"
+        canonicalPath="/support/help-center"
+        structuredData={helpCenterFaqSchema}
+      />
       <section className="border-b border-slate-800/70">
         <div className="mx-auto max-w-5xl px-6 py-16">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">
