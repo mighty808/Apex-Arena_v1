@@ -1,27 +1,39 @@
+import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import AdminLogin from "./pages/admin/login";
+
+// ── Static imports ─────────────────────────────────────────────────────────────
+// Layout shells and gate components render on every route — keep them static.
 import AdminProtectedRoute from "./components/admin/AdminProtectedRoute";
 import AdminLayout from "./components/admin/AdminLayout";
-import AdminDashboard from "./pages/admin/Dashboard";
-import UserManagement from "./pages/admin/UserManagement";
-import GamesManagement from "./pages/admin/GamesManagement";
-import OrganizerVerifications from "./pages/admin/OrganizerVerifications";
-import AdminProfile from "./pages/admin/AdminProfile";
-import PayoutsManagement from "./pages/admin/PayoutsManagement";
-import EscrowManagement from "./pages/admin/EscrowManagement";
-import SchedulerManagement from "./pages/admin/SchedulerManagement";
-import AuditLogs from "./pages/admin/AuditLogs";
-import AdminManagement from "./pages/admin/AdminManagement";
-import GameRequests from "./pages/admin/GameRequests";
-import DisputeManagement from "./pages/admin/DisputeManagement";
-import TournamentManagement from "./pages/admin/TournamentManagement";
-import TournamentDetail from "./pages/admin/TournamentDetail";
-import AdminNotifications from "./pages/admin/AdminNotifications";
-import CommunityModeration from "./pages/admin/CommunityModeration";
-import TeamsOversight from "./pages/admin/TeamsOversight";
 import { AdminNotificationProvider } from "./lib/admin-notification-context";
+
+// ── Lazy page imports ──────────────────────────────────────────────────────────
+// Each page becomes its own JS chunk, downloaded only when first visited.
+const AdminLogin            = lazy(() => import("./pages/admin/login"));
+const AdminDashboard        = lazy(() => import("./pages/admin/Dashboard"));
+const UserManagement        = lazy(() => import("./pages/admin/UserManagement"));
+const GamesManagement       = lazy(() => import("./pages/admin/GamesManagement"));
+const OrganizerVerifications = lazy(() => import("./pages/admin/OrganizerVerifications"));
+const AdminProfile          = lazy(() => import("./pages/admin/AdminProfile"));
+const PayoutsManagement     = lazy(() => import("./pages/admin/PayoutsManagement"));
+const EscrowManagement      = lazy(() => import("./pages/admin/EscrowManagement"));
+const SchedulerManagement   = lazy(() => import("./pages/admin/SchedulerManagement"));
+const AuditLogs             = lazy(() => import("./pages/admin/AuditLogs"));
+const AdminManagement       = lazy(() => import("./pages/admin/AdminManagement"));
+const GameRequests          = lazy(() => import("./pages/admin/GameRequests"));
+const DisputeManagement     = lazy(() => import("./pages/admin/DisputeManagement"));
+const TournamentManagement  = lazy(() => import("./pages/admin/TournamentManagement"));
+const TournamentDetail      = lazy(() => import("./pages/admin/TournamentDetail"));
+const AdminNotifications    = lazy(() => import("./pages/admin/AdminNotifications"));
+const CommunityModeration   = lazy(() => import("./pages/admin/CommunityModeration"));
+const TeamsOversight        = lazy(() => import("./pages/admin/TeamsOversight"));
+
+// ── Suspense fallback ─────────────────────────────────────────────────────────
+const PageFallback = () => (
+  <div className="min-h-screen bg-slate-950" aria-hidden="true" />
+);
 
 const App = () => {
   return (
@@ -51,28 +63,42 @@ const App = () => {
       />
       <Routes>
         {/* Public admin login */}
-        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route
+          path="/admin/login"
+          element={
+            <Suspense fallback={<PageFallback />}>
+              <AdminLogin />
+            </Suspense>
+          }
+        />
 
         {/* Authenticated admin area */}
         <Route path="/admin" element={<AdminProtectedRoute />}>
           <Route element={<AdminNotificationProvider><AdminLayout /></AdminNotificationProvider>}>
-            <Route index element={<AdminDashboard />} />
-            <Route path="users" element={<UserManagement />} />
-            <Route path="games" element={<GamesManagement />} />
-            <Route path="tournaments" element={<TournamentManagement />} />
-            <Route path="tournaments/:tournamentId" element={<TournamentDetail />} />
-            <Route path="verifications" element={<OrganizerVerifications />} />
-            <Route path="profile" element={<AdminProfile />} />
-            <Route path="payouts" element={<PayoutsManagement />} />
-            <Route path="escrow" element={<EscrowManagement />} />
-            <Route path="scheduler" element={<SchedulerManagement />} />
-            <Route path="audit-logs" element={<AuditLogs />} />
-            <Route path="admins" element={<AdminManagement />} />
-            <Route path="game-requests" element={<GameRequests />} />
-            <Route path="disputes" element={<DisputeManagement />} />
-            <Route path="notifications" element={<AdminNotifications />} />
-            <Route path="community" element={<CommunityModeration />} />
-            <Route path="teams" element={<TeamsOversight />} />
+            <Route
+              index
+              element={
+                <Suspense fallback={<PageFallback />}>
+                  <AdminDashboard />
+                </Suspense>
+              }
+            />
+            <Route path="users" element={<Suspense fallback={<PageFallback />}><UserManagement /></Suspense>} />
+            <Route path="games" element={<Suspense fallback={<PageFallback />}><GamesManagement /></Suspense>} />
+            <Route path="tournaments" element={<Suspense fallback={<PageFallback />}><TournamentManagement /></Suspense>} />
+            <Route path="tournaments/:tournamentId" element={<Suspense fallback={<PageFallback />}><TournamentDetail /></Suspense>} />
+            <Route path="verifications" element={<Suspense fallback={<PageFallback />}><OrganizerVerifications /></Suspense>} />
+            <Route path="profile" element={<Suspense fallback={<PageFallback />}><AdminProfile /></Suspense>} />
+            <Route path="payouts" element={<Suspense fallback={<PageFallback />}><PayoutsManagement /></Suspense>} />
+            <Route path="escrow" element={<Suspense fallback={<PageFallback />}><EscrowManagement /></Suspense>} />
+            <Route path="scheduler" element={<Suspense fallback={<PageFallback />}><SchedulerManagement /></Suspense>} />
+            <Route path="audit-logs" element={<Suspense fallback={<PageFallback />}><AuditLogs /></Suspense>} />
+            <Route path="admins" element={<Suspense fallback={<PageFallback />}><AdminManagement /></Suspense>} />
+            <Route path="game-requests" element={<Suspense fallback={<PageFallback />}><GameRequests /></Suspense>} />
+            <Route path="disputes" element={<Suspense fallback={<PageFallback />}><DisputeManagement /></Suspense>} />
+            <Route path="notifications" element={<Suspense fallback={<PageFallback />}><AdminNotifications /></Suspense>} />
+            <Route path="community" element={<Suspense fallback={<PageFallback />}><CommunityModeration /></Suspense>} />
+            <Route path="teams" element={<Suspense fallback={<PageFallback />}><TeamsOversight /></Suspense>} />
           </Route>
         </Route>
 
