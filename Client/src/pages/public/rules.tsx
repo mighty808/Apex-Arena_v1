@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, ShieldCheck, Users, AlertTriangle } from "lucide-react";
+import { SEOHead } from "../../components/SEOHead";
 
 const RULE_SECTIONS = [
   {
@@ -34,6 +35,12 @@ const RULE_SECTIONS = [
 const Rules = () => {
   return (
     <div className="bg-slate-950 text-white">
+      <SEOHead
+        title="Tournament Rules"
+        description="Read the official Apex Arenas tournament rules — fair play standards, match procedures, and code of conduct for all competitive events."
+        keywords="esports tournament rules, apex arenas rules, gaming competition rules Ghana"
+        canonicalPath="/support/rules"
+      />
       <section className="border-b border-slate-800/70">
         <div className="mx-auto max-w-5xl px-6 py-16">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-amber-300">
