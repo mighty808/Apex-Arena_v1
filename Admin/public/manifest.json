@@ -1,0 +1,16 @@
+{
+  "name": "Apex Arenas Admin",
+  "short_name": "AA Admin",
+  "description": "Apex Arenas admin panel",
+  "start_url": "/admin",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#020617",
+  "icons": [
+    {
+      "src": "/apex-logo.png",
+      "sizes": "any",
+      "type": "image/png"
+    }
+  ]
+}
