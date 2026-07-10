@@ -131,13 +131,13 @@ export function LeagueView({
               <span className="text-slate-400">Week</span>
               <span className="font-bold text-white tabular-nums">
                 {legs >= 2
-                  ? `${currentMatchweek - 1}–${currentMatchweek}`
+                  ? `${currentMatchweek - 1}, ${currentMatchweek}`
                   : currentMatchweek}
               </span>
               <span className="text-slate-600">/ {totalMatchweeks}</span>
             </div>
           )}
-          {/* Refresh — icon-only on mobile, with label on sm+ */}
+          {/* Refresh, icon-only on mobile, with label on sm+ */}
           <button
             onClick={() => loadData(true, true)}
             disabled={refreshing}

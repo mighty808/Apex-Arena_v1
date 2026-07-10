@@ -53,7 +53,7 @@ const STATUS_CONFIG = {
 type StatusKey = keyof typeof STATUS_CONFIG;
 
 function fmtDate(iso?: string) {
-  if (!iso) return "—";
+  if (!iso) return "-";
   return new Date(iso).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",

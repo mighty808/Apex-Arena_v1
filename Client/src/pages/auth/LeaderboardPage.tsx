@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Loader2, Trophy, ChevronDown, Gamepad2, Medal, Crown } from "lucide-react";
 import { tournamentService, type Tournament, type LeagueTableRow } from "../../services/tournament.service";
 import { LeagueTable } from "../../components/league/LeagueTable";
+import GlobalRankings from "../../components/GlobalRankings";
 import { useAuth } from "../../lib/auth-context";
 import { apiGet } from "../../utils/api.utils";
 import { TOURNAMENT_ENDPOINTS } from "../../config/api.config";
@@ -119,7 +120,7 @@ function ResultsTable({ results, highlightUserId }: { results: TournamentResult[
                     </div>
                   </td>
                   <td className="px-4 py-3 text-center text-xs text-slate-400 hidden sm:table-cell">
-                    {r.in_game_id || "—"}
+                    {r.in_game_id || "-"}
                   </td>
                   <td className="px-4 py-3 text-center">
                     {r.disqualified ? (
@@ -136,7 +137,7 @@ function ResultsTable({ results, highlightUserId }: { results: TournamentResult[
                     {r.prize_won ? (
                       <span className="text-emerald-400 font-semibold">₵{r.prize_won.toLocaleString()}</span>
                     ) : (
-                      <span className="text-slate-600">—</span>
+                      <span className="text-slate-600">-</span>
                     )}
                   </td>
                 </tr>
@@ -284,16 +285,16 @@ export default function LeaderboardPage() {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-8 pt-10 pb-7">
           <div>
             <h1 className="font-display text-4xl sm:text-5xl font-bold text-white leading-none">Leaderboard</h1>
-            <p className="text-base text-slate-400 mt-3">Standings by tournament — select a game and tournament to view rankings.</p>
+            <p className="text-base text-slate-400 mt-3">Standings by tournament, select a game and tournament to view rankings.</p>
           </div>
 
-          {/* Stats strip — dropdown on mobile, grid on sm+ */}
+          {/* Stats strip, dropdown on mobile, grid on sm+ */}
           {(() => {
             const statItems = [
-              { icon: Trophy,   iconColor: "text-amber-400",   bg: "from-amber-500/15 to-orange-500/15",  label: "Tournaments", value: loading ? "—" : String(tournaments.length) },
-              { icon: Gamepad2, iconColor: "text-cyan-400",    bg: "from-cyan-500/15 to-indigo-500/15",   label: "Games",       value: loading ? "—" : String(gamesWithTournaments.length) },
-              { icon: Crown,    iconColor: "text-violet-400",  bg: "from-violet-500/15 to-indigo-500/15", label: "League",      value: loading ? "—" : String(leagueCount) },
-              { icon: Medal,    iconColor: "text-orange-400",  bg: "from-orange-500/15 to-amber-500/15",  label: "Bracket",     value: loading ? "—" : String(bracketCount) },
+              { icon: Trophy,   iconColor: "text-amber-400",   bg: "from-amber-500/15 to-orange-500/15",  label: "Tournaments", value: loading ? "-" : String(tournaments.length) },
+              { icon: Gamepad2, iconColor: "text-cyan-400",    bg: "from-cyan-500/15 to-indigo-500/15",   label: "Games",       value: loading ? "-" : String(gamesWithTournaments.length) },
+              { icon: Crown,    iconColor: "text-violet-400",  bg: "from-violet-500/15 to-indigo-500/15", label: "League",      value: loading ? "-" : String(leagueCount) },
+              { icon: Medal,    iconColor: "text-orange-400",  bg: "from-orange-500/15 to-amber-500/15",  label: "Bracket",     value: loading ? "-" : String(bracketCount) },
             ];
             return (
               <>
@@ -341,6 +342,9 @@ export default function LeaderboardPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6">
+      {/* Global all-time rankings (spec §6.4), backed by the stats engine */}
+      <GlobalRankings gameId={selectedGameId} />
+
       {loading ? (
         <div className="flex justify-center py-24">
           <Loader2 className="w-6 h-6 animate-spin text-slate-400" />

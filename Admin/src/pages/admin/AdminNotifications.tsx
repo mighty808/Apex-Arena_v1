@@ -23,7 +23,7 @@ function relativeTime(iso: string): string {
   return new Date(iso).toLocaleDateString();
 }
 
-// Flat, neutral severity label — no color coding (severity text still shown, just not color-keyed).
+// Flat, neutral severity label, no color coding (severity text still shown, just not color-keyed).
 const SEVERITY_LABEL: Record<AdminNotifSeverity, string> = {
   critical: "Critical",
   action_required: "Action Required",
@@ -66,10 +66,10 @@ function NotifRow({
       onClick={onOpen}
       className={`flex items-start gap-3 px-4 py-4 border-b border-slate-800/50 cursor-pointer transition-colors hover:bg-slate-800/20 ${notif.isRead ? "" : "bg-slate-900/40"}`}
     >
-      {/* Unread dot — neutral, not severity-colored */}
+      {/* Unread dot, neutral, not severity-colored */}
       <span className={`shrink-0 mt-2 w-1.5 h-1.5 rounded-full ${!notif.isRead ? "bg-slate-400" : ""}`} />
 
-      {/* Icon — flat, no severity color */}
+      {/* Icon, flat, no severity color */}
       <div className="shrink-0 w-9 h-9 rounded-xl bg-slate-800 flex items-center justify-center mt-0.5">
         <EventIcon className="w-4 h-4 text-slate-300" />
       </div>

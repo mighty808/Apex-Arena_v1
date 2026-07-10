@@ -551,7 +551,7 @@ export default function DisputeManagement() {
                   </div>
                 )}
 
-                {/* Admin override form — only show for open disputes */}
+                {/* Admin override form, only show for open disputes */}
                 {match.status !== 'completed' && (
                   <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-5 space-y-4">
                     <h3 className="text-sm font-semibold text-amber-300 flex items-center gap-2">

@@ -24,14 +24,14 @@ function fmtGhs(pesewas: number) {
 }
 
 function fmtDate(iso?: string) {
-  if (!iso) return "—";
+  if (!iso) return "-";
   return new Date(iso).toLocaleDateString("en-GH", {
     day: "numeric", month: "short", year: "numeric",
   });
 }
 
 function fmtDateTime(iso?: string) {
-  if (!iso) return "—";
+  if (!iso) return "-";
   return new Date(iso).toLocaleString("en-GH", {
     day: "numeric", month: "short", year: "numeric",
     hour: "2-digit", minute: "2-digit",
@@ -162,7 +162,7 @@ function WithdrawModal({
         accountName: accountName.trim(),
         notes: notes.trim() || undefined,
       });
-      showSuccess("Withdrawal submitted — balance updated.");
+      showSuccess("Withdrawal submitted, balance updated.");
       onSuccess();
     } catch (err) {
       showError(err instanceof Error ? err.message : "Withdrawal failed.");
@@ -378,7 +378,7 @@ function WithdrawalsTab({
     setCancelling(id);
     try {
       await organizerService.cancelPayoutRequest(id);
-      showSuccess("Withdrawal cancelled — balance refunded.");
+      showSuccess("Withdrawal cancelled, balance refunded.");
       void load();
       onBalanceChange();
     } catch (err) {
@@ -456,7 +456,7 @@ function WithdrawalsTab({
         </div>
       )}
 
-      {/* History — paginated */}
+      {/* History, paginated */}
       {history.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
@@ -537,7 +537,7 @@ const WalletPage = () => {
 
       {/* ── Hero ──────────────────────────────────────────────────────────────── */}
       <div className="relative bg-slate-900 border-b border-slate-800/60 overflow-hidden">
-        {/* Background decorations — same as PrizesPage */}
+        {/* Background decorations, same as PrizesPage */}
         <div className="absolute -top-40 right-0 w-150 h-100 rounded-full bg-cyan-500/6 blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 left-1/4 w-125 h-50 rounded-full bg-indigo-500/5 blur-3xl pointer-events-none" />
         <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-size-[60px_60px] pointer-events-none" />
@@ -547,7 +547,7 @@ const WalletPage = () => {
           <div className="flex items-start justify-between gap-3">
             <div>
               <h1 className="font-display text-3xl sm:text-5xl font-bold text-white leading-none">Wallet</h1>
-              <p className="text-sm sm:text-base text-slate-400 mt-2 sm:mt-3 max-w-md">Your balance, transactions and withdrawals — send funds to Mobile Money.</p>
+              <p className="text-sm sm:text-base text-slate-400 mt-2 sm:mt-3 max-w-md">Your balance, transactions and withdrawals, send funds to Mobile Money.</p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <button
@@ -568,7 +568,7 @@ const WalletPage = () => {
             </div>
           </div>
 
-          {/* Stats — mobile dropdown */}
+          {/* Stats, mobile dropdown */}
           <div className="sm:hidden mt-4">
             <button onClick={() => setStatsOpen(o => !o)}
               className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700/60 text-xs font-semibold text-slate-400 uppercase tracking-widest"
@@ -601,7 +601,7 @@ const WalletPage = () => {
             )}
           </div>
 
-          {/* Stats — desktop grid of 4 */}
+          {/* Stats, desktop grid of 4 */}
           <div className="hidden sm:grid sm:grid-cols-4 gap-3 mt-6">
             {balanceLoading
               ? Array.from({ length: 4 }).map((_, i) => (

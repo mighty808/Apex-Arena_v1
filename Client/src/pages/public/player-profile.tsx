@@ -1,0 +1,320 @@
+import { useEffect, useState } from "react";
+import { useParams, Link } from "react-router-dom";
+import { Award, Gamepad2, Globe, Loader2, Trophy, UserCheck, UserPlus, UserX } from "lucide-react";
+import { apiGet, apiPost, apiDelete } from "../../utils/api.utils";
+import { AUTH_ENDPOINTS } from "../../config/api.config";
+import { useAuth } from "../../lib/auth-context";
+import { showError } from "../../utils/toast.utils";
+
+const COMMUNITY_USERS = "https://api-apexarenas.onrender.com/api/v1/community/users";
+import CareerStatsGrid from "../../components/CareerStatsGrid";
+import BadgeWall from "../../components/BadgeWall";
+import { SOCIAL_PLATFORMS, socialUrl, socialDisplay, type SocialPlatform } from "../../utils/social.utils";
+
+// Public player profile, spec §1: "public-facing profile page that serves as
+// their identity on the platform". Read-only twin of the auth Profile page.
+// Career stats/badges render as placeholders until the stats engine lands
+// (new_build.md Phase 1-2).
+
+interface PublicProfile {
+  userId: string;
+  username: string;
+  isPrivate: boolean;
+  showFollowLists: boolean;
+  followersCount?: number;
+  followingCount?: number;
+  role: string;
+  firstName: string;
+  lastName: string;
+  bio: string;
+  avatarUrl: string;
+  country: string;
+  socialLinks: Record<string, string>;
+  gameProfiles: { gameName: string; skillLevel: string; rank?: string }[];
+  memberSince?: string;
+}
+
+function mapProfile(raw: Record<string, unknown>): PublicProfile {
+  const profile = (raw.profile ?? {}) as Record<string, unknown>;
+  const games = (raw.game_profiles ?? []) as Record<string, unknown>[];
+  return {
+    userId: String(raw.user_id ?? ""),
+    username: String(raw.username ?? ""),
+    isPrivate: Boolean(raw.is_private ?? false),
+    showFollowLists: raw.show_follow_lists !== false && !raw.is_private,
+    followersCount: typeof raw.followers_count === "number" ? raw.followers_count : undefined,
+    followingCount: typeof raw.following_count === "number" ? raw.following_count : undefined,
+    role: String(raw.role ?? "player"),
+    firstName: String(profile.first_name ?? ""),
+    lastName: String(profile.last_name ?? ""),
+    bio: String(profile.bio ?? ""),
+    avatarUrl: String(profile.avatar_url ?? ""),
+    country: String(profile.country ?? ""),
+    socialLinks: (profile.social_links ?? {}) as Record<string, string>,
+    gameProfiles: games.map((g) => {
+      const game = (g.game ?? {}) as Record<string, unknown>;
+      return {
+        gameName: String(game.name ?? "Unknown Game"),
+        skillLevel: String(g.skill_level ?? "beginner"),
+        rank: g.rank ? String(g.rank) : undefined,
+      };
+    }),
+    memberSince: raw.member_since ? String(raw.member_since) : undefined,
+  };
+}
+
+export default function PublicPlayerProfile() {
+  const { username } = useParams<{ username: string }>();
+  const { user } = useAuth();
+  const [profile, setProfile] = useState<PublicProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followBusy, setFollowBusy] = useState(false);
+
+  // Follow status once we know who this profile belongs to
+  useEffect(() => {
+    if (!profile?.userId || !user || user.id === profile.userId) return;
+    let cancelled = false;
+    apiGet(`${COMMUNITY_USERS}/${profile.userId}/follow/status`, { skipCache: true })
+      .then((res) => {
+        if (cancelled || !res.success) return;
+        setIsFollowing(Boolean((res.data as { is_following?: boolean }).is_following));
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [profile?.userId, user]);
+
+  const toggleFollow = async () => {
+    if (!profile?.userId || followBusy) return;
+    setFollowBusy(true);
+    try {
+      const res = isFollowing
+        ? await apiDelete(`${COMMUNITY_USERS}/${profile.userId}/follow`)
+        : await apiPost(`${COMMUNITY_USERS}/${profile.userId}/follow`, {});
+      if (!res.success) throw new Error(res.error?.message ?? "Failed to update follow");
+      setIsFollowing((f) => !f);
+    } catch (e) {
+      showError(e instanceof Error ? e.message : "Failed to update follow.");
+    } finally {
+      setFollowBusy(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!username) return;
+    let cancelled = false;
+    setLoading(true);
+    setNotFound(false);
+
+    apiGet(`${AUTH_ENDPOINTS.PUBLIC_PROFILE}/${encodeURIComponent(username)}`, { skipAuth: true })
+      .then((res) => {
+        if (cancelled) return;
+        if (res.success) setProfile(mapProfile(res.data as Record<string, unknown>));
+        else setNotFound(true);
+      })
+      .catch(() => { if (!cancelled) setNotFound(true); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+
+    return () => { cancelled = true; };
+  }, [username]);
+
+  if (loading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-slate-500" />
+      </div>
+    );
+  }
+
+  if (notFound || !profile) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4">
+        <UserX className="w-12 h-12 text-slate-700" />
+        <h1 className="font-display text-xl font-bold text-white mt-4">Player not found</h1>
+        <p className="text-sm text-slate-500 mt-1.5">
+          No player with the username "@{username}" exists, or the account is inactive.
+        </p>
+        <Link to="/" className="mt-5 px-4 py-2 rounded-xl bg-orange-500 text-slate-950 text-sm font-bold hover:bg-orange-400 transition-colors">
+          Back to Home
+        </Link>
+      </div>
+    );
+  }
+
+  // Private players expose only their identity header
+  if (profile.isPrivate) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4">
+        <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-slate-800 bg-slate-900 flex items-center justify-center">
+          {profile.avatarUrl ? (
+            <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <span className="font-display text-2xl font-bold text-white">{profile.username[0]?.toUpperCase()}</span>
+          )}
+        </div>
+        <h1 className="font-display text-xl font-bold text-white mt-4">@{profile.username}</h1>
+        <p className="text-sm text-slate-500 mt-1.5">This profile is private.</p>
+      </div>
+    );
+  }
+
+  const displayName = `${profile.firstName} ${profile.lastName}`.trim() || profile.username;
+  const initials = (profile.firstName[0] ?? "").toUpperCase() + (profile.lastName[0] ?? "").toUpperCase()
+    || profile.username[0]?.toUpperCase() || "?";
+  const socialEntries = Object.entries(profile.socialLinks).filter(([, v]) => Boolean(v));
+
+  return (
+    <div className="min-h-screen bg-slate-950">
+      {/* ── Hero ── */}
+      <div className="relative overflow-hidden border-b border-slate-800/50">
+        <div className="relative h-28 sm:h-36 bg-slate-900 overflow-hidden">
+          <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "linear-gradient(rgba(148,163,184,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(148,163,184,0.05) 1px, transparent 1px)", backgroundSize: "48px 48px" }} />
+          <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse 70% 120% at 80% -10%, rgba(249,115,22,0.35), transparent)" }} />
+          <div className="absolute bottom-0 inset-x-0 h-px bg-linear-to-r from-transparent via-orange-500/30 to-transparent" />
+        </div>
+
+        <div className="relative max-w-5xl mx-auto px-6 sm:px-8">
+          <div className="flex flex-col items-center text-center sm:flex-row sm:items-end sm:text-left gap-4 -mt-12 sm:-mt-14 pb-6">
+            <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden border-4 border-slate-950 shadow-2xl ring-2 ring-orange-500/30 bg-linear-to-br from-slate-800 to-slate-900 flex items-center justify-center shrink-0">
+              {profile.avatarUrl ? (
+                <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <span className="font-display text-3xl font-bold text-white">{initials}</span>
+              )}
+            </div>
+            <div className="min-w-0 sm:pb-1">
+              <h1 className="font-display text-2xl sm:text-3xl font-bold text-white leading-tight">{displayName}</h1>
+              <div className="flex items-center justify-center gap-2 mt-1.5 flex-wrap sm:justify-start">
+                <span className="text-slate-400 text-sm">@{profile.username}</span>
+                <span className="text-slate-700">·</span>
+                <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize ${
+                  profile.role === "organizer"
+                    ? "bg-orange-500/15 border border-orange-500/30 text-orange-300"
+                    : "bg-emerald-500/15 border border-emerald-500/30 text-emerald-300"
+                }`}>
+                  {profile.role}
+                </span>
+                {profile.country && (
+                  <>
+                    <span className="text-slate-700">·</span>
+                    <span className="text-xs text-slate-500">{profile.country}</span>
+                  </>
+                )}
+                {profile.memberSince && (
+                  <>
+                    <span className="text-slate-700">·</span>
+                    <span className="text-xs text-slate-500">
+                      Member since {new Date(profile.memberSince).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
+                    </span>
+                  </>
+                )}
+              </div>
+              {profile.showFollowLists && profile.followersCount !== undefined && (
+                <div className="flex items-center justify-center sm:justify-start gap-4 mt-1.5 text-sm">
+                  <span className="text-slate-300"><span className="font-bold text-white">{profile.followersCount}</span> followers</span>
+                  <span className="text-slate-300"><span className="font-bold text-white">{profile.followingCount ?? 0}</span> following</span>
+                </div>
+              )}
+              {profile.bio && <p className="text-sm text-slate-400 mt-1.5">{profile.bio}</p>}
+            </div>
+
+            {/* Follow (spec §6.2), only for logged-in visitors, never on your own profile */}
+            {user && profile.userId && user.id !== profile.userId && (
+              <div className="sm:ml-auto sm:pb-1 shrink-0">
+                <button
+                  onClick={() => void toggleFollow()}
+                  disabled={followBusy}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 ${
+                    isFollowing
+                      ? "border border-slate-700 text-slate-300 hover:border-red-500/40 hover:text-red-400"
+                      : "bg-linear-to-r from-orange-500 to-amber-400 text-slate-950 font-bold hover:from-orange-400 hover:to-amber-300"
+                  }`}
+                >
+                  {isFollowing ? <UserCheck className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
+                  {followBusy ? "…" : isFollowing ? "Following" : "Follow"}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Content ── */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        {/* Game tags */}
+        <div className="rounded-2xl border border-slate-800/60 bg-slate-900/60 p-6">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-8 h-8 rounded-full bg-orange-500/15 border border-orange-500/30 flex items-center justify-center shrink-0">
+              <Gamepad2 className="w-4 h-4 text-orange-400" />
+            </div>
+            <h2 className="font-display text-base font-bold text-white">Games</h2>
+          </div>
+          {profile.gameProfiles.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {profile.gameProfiles.map((gp, i) => (
+                <span key={i} className="px-3 py-1.5 rounded-full bg-slate-800/80 border border-slate-700 text-sm text-white">
+                  {gp.gameName}
+                  <span className="ml-2 text-xs text-orange-400 capitalize">{gp.rank || gp.skillLevel}</span>
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-slate-500">This player hasn't added any games yet.</p>
+          )}
+        </div>
+
+        {/* Career stats, live from the stats engine */}
+        <div className="rounded-2xl border border-slate-800/60 bg-slate-900/60 p-6">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-8 h-8 rounded-full bg-orange-500/15 border border-orange-500/30 flex items-center justify-center shrink-0">
+              <Trophy className="w-4 h-4 text-orange-400" />
+            </div>
+            <h2 className="font-display text-base font-bold text-white">Career Stats</h2>
+          </div>
+          <CareerStatsGrid username={profile.username} />
+        </div>
+
+        {/* Badges, spec §2 */}
+        <div className="rounded-2xl border border-slate-800/60 bg-slate-900/60 p-6">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-8 h-8 rounded-full bg-orange-500/15 border border-orange-500/30 flex items-center justify-center shrink-0">
+              <Award className="w-4 h-4 text-orange-400" />
+            </div>
+            <h2 className="font-display text-base font-bold text-white">Badges</h2>
+          </div>
+          <BadgeWall username={profile.username} />
+        </div>
+
+        {/* Social links */}
+        {socialEntries.length > 0 && (
+          <div className="rounded-2xl border border-slate-800/60 bg-slate-900/60 p-6">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-8 h-8 rounded-full bg-orange-500/15 border border-orange-500/30 flex items-center justify-center shrink-0">
+                <Globe className="w-4 h-4 text-orange-400" />
+              </div>
+              <h2 className="font-display text-base font-bold text-white">Socials</h2>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {socialEntries.map(([key, value]) => {
+                const platform = SOCIAL_PLATFORMS.find((p) => p.key === key);
+                const label = platform?.label ?? key;
+                const url = socialUrl((key as SocialPlatform) ?? "twitter", value);
+                return url ? (
+                  <a key={key} href={url} target="_blank" rel="noopener noreferrer"
+                    className="px-3 py-1.5 rounded-full bg-slate-800/80 border border-slate-700 text-sm text-cyan-300 hover:border-cyan-500/50 transition-colors">
+                    {label}: <span className="text-white">{socialDisplay(value)}</span>
+                  </a>
+                ) : (
+                  <span key={key} className="px-3 py-1.5 rounded-full bg-slate-800/80 border border-slate-700 text-sm text-white">
+                    {label}: <span className="text-slate-300">{socialDisplay(value)}</span>
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

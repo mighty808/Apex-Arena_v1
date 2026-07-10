@@ -109,7 +109,7 @@ export function OrganizerMatchModal({ matchId, currentUserId, currentMatchweek, 
 
   async function handleForfeit() {
     if (!forfeitPlayerId || !match) return;
-    // forfeitPlayerId is the WINNER — send the loser's ID to the backend
+    // forfeitPlayerId is the WINNER, send the loser's ID to the backend
     const loserId = forfeitPlayerId === match.player1Id ? match.player2Id : match.player1Id;
     setSubmitting(true);
     setError(null);
@@ -202,7 +202,7 @@ export function OrganizerMatchModal({ matchId, currentUserId, currentMatchweek, 
             <div className="flex items-center justify-center gap-3 py-2 rounded-lg bg-slate-800/50 border border-slate-700/50">
               <span className="text-sm text-slate-400">{match.player1Name}</span>
               <span className="text-lg font-bold text-white tabular-nums">
-                {match.player1Score} – {match.player2Score}
+                {match.player1Score}-{match.player2Score}
               </span>
               <span className="text-sm text-slate-400">{match.player2Name}</span>
             </div>
@@ -268,10 +268,10 @@ export function OrganizerMatchModal({ matchId, currentUserId, currentMatchweek, 
                 const decidedOnPen = !pen && rt1 === rt2 && (p1Won || p2Won);
                 return (
                   <>
-                    <span className="text-2xl font-bold text-white tabular-nums">{rt1} – {rt2}</span>
+                    <span className="text-2xl font-bold text-white tabular-nums">{rt1}-{rt2}</span>
                     {pen ? (
                       <span className="text-[10px] text-amber-400 font-semibold tabular-nums">
-                        Pen: {pen.pen1} – {pen.pen2}
+                        Pen: {pen.pen1}-{pen.pen2}
                       </span>
                     ) : decidedOnPen ? (
                       <span className="text-[10px] text-amber-400 font-semibold">
@@ -335,7 +335,7 @@ export function OrganizerMatchModal({ matchId, currentUserId, currentMatchweek, 
                       className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white text-center placeholder-slate-600 focus:outline-none focus:border-indigo-500"
                     />
                   </div>
-                  <span className="text-slate-600 font-bold text-sm mt-4">–</span>
+                  <span className="text-slate-600 font-bold text-sm mt-4">-</span>
                   <div className="flex-1 space-y-1">
                     <p className="text-[10px] text-slate-500 font-medium truncate">{match.player2Name}</p>
                     <input
@@ -454,7 +454,7 @@ export function OrganizerMatchModal({ matchId, currentUserId, currentMatchweek, 
                       className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white text-center placeholder-slate-600 focus:outline-none focus:border-indigo-500"
                     />
                   </div>
-                  <span className="text-slate-600 font-bold text-sm mt-4">–</span>
+                  <span className="text-slate-600 font-bold text-sm mt-4">-</span>
                   <div className="flex-1 space-y-1">
                     <p className="text-[10px] text-slate-500 font-medium truncate">{match?.player2Name}</p>
                     <input
@@ -494,13 +494,13 @@ export function OrganizerMatchModal({ matchId, currentUserId, currentMatchweek, 
             >
               <span className="flex items-center gap-2.5">
                 <UserX className="w-4 h-4" />
-                Forfeit — No Show
+                Forfeit, No Show
               </span>
               <ChevronDown className={`w-4 h-4 transition-transform ${showForfeit ? 'rotate-180' : ''}`} />
             </button>
             {showForfeit && (
               <div className="mt-2 p-3 rounded-xl bg-slate-800/60 border border-slate-700/50 space-y-2">
-                <p className="text-xs text-slate-400">Select the winner — opponent will receive a 3–0 forfeit win.</p>
+                <p className="text-xs text-slate-400">Select the winner, opponent will receive a 3-0 forfeit win.</p>
                 <div className="flex gap-2">
                   {[
                     { id: match.player1Id, name: match.player1Name },
@@ -603,7 +603,7 @@ export function OrganizerMatchModal({ matchId, currentUserId, currentMatchweek, 
         </div>
       </div>
 
-      {/* Nested player modal — rendered on top when organizer acts as player */}
+      {/* Nested player modal, rendered on top when organizer acts as player */}
       {showPlayerModal && currentUserId && (
         <MatchActionModal
           matchId={matchId}

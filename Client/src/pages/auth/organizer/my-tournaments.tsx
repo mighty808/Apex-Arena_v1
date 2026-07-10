@@ -102,7 +102,7 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
         {/* Bottom fade */}
         <div className="absolute inset-0 bg-linear-to-t from-slate-900 via-slate-900/20 to-transparent" />
 
-        {/* Status chip — top right */}
+        {/* Status chip, top right */}
         <div className="absolute top-2.5 right-2.5">
           <span className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full bg-slate-950/80 backdrop-blur-sm border border-white/10 ${meta.text}`}>
             <span className={`w-1.5 h-1.5 rounded-full ${meta.dot} ${isLive ? "animate-pulse" : ""}`} />
@@ -110,7 +110,7 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
           </span>
         </div>
 
-        {/* Edit button — top left */}
+        {/* Edit button, top left */}
         {canEdit && (
           <button
             type="button"
@@ -126,7 +126,7 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
           </button>
         )}
 
-        {/* Game logo — bottom left */}
+        {/* Game logo, bottom left */}
         {tournament.game?.logoUrl && (
           <div className="absolute bottom-2.5 left-2.5">
             <img
@@ -137,7 +137,7 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
           </div>
         )}
 
-        {/* Prize — bottom right */}
+        {/* Prize, bottom right */}
         {prizeGhs && (
           <div className="absolute bottom-2.5 right-2.5">
             <span className="text-[11px] font-bold text-amber-300 bg-slate-950/80 backdrop-blur-sm px-2 py-0.5 rounded-full border border-amber-400/20">
@@ -492,7 +492,7 @@ const MyTournaments = () => {
               <p className="text-base text-slate-400 mt-3">
                 {isLoading ? "Loading…" : tournaments.length > 0
                   ? `${tournaments.length} tournament${tournaments.length !== 1 ? "s" : ""} · ${active.length} active`
-                  : "No tournaments yet — create your first one"}
+                  : "No tournaments yet, create your first one"}
               </p>
             </div>
             <Link
@@ -505,7 +505,7 @@ const MyTournaments = () => {
             </Link>
           </div>
 
-          {/* Stats strip — dropdown on mobile, grid on sm+ */}
+          {/* Stats strip, dropdown on mobile, grid on sm+ */}
           {!isLoading && tournaments.length > 0 && (() => {
             const statItems = [
               { icon: Trophy,       label: "Total",   value: String(tournaments.length), accent: "text-white",       iconColor: "text-slate-400",   iconBg: "bg-slate-800 border-slate-700/50"        },

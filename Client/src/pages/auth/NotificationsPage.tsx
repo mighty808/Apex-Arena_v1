@@ -24,7 +24,7 @@ function relativeTime(iso?: string): string {
   return new Date(iso).toLocaleDateString();
 }
 
-// Icon varies by type for at-a-glance scanning — no color coding, flat dark theme only.
+// Icon varies by type for at-a-glance scanning, no color coding, flat dark theme only.
 const TYPE_ICON: Record<string, React.ElementType> = {
   tournament_registration: Trophy,
   tournament_cancelled: Trophy,
@@ -96,7 +96,7 @@ function NotifRow({
       className={`flex items-start gap-4 px-6 py-4 border-b border-slate-800 transition-colors group cursor-pointer
         ${notif.isRead ? "hover:bg-slate-800/20" : "bg-slate-800/30 hover:bg-slate-800/40"}`}
     >
-      {/* Icon — flat, no per-type color */}
+      {/* Icon, flat, no per-type color */}
       <div className="shrink-0 w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center mt-0.5 ring-1 ring-inset ring-white/5">
         <Icon className="w-5 h-5 text-slate-300" />
       </div>
@@ -180,10 +180,10 @@ export default function NotificationsPage() {
   ).length;
 
   const statItems = [
-    { icon: Bell,          iconColor: "text-cyan-400",   bg: "from-cyan-500/25 to-indigo-500/20",  label: "Total",       value: isLoading ? "—" : String(notifications.length) },
-    { icon: MessageSquare, iconColor: "text-amber-400",  bg: "from-amber-500/25 to-orange-500/20", label: "Unread",      value: isLoading ? "—" : String(unreadCount)           },
-    { icon: Trophy,        iconColor: "text-violet-400", bg: "from-violet-500/25 to-indigo-500/20",label: "Tournaments", value: isLoading ? "—" : String(tournamentCount)        },
-    { icon: Wallet,        iconColor: "text-green-400",  bg: "from-green-500/25 to-teal-500/20",   label: "Wallet",      value: isLoading ? "—" : String(walletCount)            },
+    { icon: Bell,          iconColor: "text-cyan-400",   bg: "from-cyan-500/25 to-indigo-500/20",  label: "Total",       value: isLoading ? "-" : String(notifications.length) },
+    { icon: MessageSquare, iconColor: "text-amber-400",  bg: "from-amber-500/25 to-orange-500/20", label: "Unread",      value: isLoading ? "-" : String(unreadCount)           },
+    { icon: Trophy,        iconColor: "text-violet-400", bg: "from-violet-500/25 to-indigo-500/20",label: "Tournaments", value: isLoading ? "-" : String(tournamentCount)        },
+    { icon: Wallet,        iconColor: "text-green-400",  bg: "from-green-500/25 to-teal-500/20",   label: "Wallet",      value: isLoading ? "-" : String(walletCount)            },
   ];
 
   return (
@@ -230,7 +230,7 @@ export default function NotificationsPage() {
             </div>
           </div>
 
-          {/* Stats — mobile toggle */}
+          {/* Stats, mobile toggle */}
           <div className="sm:hidden mt-4">
             <button
               onClick={() => setStatsOpen((o) => !o)}
@@ -256,7 +256,7 @@ export default function NotificationsPage() {
             )}
           </div>
 
-          {/* Stats — desktop always visible */}
+          {/* Stats, desktop always visible */}
           <div className="hidden sm:grid sm:grid-cols-4 gap-3 mt-6">
             {statItems.map((s) => (
               <div key={s.label} className="flex items-center gap-3 bg-slate-800/50 border border-slate-700/60 rounded-xl px-4 py-3">

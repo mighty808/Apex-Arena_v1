@@ -3,7 +3,7 @@ import { API_BASE_URLS, AUTH_ENDPOINTS, TOURNAMENT_ENDPOINTS, FINANCE_ENDPOINTS 
 import { getAdminAccessToken } from '../utils/auth.utils';
 import type { AdminStats, ManagedUser } from '../types/admin.types';
 
-// Helper — injects the admin Bearer token into every request
+// Helper, injects the admin Bearer token into every request
 function adminHeaders(): { headers: Record<string, string> } {
   const token = getAdminAccessToken();
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
@@ -796,7 +796,7 @@ export const adminService = {
         userId: String(user._id ?? user.id ?? p.user_id ?? ''),
         username: String(user.username ?? p.username ?? ''),
         email: String(user.email ?? p.email ?? ''),
-        amount: Number(p.amount ?? 0),                          // pesewas — divide by 100 to display
+        amount: Number(p.amount ?? 0),                          // pesewas, divide by 100 to display
         type: String(p.request_type ?? p.type ?? 'wallet_withdrawal') as AdminPayoutRequest['type'],
         status: String(p.status ?? 'pending') as AdminPayoutRequest['status'],
         momoNumber: (pd.momo_number ?? p.momo_number) as string | undefined,
@@ -822,7 +822,7 @@ export const adminService = {
       userId: String(user._id ?? user.id ?? p.user_id ?? ''),
       username: String(user.username ?? p.username ?? ''),
       email: String(user.email ?? p.email ?? ''),
-      amount: Number(p.amount ?? 0),                          // pesewas — divide by 100 to display
+      amount: Number(p.amount ?? 0),                          // pesewas, divide by 100 to display
       type: String(p.request_type ?? p.type ?? 'wallet_withdrawal') as AdminPayoutRequest['type'],
       status: String(p.status ?? 'pending') as AdminPayoutRequest['status'],
       momoNumber: (pd.momo_number ?? p.momo_number) as string | undefined,

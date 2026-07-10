@@ -33,7 +33,7 @@ const AdminLayout = () => {
         <header className="sticky top-0 z-30 px-4 sm:px-6 pt-3">
           <div className="flex items-center justify-between rounded-2xl border border-slate-800/80 bg-slate-950/70 backdrop-blur-xl px-4 sm:px-5 py-3 shadow-[0_14px_40px_-24px_rgba(14,165,233,0.45)]">
             <div className="flex items-center gap-3">
-              {/* Hamburger — mobile only */}
+              {/* Hamburger, mobile only */}
               <button
                 onClick={() => setMobileOpen(true)}
                 className="md:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors"

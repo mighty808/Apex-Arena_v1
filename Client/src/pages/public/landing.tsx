@@ -23,17 +23,17 @@ const EASE = [0.22, 1, 0.36, 1] as const;
 
 const FEATURES = [
   { icon: Shield,     color: "text-cyan-400",   bg: "bg-cyan-400/10",   glow: "rgba(34,211,238,0.12)",  title: "Guaranteed prize pools",  desc: "Every prize is locked in escrow before registration opens. You compete knowing the reward is real." },
-  { icon: Cpu,        color: "text-indigo-400", bg: "bg-indigo-400/10", glow: "rgba(99,102,241,0.12)",  title: "Fair dispute resolution",  desc: "Verified moderators, match-evidence workflows, and clear rules — so every result stands on merit." },
-  { icon: Smartphone, color: "text-emerald-400",bg: "bg-emerald-400/10",glow: "rgba(52,211,153,0.12)",  title: "Instant winner payouts",   desc: "MTN MoMo, Vodafone Cash, AirtelTigo. Your win is confirmed, your money moves — no waiting." },
+  { icon: Cpu,        color: "text-indigo-400", bg: "bg-indigo-400/10", glow: "rgba(99,102,241,0.12)",  title: "Fair dispute resolution",  desc: "Verified moderators, match-evidence workflows, and clear rules, so every result stands on merit." },
+  { icon: Smartphone, color: "text-emerald-400",bg: "bg-emerald-400/10",glow: "rgba(52,211,153,0.12)",  title: "Instant winner payouts",   desc: "MTN MoMo, Vodafone Cash, AirtelTigo. Your win is confirmed, your money moves, no waiting." },
   { icon: Users,      color: "text-violet-400", bg: "bg-violet-400/10", glow: "rgba(167,139,250,0.12)", title: "Build your player career", desc: "Profiles, stats, highlights, and a ranking system that tracks your growth across every tournament." },
-  { icon: Globe,      color: "text-sky-400",    bg: "bg-sky-400/10",    glow: "rgba(56,189,248,0.12)",  title: "Every format, one arena",  desc: "Online, LAN, hybrid — a single bracket tool built for Mobile Legends, CODM, EA FC, PUBG, and more." },
+  { icon: Globe,      color: "text-sky-400",    bg: "bg-sky-400/10",    glow: "rgba(56,189,248,0.12)",  title: "Every format, one arena",  desc: "Online, LAN, hybrid, a single bracket tool built for Mobile Legends, CODM, EA FC, PUBG, and more." },
   { icon: Award,      color: "text-amber-400",  bg: "bg-amber-400/10",  glow: "rgba(251,191,36,0.12)",  title: "Verified organizers",      desc: "Every organizer on the platform is vetted. Legit tournaments, clear rules, and real accountability." },
 ];
 
 const STEPS = [
   { n: "01", title: "Claim your handle",  desc: "Set up your account in minutes. Lock in the IGN that'll carry your legacy across every bracket." },
   { n: "02", title: "Pick your arena",    desc: "Browse verified tournaments with clear rules, trusted organizers, and brackets that actually run." },
-  { n: "03", title: "Compete with proof", desc: "Play, submit match evidence, and have every result logged — no disputes, no he-said-she-said." },
+  { n: "03", title: "Compete with proof", desc: "Play, submit match evidence, and have every result logged, no disputes, no he-said-she-said." },
   { n: "04", title: "Win and get paid",   desc: "Verified win = automatic Mobile Money payout. The moment it's confirmed, it's yours." },
 ];
 
@@ -76,9 +76,9 @@ const GAMES = [
 ];
 
 const TESTIMONIALS = [
-  { quote: "This is the first platform where my rank actually means something. Every win is on the record — that's legacy.", name: "Phoenix GG",   role: "MLBB · 3× tournament winner", avatar: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?q=80&w=200&auto=format&fit=crop" },
+  { quote: "This is the first platform where my rank actually means something. Every win is on the record, that's legacy.", name: "Phoenix GG",   role: "MLBB · 3× tournament winner", avatar: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?q=80&w=200&auto=format&fit=crop" },
   { quote: "The bracket ran clean, results were verified, and no one could dispute our win. That's how it should always be.", name: "Ada Boateng", role: "CODM · Team Captain",          avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&auto=format&fit=crop" },
-  { quote: "We've run 40+ brackets on Apex. The organizer tools are unmatched — our players trust every tournament we post.", name: "Nana Asante", role: "Organizer · Accra Esports",   avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&auto=format&fit=crop" },
+  { quote: "We've run 40+ brackets on Apex. The organizer tools are unmatched, our players trust every tournament we post.", name: "Nana Asante", role: "Organizer · Accra Esports",   avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&auto=format&fit=crop" },
 ];
 
 const STATUS_CHIP: Record<string, { cls: string; label: string }> = {
@@ -245,7 +245,7 @@ const Landing = () => {
         <div className="relative max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 pt-14 pb-16 lg:pt-24 lg:pb-24">
           <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
 
-            {/* Left — text */}
+            {/* Left, text */}
             <div>
               {/* Badge slides in from left */}
               <motion.span
@@ -258,7 +258,7 @@ const Landing = () => {
                 <span>Next-gen esports infrastructure for West Africa</span>
               </motion.span>
 
-              {/* Headline — each line clips up from below */}
+              {/* Headline, each line clips up from below */}
               <h1 className="font-display text-[2.2rem] sm:text-5xl lg:text-[2.2rem] xl:text-[2.8rem] font-bold tracking-tight leading-[1.1] mt-5">
                 <div style={{ overflow: "hidden" }}>
                   <motion.span
@@ -288,7 +288,7 @@ const Landing = () => {
                 transition={{ duration: 0.6, ease: EASE, delay: 0.38 }}
                 className="text-sm sm:text-base text-slate-400 mt-4 leading-relaxed max-w-md"
               >
-                Escrow-backed prizes, instant payouts, verified organizers, and real results — every match, every time.
+                Escrow-backed prizes, instant payouts, verified organizers, and real results, every match, every time.
               </motion.p>
 
               <motion.div
@@ -323,7 +323,7 @@ const Landing = () => {
               </motion.div>
             </div>
 
-            {/* Right — browser mockup: enters from right, then gently floats */}
+            {/* Right, browser mockup: enters from right, then gently floats */}
             <motion.div
               className="hidden lg:block relative"
               initial={reduceMotion ? undefined : { opacity: 0, x: 60 }}
@@ -519,7 +519,7 @@ const Landing = () => {
             <div>
               <p className="text-xs font-semibold text-cyan-400 uppercase tracking-[0.2em] mb-2.5">Supported titles</p>
               <h2 className="font-display text-3xl sm:text-5xl font-bold text-white tracking-tight">Compete in every title that matters</h2>
-              <p className="text-slate-400 text-sm sm:text-lg mt-3 max-w-xl">From 5v5 MOBA to 1v1 fighters — if it's competitive in West Africa, there's a bracket here.</p>
+              <p className="text-slate-400 text-sm sm:text-lg mt-3 max-w-xl">From 5v5 MOBA to 1v1 fighters, if it's competitive in West Africa, there's a bracket here.</p>
             </div>
             <Link to="/signup" className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition-colors shrink-0">
               View all titles <ArrowRight className="w-4 h-4" />
@@ -537,7 +537,7 @@ const Landing = () => {
               show: { transition: { staggerChildren: 0.12 } },
             }}
           >
-            {/* FC 26 — large (2 cols × 2 rows) */}
+            {/* FC 26, large (2 cols × 2 rows) */}
             <motion.div
               variants={reduceMotion ? undefined : {
                 hidden: { opacity: 0, x: -40, scale: 0.95 },
@@ -645,7 +645,7 @@ const Landing = () => {
               </span>
             </h2>
             <p className="text-slate-400 text-sm sm:text-lg mt-3">
-              Every corner of the platform is built to keep the game honest — so your skill, your results, and your name mean something real.
+              Every corner of the platform is built to keep the game honest, so your skill, your results, and your name mean something real.
             </p>
           </motion.div>
 
@@ -696,7 +696,7 @@ const Landing = () => {
           <motion.div {...fade()} className="flex items-end justify-between flex-wrap gap-4 mb-10 sm:mb-12">
             <div>
               <p className="text-xs font-semibold text-cyan-400 uppercase tracking-[0.2em] mb-2.5">How it works</p>
-              <h2 className="font-display text-3xl sm:text-5xl font-bold text-white tracking-tight">From signup to champion — four steps</h2>
+              <h2 className="font-display text-3xl sm:text-5xl font-bold text-white tracking-tight">From signup to champion, four steps</h2>
             </div>
             <Link to="/signup" className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition-colors">
               Get started <ArrowRight className="w-4 h-4" />
@@ -711,7 +711,7 @@ const Landing = () => {
                 whileHover={reduceMotion ? undefined : { y: -4 }}
                 className="relative rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6 overflow-hidden group hover:border-cyan-500/25 hover:bg-slate-900 transition-all"
               >
-                {/* Big number — spring pop */}
+                {/* Big number, spring pop */}
                 <motion.p
                   className="font-display text-6xl font-bold text-transparent bg-clip-text bg-linear-to-b from-cyan-500/50 to-transparent"
                   initial={reduceMotion ? undefined : { scale: 0.4, opacity: 0 }}
@@ -780,9 +780,9 @@ const Landing = () => {
       {/* ── CTA ──────────────────────────────────────────────────────────────── */}
       <section className="bg-slate-950 py-14 sm:py-24 border-t border-slate-800/60">
         <div className="max-w-5xl mx-auto px-5 sm:px-6 lg:px-8">
-          {/* Entrance wrapper — whileInView only */}
+          {/* Entrance wrapper, whileInView only */}
           <motion.div {...fade()}>
-          {/* Glow pulse wrapper — animate only, no conflict */}
+          {/* Glow pulse wrapper, animate only, no conflict */}
           <motion.div
             className="relative rounded-2xl sm:rounded-3xl border border-cyan-500/25 overflow-hidden p-8 sm:p-10 md:p-14 text-center"
             style={{ background: "radial-gradient(ellipse 70% 100% at 50% 0%, rgba(6,182,212,0.15), transparent), #0f172a" }}
@@ -811,7 +811,7 @@ const Landing = () => {
               Your next bracket is live
             </h2>
             <p className="text-sm sm:text-base text-slate-300 mt-3 max-w-xl mx-auto">
-              Sign up free, lock in your handle, and step into verified competition — your legacy starts here.
+              Sign up free, lock in your handle, and step into verified competition, your legacy starts here.
             </p>
 
             <div className="flex flex-col sm:flex-row justify-center gap-3 mt-7 sm:mt-8">

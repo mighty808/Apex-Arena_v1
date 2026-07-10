@@ -30,7 +30,7 @@ const inputCls = "w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4
 const selectCls = "w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500/70 focus:bg-slate-800 transition-colors";
 
 function fmtDate(iso?: string) {
-  if (!iso) return "—";
+  if (!iso) return "-";
   return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 }
 
@@ -109,7 +109,7 @@ export default function PayoutsPage() {
         accountName: accountName.trim(),
         notes: notes.trim() || undefined,
       });
-      showSuccess("Payout request submitted. Processing typically takes 1–3 business days.");
+      showSuccess("Payout request submitted. Processing typically takes 1-3 business days.");
       setShowForm(false);
       setAmount(""); setMomoNumber(""); setAccountName(""); setNotes(""); setMomoError(null);
       void load();
@@ -167,14 +167,14 @@ export default function PayoutsPage() {
           </div>
           <p className="text-sm text-slate-500 -mt-2">Request and track your withdrawals.</p>
 
-          {/* Stats — mobile dropdown */}
+          {/* Stats, mobile dropdown */}
           {statsOpen && (
             <div className="sm:hidden grid grid-cols-2 gap-2">
               {[
-                { icon: DollarSign,   iconColor: "text-orange-400",  bg: "from-orange-500/15 to-amber-500/15",  label: "Available",  value: loading ? "—" : (wallet ? `GHS ${(wallet.availableBalance / 100).toFixed(2)}` : "—") },
-                { icon: Send,         iconColor: "text-cyan-400",    bg: "from-cyan-500/15 to-indigo-500/15",   label: "Requests",   value: loading ? "—" : String(requests.length) },
-                { icon: CheckCircle2, iconColor: "text-emerald-400", bg: "from-emerald-500/15 to-teal-500/15", label: "Total Paid", value: loading ? "—" : (totalPaid > 0 ? `GHS ${totalPaid.toFixed(2)}` : "—") },
-                { icon: Clock3,       iconColor: "text-amber-400",   bg: "from-amber-500/15 to-orange-500/15", label: "Pending",    value: loading ? "—" : (totalPending > 0 ? `GHS ${totalPending.toFixed(2)}` : "—") },
+                { icon: DollarSign,   iconColor: "text-orange-400",  bg: "from-orange-500/15 to-amber-500/15",  label: "Available",  value: loading ? "-" : (wallet ? `GHS ${(wallet.availableBalance / 100).toFixed(2)}` : "-") },
+                { icon: Send,         iconColor: "text-cyan-400",    bg: "from-cyan-500/15 to-indigo-500/15",   label: "Requests",   value: loading ? "-" : String(requests.length) },
+                { icon: CheckCircle2, iconColor: "text-emerald-400", bg: "from-emerald-500/15 to-teal-500/15", label: "Total Paid", value: loading ? "-" : (totalPaid > 0 ? `GHS ${totalPaid.toFixed(2)}` : "-") },
+                { icon: Clock3,       iconColor: "text-amber-400",   bg: "from-amber-500/15 to-orange-500/15", label: "Pending",    value: loading ? "-" : (totalPending > 0 ? `GHS ${totalPending.toFixed(2)}` : "-") },
               ].map((s) => (
                 <div key={s.label} className="flex items-center gap-2.5 bg-slate-800/50 border border-slate-700/60 rounded-xl px-3 py-3">
                   <div className={`w-7 h-7 rounded-lg bg-linear-to-br ${s.bg} flex items-center justify-center shrink-0`}>
@@ -189,13 +189,13 @@ export default function PayoutsPage() {
             </div>
           )}
 
-          {/* Stats — desktop always visible */}
+          {/* Stats, desktop always visible */}
           <div className="hidden sm:grid grid-cols-4 gap-3">
             {[
-              { icon: DollarSign,   iconColor: "text-orange-400",  bg: "from-orange-500/15 to-amber-500/15",  label: "Available",  value: loading ? "—" : (wallet ? `GHS ${(wallet.availableBalance / 100).toFixed(2)}` : "—") },
-              { icon: Send,         iconColor: "text-cyan-400",    bg: "from-cyan-500/15 to-indigo-500/15",   label: "Requests",   value: loading ? "—" : String(requests.length) },
-              { icon: CheckCircle2, iconColor: "text-emerald-400", bg: "from-emerald-500/15 to-teal-500/15", label: "Total Paid", value: loading ? "—" : (totalPaid > 0 ? `GHS ${totalPaid.toFixed(2)}` : "—") },
-              { icon: Clock3,       iconColor: "text-amber-400",   bg: "from-amber-500/15 to-orange-500/15", label: "Pending",    value: loading ? "—" : (totalPending > 0 ? `GHS ${totalPending.toFixed(2)}` : "—") },
+              { icon: DollarSign,   iconColor: "text-orange-400",  bg: "from-orange-500/15 to-amber-500/15",  label: "Available",  value: loading ? "-" : (wallet ? `GHS ${(wallet.availableBalance / 100).toFixed(2)}` : "-") },
+              { icon: Send,         iconColor: "text-cyan-400",    bg: "from-cyan-500/15 to-indigo-500/15",   label: "Requests",   value: loading ? "-" : String(requests.length) },
+              { icon: CheckCircle2, iconColor: "text-emerald-400", bg: "from-emerald-500/15 to-teal-500/15", label: "Total Paid", value: loading ? "-" : (totalPaid > 0 ? `GHS ${totalPaid.toFixed(2)}` : "-") },
+              { icon: Clock3,       iconColor: "text-amber-400",   bg: "from-amber-500/15 to-orange-500/15", label: "Pending",    value: loading ? "-" : (totalPending > 0 ? `GHS ${totalPending.toFixed(2)}` : "-") },
             ].map((s) => (
               <div key={s.label} className="flex items-center gap-3 bg-slate-800/50 border border-slate-700/60 rounded-xl px-4 py-3">
                 <div className={`w-8 h-8 rounded-lg bg-linear-to-br ${s.bg} flex items-center justify-center shrink-0`}>

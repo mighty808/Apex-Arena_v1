@@ -31,7 +31,7 @@ function RoleBadge({ role }: { role: TournamentChatMessage['senderRole'] }) {
   return null;
 }
 
-/** Finds the `@token` immediately before the cursor, if any — drives the mention dropdown. */
+/** Finds the `@token` immediately before the cursor, if any, drives the mention dropdown. */
 function findActiveMentionToken(value: string, cursor: number): { query: string; anchor: number } | null {
   const beforeCursor = value.slice(0, cursor);
   const match = /@([^\s@]*)$/.exec(beforeCursor);
@@ -39,7 +39,7 @@ function findActiveMentionToken(value: string, cursor: number): { query: string;
   return { query: match[1], anchor: match.index };
 }
 
-/** Cosmetic only — highlights `@<roster display name>` and `@all`/`@everyone` occurrences in rendered content. */
+/** Cosmetic only, highlights `@<roster display name>` and `@all`/`@everyone` occurrences in rendered content. */
 function renderContentWithMentions(content: string, roster: ChatRosterMember[]): ReactNode {
   const names = [...roster.map((m) => m.displayName), 'all', 'everyone'].filter(Boolean);
   if (names.length === 0) return content;
@@ -69,7 +69,7 @@ function renderContentWithMentions(content: string, roster: ChatRosterMember[]):
 
 interface TournamentChatPanelProps {
   tournamentId: string;
-  /** Admins are always privileged for @all — defaults to true since every Admin-app caller is an admin. */
+  /** Admins are always privileged for @all, defaults to true since every Admin-app caller is an admin. */
   viewerCanMentionAll?: boolean;
 }
 

@@ -102,7 +102,7 @@ export default function JoinedTournamentDetailsCard({ reg }: Props) {
         {/* Bottom fade */}
         <div className="absolute inset-0 bg-linear-to-t from-slate-900 via-slate-900/20 to-transparent" />
 
-        {/* Tournament status — top right */}
+        {/* Tournament status, top right */}
         <div className="absolute top-2.5 right-2.5">
           <span className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full bg-slate-950/80 backdrop-blur-sm border border-white/10 ${tourMeta.text}`}>
             <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${tourMeta.dot}`} />
@@ -110,7 +110,7 @@ export default function JoinedTournamentDetailsCard({ reg }: Props) {
           </span>
         </div>
 
-        {/* Game logo — bottom left */}
+        {/* Game logo, bottom left */}
         {reg.gameLogoUrl && imageUrl && (
           <div className="absolute bottom-2.5 left-2.5">
             <img
@@ -121,7 +121,7 @@ export default function JoinedTournamentDetailsCard({ reg }: Props) {
           </div>
         )}
 
-        {/* Prize won or placement — bottom right */}
+        {/* Prize won or placement, bottom right */}
         {prizeGhs ? (
           <div className="absolute bottom-2.5 right-2.5">
             <span className="text-[11px] font-bold text-amber-300 bg-slate-950/80 backdrop-blur-sm px-2 py-0.5 rounded-full border border-amber-400/20">
@@ -135,7 +135,7 @@ export default function JoinedTournamentDetailsCard({ reg }: Props) {
             </span>
           </div>
         ) : (
-          /* Registration status — bottom left if no game logo offset, else offset */
+          /* Registration status, bottom left if no game logo offset, else offset */
           <div className={`absolute bottom-2.5 ${reg.gameLogoUrl && imageUrl ? "left-11" : "left-3"}`}>
             <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border backdrop-blur-sm ${regMeta.cls}`}>
               {regMeta.label}
@@ -174,7 +174,7 @@ export default function JoinedTournamentDetailsCard({ reg }: Props) {
             <p className="text-[10px] text-slate-600 uppercase tracking-wide mb-0.5 flex items-center gap-1">
               <Gamepad2 className="w-2.5 h-2.5" /> In-Game ID
             </p>
-            <p className="text-[11px] font-medium text-orange-300 truncate">{reg.inGameId || "—"}</p>
+            <p className="text-[11px] font-medium text-orange-300 truncate">{reg.inGameId || "-"}</p>
           </div>
           <div>
             <p className="text-[10px] text-slate-600 uppercase tracking-wide mb-0.5 flex items-center gap-1">

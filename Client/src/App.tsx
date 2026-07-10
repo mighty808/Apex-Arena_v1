@@ -42,13 +42,17 @@ const About             = lazy(() => import("./pages/public/about"));
 const Careers           = lazy(() => import("./pages/public/careers"));
 const PrivacyPolicy     = lazy(() => import("./pages/public/privacy-policy"));
 const TermsOfService    = lazy(() => import("./pages/public/terms-of-service"));
-const PublicTournaments = lazy(() => import("./pages/public/tournaments"));
+const PublicTournaments    = lazy(() => import("./pages/public/tournaments"));
+const PublicPlayerProfile  = lazy(() => import("./pages/public/player-profile"));
 
 // Auth / dashboard pages
 const Dashboard             = lazy(() => import("./pages/auth/Dashboard"));
 // Single import for LeaderboardPage — reused on both /leaderboard and /auth/leaderboard
 const LeaderboardPage       = lazy(() => import("./pages/auth/LeaderboardPage"));
 const NotificationsPage     = lazy(() => import("./pages/auth/NotificationsPage"));
+const SettingsPage          = lazy(() => import("./pages/auth/SettingsPage"));
+const CommunityPage         = lazy(() => import("./pages/auth/CommunityPage"));
+const TeamsPage             = lazy(() => import("./pages/auth/FriendsPage"));
 const PrizesPage            = lazy(() => import("./pages/auth/PrizesPage"));
 const TransactionsPage      = lazy(() => import("./pages/auth/transactions"));
 const PlayerProfile         = lazy(() => import("./pages/auth/player/profile"));
@@ -123,7 +127,7 @@ const App = () => {
           "--toastify-color-dark": "#1e293b",
           "--toastify-color-light": "#94a3b8",
           "--toastify-color-info": "#0ea5e9",
-          "--toastify-color-success": "#10b981",
+          "--toastify-color-success": "#0ea5e9",
           "--toastify-color-warning": "#f59e0b",
           "--toastify-color-error": "#ef4444",
           "--toastify-text-color-light": "#f1f5f9",
@@ -149,6 +153,7 @@ const App = () => {
           <Route path="forgot" element={<ForgotPassword />} />
           <Route path="verify-otp" element={<VerifyOtp />} />
           <Route path="tournaments" element={<PublicTournaments />} />
+          <Route path="players/:username" element={<PublicPlayerProfile />} />
           <Route path="leaderboard" element={<LeaderboardPage />} />
           <Route path="*" element={<NotFound />} />
         </Route>
@@ -163,6 +168,9 @@ const App = () => {
             <Route path="wallet" element={<TransactionsPage />} />
             <Route path="leaderboard" element={<LeaderboardPage />} />
             <Route path="notifications" element={<NotificationsPage />} />
+            <Route path="settings" element={<SettingsPage />} />
+            <Route path="community" element={<CommunityPage />} />
+            <Route path="teams" element={<TeamsPage />} />
             <Route path="prizes" element={<PrizesPage />} />
             <Route path="contact-us" element={<ContactUs />} />
 

@@ -113,7 +113,7 @@ function PaginationBar({
   const end   = Math.min((page + 1) * pageSize, total);
   return (
     <div className="flex items-center justify-between px-4 py-2.5 border-t border-slate-800">
-      <p className="text-xs text-slate-500 tabular-nums">{start}–{end} of {total}</p>
+      <p className="text-xs text-slate-500 tabular-nums">{start}-{end} of {total}</p>
       <div className="flex items-center gap-1">
         <button
           onClick={() => onChange(page - 1)}
@@ -390,7 +390,7 @@ function WithdrawModal({ balance, onClose, onSuccess }: { balance: number; onClo
 
           <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-slate-800/60 border border-slate-700 text-xs text-slate-400">
             <Clock className="w-3.5 h-3.5 shrink-0 mt-0.5 text-amber-400" />
-            Withdrawals are reviewed and processed within 1–2 business days.
+            Withdrawals are reviewed and processed within 1-2 business days.
           </div>
 
           <button onClick={handleWithdraw} disabled={!isValid || submitting}
@@ -452,7 +452,7 @@ export default function WalletPage() {
               createdAt:   String(t.created_at ?? t.createdAt ?? ""),
               gateway:     (t.payment_details as Record<string, unknown> | undefined)?.payment_gateway as string | undefined,
             }))
-            // Exclude internal webhook failure audit records — these are admin-only
+            // Exclude internal webhook failure audit records, these are admin-only
             .filter((t) => !t.description?.startsWith("WEBHOOK FAILURE"))
         );
       }
@@ -553,12 +553,12 @@ export default function WalletPage() {
           </div>
         )}
 
-        {/* Info strip — dropdown on mobile, grid on sm+ */}
+        {/* Info strip, dropdown on mobile, grid on sm+ */}
         {(() => {
           const infoItems = [
             { icon: CreditCard,   text: "MTN MoMo · Vodafone · AirtelTigo", sub: "Payment methods"           },
             { icon: CheckCircle2, text: "Escrow-secured",                    sub: "Entry fees held safely"     },
-            { icon: Clock,        text: "1–2 business days",                 sub: "Withdrawal processing time" },
+            { icon: Clock,        text: "1-2 business days",                 sub: "Withdrawal processing time" },
           ];
           return (
             <>
@@ -609,7 +609,7 @@ export default function WalletPage() {
         {/* ── Two-column layout ───────────────────────────────────────────── */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-5 items-start">
 
-          {/* LEFT — Transaction History */}
+          {/* LEFT, Transaction History */}
           <div className="rounded-2xl border border-slate-800 bg-slate-900 overflow-hidden">
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800">
               <div>
@@ -677,7 +677,7 @@ export default function WalletPage() {
             )}
           </div>
 
-          {/* RIGHT — Withdrawal Requests */}
+          {/* RIGHT, Withdrawal Requests */}
           <div className="rounded-2xl border border-slate-800 bg-slate-900 overflow-hidden">
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800">
               <div>

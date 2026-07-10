@@ -22,17 +22,17 @@ export interface AdminLoginPayload {
 }
 
 export interface AdminLoginResult {
-  /** Direct success — tokens + user returned */
+  /** Direct success, tokens + user returned */
   tokens?: AdminTokens;
   user?: AdminUser;
-  /** 2FA required — need to call verify endpoint */
+  /** 2FA required, need to call verify endpoint */
   requires2FA?: boolean;
   userId?: string;
-  /** 2FA setup required — show QR code first */
+  /** 2FA setup required, show QR code first */
   requires2FASetup?: boolean;
   qrCode?: string;
   secret?: string;
-  /** 2FA setup confirmed — no tokens, must re-login */
+  /** 2FA setup confirmed, no tokens, must re-login */
   setupComplete?: boolean;
   backupCodes?: string[];
 }

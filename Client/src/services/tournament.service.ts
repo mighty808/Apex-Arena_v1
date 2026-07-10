@@ -36,6 +36,14 @@ export interface LeagueSettings {
   fixturesGeneratedAt?: string;
 }
 
+export interface TournamentSponsor {
+  name: string;
+  logoUrl: string;
+  size: 'small' | 'medium' | 'large';
+  displayOrder: number;
+  websiteUrl?: string;
+}
+
 export interface Tournament {
   id: string;
   title: string;
@@ -66,6 +74,7 @@ export interface Tournament {
   gameMode?: string;
   isRegistered?: boolean;
   leagueSettings?: LeagueSettings;
+  sponsors?: TournamentSponsor[];
 }
 
 export interface LeagueTableRow {
@@ -381,6 +390,18 @@ export function mapTournament(
     })),
     thumbnailUrl: raw.thumbnail_url as string | undefined,
     bannerUrl: raw.banner_url as string | undefined,
+    sponsors: Array.isArray(raw.sponsors)
+      ? (raw.sponsors as Record<string, unknown>[])
+          .map((s) => ({
+            name: String(s.name ?? ''),
+            logoUrl: String(s.logo_url ?? s.logoUrl ?? ''),
+            size: (['small', 'medium', 'large'].includes(String(s.size)) ? String(s.size) : 'medium') as TournamentSponsor['size'],
+            displayOrder: Number(s.display_order ?? s.displayOrder ?? 0),
+            websiteUrl: (s.website_url ?? s.websiteUrl) as string | undefined,
+          }))
+          .filter((s) => s.name && s.logoUrl)
+          .sort((a, b) => a.displayOrder - b.displayOrder)
+      : undefined,
     rules: (raw.rules as Record<string, unknown>)?.description as string | undefined,
     requiresInGameId: Boolean((raw.rules as Record<string, unknown>)?.in_game_id_required ?? false),
     region: raw.region as string | undefined,

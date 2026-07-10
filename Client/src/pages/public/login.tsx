@@ -345,7 +345,7 @@ const Login = () => {
           />
         </div>
 
-        {/* Google Link Account — shown when user has a password account that needs linking */}
+        {/* Google Link Account, shown when user has a password account that needs linking */}
         {googleLinkState && (
           <div className="mt-4 space-y-3">
             <p className="text-sm text-amber-300 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2">

@@ -51,7 +51,7 @@ function loadGisScript(): Promise<void> {
     }
 
     if (document.getElementById(SCRIPT_ID)) {
-      // Script tag exists but hasn't loaded yet — wait for it
+      // Script tag exists but hasn't loaded yet, wait for it
       const existing = document.getElementById(SCRIPT_ID) as HTMLScriptElement;
       existing.addEventListener('load', () => resolve());
       existing.addEventListener('error', () => reject(new Error('Failed to load Google Sign-In')));

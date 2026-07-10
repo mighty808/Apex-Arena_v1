@@ -411,8 +411,8 @@ export default function EscrowManagement() {
                 <div className="p-6 space-y-5">
                   <div>
                     <p className="text-xs text-slate-500 uppercase tracking-widest mb-2">Timeline</p>
-                    <InfoRow label="Created" value={escrow.createdAt ? new Date(escrow.createdAt).toLocaleString() : '—'} />
-                    <InfoRow label="Last Updated" value={escrow.updatedAt ? new Date(escrow.updatedAt).toLocaleString() : '—'} />
+                    <InfoRow label="Created" value={escrow.createdAt ? new Date(escrow.createdAt).toLocaleString() : '-'} />
+                    <InfoRow label="Last Updated" value={escrow.updatedAt ? new Date(escrow.updatedAt).toLocaleString() : '-'} />
                   </div>
 
                   <div>

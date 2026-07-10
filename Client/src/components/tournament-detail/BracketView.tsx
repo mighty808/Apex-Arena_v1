@@ -160,7 +160,7 @@ function LegScoreDropdown({ p1Label, p2Label, p1IsMe, p2IsMe, p1Leg1, p2Leg1, p1
         <Name label={p1Label} isMe={p1IsMe} winning={s1 > s2} />
         <div className="flex items-center gap-1">
           <span className={`px-1.5 py-0.5 rounded bg-slate-800 ${s1 > s2 ? "text-amber-300" : "text-slate-400"}`}>{s1}</span>
-          <span className="text-slate-700 text-[10px]">–</span>
+          <span className="text-slate-700 text-[10px]">-</span>
           <span className={`px-1.5 py-0.5 rounded bg-slate-800 ${s2 > s1 ? "text-amber-300" : "text-slate-400"}`}>{s2}</span>
         </div>
         <Name label={p2Label} isMe={p2IsMe} winning={s2 > s1} />
@@ -190,7 +190,7 @@ function LegScoreDropdown({ p1Label, p2Label, p1IsMe, p2IsMe, p1Leg1, p2Leg1, p1
                 <Name label={p1Label} isMe={p1IsMe} winning={p1Agg > (p2Agg ?? 0)} />
                 <div className="flex items-center gap-1">
                   <span className={`px-1.5 py-0.5 rounded bg-slate-900 ${p1Agg > (p2Agg ?? 0) ? "text-white" : p1Agg === (p2Agg ?? 0) ? "text-amber-400" : "text-slate-500"}`}>{p1Agg}</span>
-                  <span className="text-slate-700 text-[10px]">–</span>
+                  <span className="text-slate-700 text-[10px]">-</span>
                   <span className={`px-1.5 py-0.5 rounded bg-slate-900 ${(p2Agg ?? 0) > p1Agg ? "text-white" : p1Agg === (p2Agg ?? 0) ? "text-amber-400" : "text-slate-500"}`}>{p2Agg ?? 0}</span>
                 </div>
                 <Name label={p2Label} isMe={p2IsMe} winning={(p2Agg ?? 0) > p1Agg} />
@@ -226,7 +226,7 @@ function MatchCard({
   const p1Win = p[0]?.result === "win";
   const p2Win = p[1]?.result === "win";
 
-  // "You" detection — match by userId or in-game ID
+  // "You" detection, match by userId or in-game ID
   const isMe = (participant: typeof p[0]) => {
     if (!participant) return false;
     const { extractEntityId: eid } = { extractEntityId: (v: unknown) => {
@@ -268,7 +268,7 @@ function MatchCard({
   const txtCls  = STATUS_TEXT[statusRaw] ?? STATUS_TEXT.pending;
   const statusLabel = STATUS_DISPLAY_LABEL[statusRaw] ?? statusRaw.replace(/_/g, " ");
 
-  // For leg1_done: show "First Leg Complete — Second Leg to be played"
+  // For leg1_done: show "First Leg Complete, Second Leg to be played"
   const isLeg1Done = statusRaw === "leg1_done";
   const isAwaitingPenalties = statusRaw === "awaiting_penalties";
 
@@ -280,12 +280,12 @@ function MatchCard({
     : "border-slate-700/60";
 
   const renderScore = (regular: number | null, pen: number | null, isWinner: boolean, decidedOnPen?: boolean) => {
-    if (!hasScores) return <span className="text-slate-700">—</span>;
+    if (!hasScores) return <span className="text-slate-700">-</span>;
     if (pen !== null) {
       return (
         <div className="flex items-center gap-1 shrink-0">
           <span className={`text-xs font-bold tabular-nums ${isWinner ? "text-orange-300" : "text-slate-500"}`}>
-            {regular ?? "—"}
+            {regular ?? "-"}
           </span>
           <span className="text-[9px] text-amber-500/80 font-bold tabular-nums">
             ({pen})
@@ -296,14 +296,14 @@ function MatchCard({
     if (decidedOnPen && isWinner) {
       return (
         <div className="flex items-center gap-1 shrink-0">
-          <span className="text-xs font-bold tabular-nums text-orange-300">{regular ?? "—"}</span>
+          <span className="text-xs font-bold tabular-nums text-orange-300">{regular ?? "-"}</span>
           <span className="text-[9px] text-amber-500/80 font-bold">(P)</span>
         </div>
       );
     }
     return (
       <span className={`text-xs font-bold tabular-nums shrink-0 ${isWinner ? "text-orange-300" : "text-slate-600"}`}>
-        {regular ?? "—"}
+        {regular ?? "-"}
       </span>
     );
   };
@@ -319,7 +319,7 @@ function MatchCard({
   const p1Pen = penScores[0]?.score ?? null;
   const p2Pen = penScores[1]?.score ?? null;
 
-  // Penalty override: parse "Regular time: X–Y · Penalties: P1–P2" from admin_override.reason
+  // Penalty override: parse "Regular time: X, Y · Penalties: P1, P2" from admin_override.reason
   const penaltyOverride = (() => {
     const raw = match as Record<string, unknown>;
     const adminOverride = raw.admin_override as Record<string, unknown> | undefined;
@@ -401,14 +401,14 @@ function MatchCard({
       {isLeg1Done && (
         <div className="mx-2 mb-1 px-2.5 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/25">
           <p className="text-[10px] font-semibold text-amber-400 text-center">
-            First Leg Complete — Second Leg to be played
+            First Leg Complete, Second Leg to be played
           </p>
         </div>
       )}
       {isAwaitingPenalties && (
         <div className="mx-2 mb-1 px-2.5 py-1.5 rounded-lg bg-orange-500/10 border border-orange-500/25">
           <p className="text-[10px] font-semibold text-orange-400 text-center">
-            Aggregate level — Penalty shootout required
+            Aggregate level, Penalty shootout required
           </p>
         </div>
       )}
@@ -457,7 +457,7 @@ function BracketColumns({
 
   // Measure the ACTUAL rendered height of every card. Cards vary in height
   // (bye vs regular rows, optional score/banner content), so connector geometry
-  // and card placement must come from real measurements — a hard-coded card
+  // and card placement must come from real measurements, a hard-coded card
   // height made the lines drift further from their cards down each column.
   useLayoutEffect(() => {
     const measure = () => {
@@ -545,7 +545,7 @@ function BracketColumns({
             </div>
 
             <div className="relative" style={{ height: `${boardHeight}px` }}>
-              {/* Cards — absolutely positioned from measured heights */}
+              {/* Cards, absolutely positioned from measured heights */}
               {matches.map((match, mi) => {
                 const matchId    = match._id ?? match.id;
                 const isClickable = Boolean(onMatchClick && matchId);
@@ -571,7 +571,7 @@ function BracketColumns({
                 );
               })}
 
-              {/* Connectors to the next round — drawn from measured card centers */}
+              {/* Connectors to the next round, drawn from measured card centers */}
               {ri < rounds.length - 1 && matches.length > 0 && (
                 <div className="absolute inset-0 pointer-events-none" style={{ overflow: "visible" }}>
                   {matches.map((_, mi) => (

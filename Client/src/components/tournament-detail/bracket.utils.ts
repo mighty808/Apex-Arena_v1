@@ -131,9 +131,9 @@ function buildRoundsFromFlatMatches(matches: BracketMatch[]): BracketRound[] {
     const hasGrandFinalMatch = gfMatches.length > 0;
     // Two possible shapes here:
     // - Legacy tournaments (generated before the losers-bracket removal) have a
-    //   separate bolted-on Grand Final match — the WB's own last round is really
+    //   separate bolted-on Grand Final match, the WB's own last round is really
     //   the Semi Finals feeding into it.
-    // - Current tournaments have no separate Grand Final match at all — the WB
+    // - Current tournaments have no separate Grand Final match at all, the WB
     //   reduces naturally all the way to one match, which IS the Grand Final.
     // Label accordingly so both old and new data render with correct names.
     const wbTotal = wbRounds.length;

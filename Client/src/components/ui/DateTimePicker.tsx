@@ -52,7 +52,7 @@ export function DateTimePicker({
     }
   }, [value]);
 
-  // Close on outside click (desktop only — mobile uses overlay tap)
+  // Close on outside click (desktop only, mobile uses overlay tap)
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {

@@ -31,7 +31,7 @@ function RoleBadge({ role }: { role: TournamentChatMessage['senderRole'] }) {
   return null;
 }
 
-/** Finds the `@token` immediately before the cursor, if any — drives the mention dropdown. */
+/** Finds the `@token` immediately before the cursor, if any, drives the mention dropdown. */
 function findActiveMentionToken(value: string, cursor: number): { query: string; anchor: number } | null {
   const beforeCursor = value.slice(0, cursor);
   const match = /@([^\s@]*)$/.exec(beforeCursor);
@@ -39,7 +39,7 @@ function findActiveMentionToken(value: string, cursor: number): { query: string;
   return { query: match[1], anchor: match.index };
 }
 
-/** Cosmetic only — highlights `@<roster display name>` and `@all`/`@everyone` occurrences in rendered content. */
+/** Cosmetic only, highlights `@<roster display name>` and `@all`/`@everyone` occurrences in rendered content. */
 function renderContentWithMentions(content: string, roster: ChatRosterMember[]): ReactNode {
   const names = [...roster.map((m) => m.displayName), 'all', 'everyone'].filter(Boolean);
   if (names.length === 0) return content;
@@ -69,7 +69,7 @@ function renderContentWithMentions(content: string, roster: ChatRosterMember[]):
 
 interface TournamentChatPanelProps {
   tournamentId: string;
-  /** Only organizers/co-organizers/admins can use @all — pages pass this based on the viewer's own role check. */
+  /** Only organizers/co-organizers/admins can use @all, pages pass this based on the viewer's own role check. */
   viewerCanMentionAll?: boolean;
 }
 
@@ -204,20 +204,30 @@ export function TournamentChatPanel({ tournamentId, viewerCanMentionAll = false 
 
               {messages.length === 0 && !isLoading ? (
                 <p className="text-xs text-slate-500 py-6 text-center">
-                  No messages yet — say hello.
+                  No messages yet, say hello.
                 </p>
               ) : (
                 messages.map((message) => {
                   const isMine = message.senderId === user?.id;
                   const isEditing = editingId === message.id;
                   return (
-                    <div key={message.id} className="group flex items-start gap-2">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-xs font-semibold text-slate-300">
-                            {message.senderDisplayName}
-                          </span>
-                          <RoleBadge role={message.senderRole} />
+                    // Social-media layout: my messages right-aligned in an
+                    // accent bubble, everyone else left-aligned in slate
+                    <div key={message.id} className={`group flex items-end gap-2 ${isMine ? "flex-row-reverse" : ""}`}>
+                      <div
+                        className={`max-w-[80%] min-w-0 rounded-2xl px-3 py-2 ${
+                          isMine
+                            ? "bg-orange-500/15 border border-orange-500/25 rounded-br-sm"
+                            : "bg-slate-800/70 border border-slate-700/60 rounded-bl-sm"
+                        }`}
+                      >
+                        <div className={`flex items-center gap-1.5 flex-wrap ${isMine ? "justify-end" : ""}`}>
+                          {!isMine && (
+                            <span className="text-xs font-semibold text-slate-300">
+                              {message.senderDisplayName}
+                            </span>
+                          )}
+                          {!isMine && <RoleBadge role={message.senderRole} />}
                           <span className="text-[10px] text-slate-600">
                             {formatMessageTime(message.createdAt)}
                           </span>
@@ -272,7 +282,7 @@ export function TournamentChatPanel({ tournamentId, viewerCanMentionAll = false 
                             </p>
                           )
                         ) : (
-                          <p className="text-sm text-slate-200 break-words mt-0.5">
+                          <p className={`text-sm text-slate-200 break-words mt-0.5 ${isMine ? "text-right" : ""}`}>
                             {renderContentWithMentions(message.content, roster)}
                           </p>
                         )}

@@ -171,7 +171,7 @@ const AdminProfile = () => {
         setAlert({ type: "error", msg });
         return;
       }
-      // Update session — read fresh tokens from localStorage in case the
+      // Update session, read fresh tokens from localStorage in case the
       // access token was silently refreshed since the component mounted.
       if (admin) {
         const freshTokens: AdminTokens = {

@@ -5,7 +5,7 @@
  * from the backend's snake_case responses when needed.
  */
 
-// User roles – player and organizer are the primary frontend roles (admin omitted)
+// User roles, player and organizer are the primary frontend roles (admin omitted)
 export type UserRole = 'player' | 'organizer';
 
 export interface UserSocialLinks {
@@ -171,7 +171,7 @@ export interface CheckUsernameResponse {
 }
 
 // ----------------------------------------------------------------------
-// Password management (optional – if you need them)
+// Password management (optional, if you need them)
 // ----------------------------------------------------------------------
 export interface PasswordResetRequest {
   email: string;

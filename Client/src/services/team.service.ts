@@ -45,8 +45,8 @@ export interface RecruitmentPost {
   teamName: string;
   title: string;
   description?: string;
-  requirements?: string;
-  positions?: number;
+  roles: string[];
+  skillLevel?: string;
   gameId?: string;
   gameName?: string;
   status: 'open' | 'closed' | 'filled';
@@ -73,6 +73,8 @@ export interface TeamFilters {
   limit?: number;
   gameId?: string;
   search?: string;
+  /** Teams the given user belongs to (captain or member) */
+  memberUserId?: string;
 }
 
 // ─── Mappers ─────────────────────────────────────────────────────────────────
@@ -111,7 +113,10 @@ function mapTeam(raw: Record<string, unknown>): Team {
     maxSize: raw.max_size as number | undefined,
     gameId: typeof game === 'object' ? String(game._id ?? game.id ?? '') : String(game ?? ''),
     gameName: typeof game === 'object' ? (game.name as string | undefined) : undefined,
-    isOpen: Boolean(raw.is_open ?? raw.isOpen ?? false),
+    // The server stores this as settings.is_recruiting; is_open never existed
+    isOpen: Boolean(
+      (raw.settings as Record<string, unknown> | undefined)?.is_recruiting ?? raw.is_open ?? raw.isOpen ?? false
+    ),
     createdAt: String(raw.created_at ?? raw.createdAt ?? ''),
   };
 }
@@ -125,8 +130,8 @@ function mapRecruitmentPost(raw: Record<string, unknown>): RecruitmentPost {
     teamName: typeof team === 'object' ? String(team.name ?? '') : '',
     title: String(raw.title ?? ''),
     description: raw.description as string | undefined,
-    requirements: raw.requirements as string | undefined,
-    positions: raw.positions as number | undefined,
+    roles: Array.isArray(raw.looking_for_roles) ? (raw.looking_for_roles as string[]) : [],
+    skillLevel: raw.looking_for_skill_level as string | undefined,
     gameId: typeof game === 'object' ? String(game._id ?? game.id ?? '') : String(game ?? ''),
     gameName: typeof game === 'object' ? (game.name as string | undefined) : undefined,
     status: (raw.status as RecruitmentPost['status']) ?? 'open',
@@ -137,7 +142,10 @@ function mapRecruitmentPost(raw: Record<string, unknown>): RecruitmentPost {
 }
 
 function mapApplication(raw: Record<string, unknown>): RecruitmentApplication {
-  const user = (raw.user_id ?? raw.user ?? {}) as Record<string, unknown>;
+  // The applications endpoint returns populated user docs directly
+  // ({_id, username, profile}), not wrapper objects, treat the row itself
+  // as the user when it carries a username.
+  const user = (raw.username ? raw : (raw.user_id ?? raw.user ?? {})) as Record<string, unknown>;
   const profile = (user.profile ?? {}) as Record<string, unknown>;
   const firstName = String(profile.first_name ?? user.first_name ?? '');
   const lastName = String(profile.last_name ?? user.last_name ?? '');
@@ -167,6 +175,7 @@ export const teamService = {
     if (filters.limit) query.set('limit', String(filters.limit));
     if (filters.gameId) query.set('game_id', filters.gameId);
     if (filters.search) query.set('search', filters.search);
+    if (filters.memberUserId) query.set('member_user_id', filters.memberUserId);
     const url = query.toString()
       ? `${TOURNAMENT_ENDPOINTS.TEAMS}?${query}`
       : TOURNAMENT_ENDPOINTS.TEAMS;
@@ -193,7 +202,8 @@ export const teamService = {
       logo_url: payload.logoUrl,
       game_id: payload.gameId,
       max_size: payload.maxSize,
-      is_open: payload.isOpen ?? false,
+      // Server field is is_recruiting (the old is_open was silently ignored)
+      is_recruiting: payload.isOpen ?? false,
     });
     if (!response.success) {
       const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to create team';
@@ -297,24 +307,25 @@ export const teamService = {
   // ─── Team Recruitment ──────────────────────────────────────────────────────
 
   async getRecruitmentPosts(teamId: string): Promise<RecruitmentPost[]> {
-    const response = await apiGet(`${TOURNAMENT_ENDPOINTS.RECRUITMENT_POSTS}/${teamId}/recruitment`);
+    // Server has no per-team GET route, the public list endpoint filters by team_id
+    const response = await apiGet(`${TOURNAMENT_ENDPOINTS.RECRUITMENT_POSTS}?team_id=${encodeURIComponent(teamId)}`, { skipCache: true });
     if (!response.success) return [];
     const data = response.data as Record<string, unknown>;
-    const list = (Array.isArray(data) ? data : (data.posts ?? data.data ?? [])) as Record<string, unknown>[];
+    const list = (Array.isArray(response.data) ? response.data : (data.posts ?? data.data ?? [])) as Record<string, unknown>[];
     return list.map(mapRecruitmentPost);
   },
 
   async createRecruitmentPost(
     teamId: string,
-    payload: { title: string; description?: string; requirements?: string; positions?: number; gameId?: string; expiresAt?: string },
+    payload: { title: string; description?: string; roles: string[]; skillLevel?: string; gameId?: string; expiresInDays?: number },
   ): Promise<RecruitmentPost> {
     const response = await apiPost(`${TOURNAMENT_ENDPOINTS.RECRUITMENT_POSTS}/${teamId}/recruitment`, {
       title: payload.title,
       description: payload.description,
-      requirements: payload.requirements,
-      positions: payload.positions,
+      looking_for_roles: payload.roles,
+      ...(payload.skillLevel ? { looking_for_skill_level: payload.skillLevel } : {}),
       game_id: payload.gameId,
-      expires_at: payload.expiresAt,
+      ...(payload.expiresInDays ? { expires_in_days: payload.expiresInDays } : {}),
     });
     if (!response.success) {
       const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to create recruitment post';
@@ -333,15 +344,14 @@ export const teamService = {
 
   async updateRecruitmentPost(
     postId: string,
-    updates: { title?: string; description?: string; requirements?: string; positions?: number; status?: string; expiresAt?: string },
+    updates: { title?: string; description?: string; roles?: string[]; skillLevel?: string; status?: string },
   ): Promise<RecruitmentPost> {
     const body: Record<string, unknown> = {};
     if (updates.title !== undefined) body.title = updates.title;
     if (updates.description !== undefined) body.description = updates.description;
-    if (updates.requirements !== undefined) body.requirements = updates.requirements;
-    if (updates.positions !== undefined) body.positions = updates.positions;
+    if (updates.roles !== undefined) body.looking_for_roles = updates.roles;
+    if (updates.skillLevel !== undefined) body.looking_for_skill_level = updates.skillLevel;
     if (updates.status !== undefined) body.status = updates.status;
-    if (updates.expiresAt !== undefined) body.expires_at = updates.expiresAt;
     const response = await apiPatch(`${TOURNAMENT_ENDPOINTS.RECRUITMENT_POST_DETAIL}/${postId}`, body);
     if (!response.success) {
       const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to update recruitment post';
@@ -382,9 +392,10 @@ export const teamService = {
     applicationId: string,
     accept: boolean,
   ): Promise<void> {
+    // applicationId is the applicant's user id; the server expects { accept }
     const response = await apiPost(
       `${TOURNAMENT_ENDPOINTS.RECRUITMENT_APPLICATION_RESPOND}/${postId}/applications/${applicationId}/respond`,
-      { action: accept ? 'accept' : 'reject' },
+      { accept },
     );
     if (!response.success) {
       const msg = (response as { error?: { message?: string } }).error?.message ?? 'Failed to respond to application';

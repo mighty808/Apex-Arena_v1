@@ -18,6 +18,7 @@ import {
   AlertTriangle,
   Trophy,
   Bell,
+  MessagesSquare,
 } from "lucide-react";
 
 import { useEffect, useRef, useState } from "react";
@@ -36,6 +37,8 @@ const NAV_GROUPS = [
       { to: "/admin/verifications", icon: BadgeCheck, label: "Verifications" },
       { to: "/admin/games", icon: Gamepad2, label: "Games" },
       { to: "/admin/game-requests", icon: Puzzle, label: "Game Requests" },
+      { to: "/admin/community", icon: MessagesSquare, label: "Community" },
+      { to: "/admin/teams", icon: Users, label: "Teams" },
       { to: "/admin/notifications", icon: Bell, label: "Notifications" },
       { to: "/admin/disputes", icon: AlertTriangle, label: "Disputes" },
       { to: "/admin/payouts", icon: Wallet, label: "Payouts" },

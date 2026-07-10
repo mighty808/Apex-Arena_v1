@@ -22,7 +22,7 @@ beforeEach(() => {
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
-describe('apiFetch — success path', () => {
+describe('apiFetch, success path', () => {
   it('returns parsed JSON on a successful response', async () => {
     server.use(
       http.get(MOCK_URL, () =>
@@ -67,7 +67,7 @@ describe('apiFetch — success path', () => {
   });
 });
 
-describe('apiFetch — idempotency keys', () => {
+describe('apiFetch, idempotency keys', () => {
   it('adds X-Idempotency-Key on POST', async () => {
     let capturedKey: string | null = null;
 
@@ -100,7 +100,7 @@ describe('apiFetch — idempotency keys', () => {
   });
 });
 
-describe('apiFetch — GET caching', () => {
+describe('apiFetch, GET caching', () => {
   it('returns the same promise for duplicate GET calls within TTL', async () => {
     let callCount = 0;
 
@@ -113,7 +113,7 @@ describe('apiFetch — GET caching', () => {
 
     const [r1, r2] = await Promise.all([apiGet(MOCK_URL), apiGet(MOCK_URL)]);
 
-    // Both should have the same data — only one network call was made
+    // Both should have the same data, only one network call was made
     expect(callCount).toBe(1);
     expect(r1).toEqual(r2);
   });
@@ -135,7 +135,7 @@ describe('apiFetch — GET caching', () => {
   });
 });
 
-describe('apiFetch — 401 retry', () => {
+describe('apiFetch, 401 retry', () => {
   it('retries once with refreshed token on 401 and returns data', async () => {
     let callCount = 0;
 
@@ -174,7 +174,7 @@ describe('apiFetch — 401 retry', () => {
   });
 });
 
-describe('apiFetch — error handling', () => {
+describe('apiFetch, error handling', () => {
   it('returns INVALID_RESPONSE when server returns non-JSON', async () => {
     server.use(
       http.get(MOCK_URL, () =>
