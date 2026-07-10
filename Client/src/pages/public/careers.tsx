@@ -1,3 +1,5 @@
+import { SEOHead } from "../../components/SEOHead";
+
 const OPENINGS = [
   {
     role: "Frontend Engineer",
@@ -32,6 +34,12 @@ const OPENINGS = [
 const Careers = () => {
   return (
     <div className="bg-slate-950 text-white">
+      <SEOHead
+        title="Careers"
+        description="Join the Apex Arenas team and help build Ghana's competitive gaming ecosystem. Open roles in engineering, design, and operations."
+        keywords="jobs Ghana, tech careers Ghana, esports jobs, gaming company"
+        canonicalPath="/careers"
+      />
       {/* Hero */}
       <section className="border-b border-slate-800/70">
         <div className="mx-auto max-w-5xl px-6 py-16">
