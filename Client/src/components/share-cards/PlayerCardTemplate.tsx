@@ -10,7 +10,7 @@ import { ApexBranding, CardBackground, CardAvatar } from "./CardChrome";
 // scanning a shared card lands straight on the player's Apex profile.
 
 export function publicProfileUrl(username: string): string {
-  return `https://www.apexarenas.com/players/${encodeURIComponent(username)}`;
+  return `https://apex-arenas.com/players/${encodeURIComponent(username)}`;
 }
 
 export default function PlayerCardTemplate({
