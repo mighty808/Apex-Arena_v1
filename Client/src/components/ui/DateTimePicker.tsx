@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { DayPicker } from "react-day-picker";
 import { format, parse, isValid } from "date-fns";
 import { CalendarDays, Clock, ChevronLeft, ChevronRight } from "lucide-react";
@@ -38,6 +39,9 @@ export function DateTimePicker({
   const [minute, setMinute] = useState(parsed ? parsed.getMinutes() : 0);
   const [selected, setSelected] = useState<Date | undefined>(parsed ?? undefined);
   const ref = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [desktopPos, setDesktopPos] = useState<{ top: number; left: number; width: number; maxHeight: number } | null>(null);
 
   // Keep internal state in sync when value prop changes from outside
   useEffect(() => {
@@ -56,10 +60,50 @@ export function DateTimePicker({
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      if (ref.current?.contains(target)) return;
+      if (panelRef.current?.contains(target)) return;
+      setOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  // Position the desktop popover relative to the trigger, flipping up and
+  // clamping height so it always stays within the viewport instead of being
+  // cut off by ancestor overflow or the bottom of the screen.
+  useLayoutEffect(() => {
+    if (!open) {
+      setDesktopPos(null);
+      return;
+    }
+    const compute = () => {
+      const trigger = triggerRef.current;
+      if (!trigger) return;
+      const rect = trigger.getBoundingClientRect();
+      const gap = 8;
+      const panelHeight = panelRef.current?.offsetHeight ?? 480;
+      const spaceBelow = window.innerHeight - rect.bottom - gap;
+      const spaceAbove = rect.top - gap;
+      const openUp = spaceBelow < panelHeight && spaceAbove > spaceBelow;
+      const top = openUp
+        ? Math.max(gap, rect.top - gap - Math.min(panelHeight, spaceAbove))
+        : rect.bottom + gap;
+      const maxHeight = Math.max(200, openUp ? spaceAbove : spaceBelow);
+      const width = Math.max(rect.width, 300);
+      const left = Math.min(
+        Math.max(gap, rect.left),
+        window.innerWidth - width - gap,
+      );
+      setDesktopPos({ top, left, width, maxHeight });
+    };
+    compute();
+    window.addEventListener("resize", compute);
+    window.addEventListener("scroll", compute, true);
+    return () => {
+      window.removeEventListener("resize", compute);
+      window.removeEventListener("scroll", compute, true);
+    };
   }, [open]);
 
   // Lock body scroll on mobile when open
@@ -118,11 +162,12 @@ export function DateTimePicker({
             nav:          "flex items-center gap-1",
             button_previous: "p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors",
             button_next:     "p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors",
+            month_grid:   "w-full border-collapse",
             weeks:        "space-y-1",
-            weekdays:     "flex",
+            weekdays:     "flex justify-between",
             weekday:      "w-9 text-center text-[11px] font-semibold text-slate-500 uppercase",
-            week:         "flex",
-            day:          "w-9 h-9",
+            week:         "flex justify-between",
+            day:          "w-9 h-9 text-center",
             day_button:   "w-9 h-9 rounded-lg text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-colors flex items-center justify-center",
             selected:     "bg-orange-500 text-white rounded-lg",
             today:        "font-bold text-orange-400",
@@ -226,6 +271,7 @@ export function DateTimePicker({
     <div ref={ref} className={`relative ${className}`}>
       {/* Trigger */}
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setOpen((o) => !o)}
         className={`w-full flex items-center gap-3 bg-slate-800/50 border rounded-xl px-4 py-2.5 text-sm transition-colors text-left ${
@@ -247,14 +293,29 @@ export function DateTimePicker({
             className="fixed inset-0 bg-black/60 z-40 sm:hidden"
             onClick={() => setOpen(false)}
           />
-          <div className="fixed bottom-0 left-0 right-0 z-50 sm:hidden rounded-t-2xl overflow-hidden">
+          <div className="fixed bottom-0 left-0 right-0 z-50 sm:hidden rounded-t-2xl overflow-hidden max-h-[85vh] overflow-y-auto">
             {panel}
           </div>
 
-          {/* Desktop: absolute dropdown */}
-          <div className="hidden sm:block absolute z-50 mt-2 left-0 right-0 sm:right-auto">
-            {panel}
-          </div>
+          {/* Desktop: portal dropdown, positioned to stay within the viewport */}
+          {createPortal(
+            <div
+              ref={panelRef}
+              className="hidden sm:block fixed z-[70]"
+              style={{
+                top: desktopPos?.top ?? -9999,
+                left: desktopPos?.left ?? -9999,
+                width: desktopPos?.width,
+                maxHeight: desktopPos?.maxHeight,
+                visibility: desktopPos ? "visible" : "hidden",
+              }}
+            >
+              <div className="max-h-full overflow-y-auto rounded-2xl">
+                {panel}
+              </div>
+            </div>,
+            document.body,
+          )}
         </>
       )}
     </div>

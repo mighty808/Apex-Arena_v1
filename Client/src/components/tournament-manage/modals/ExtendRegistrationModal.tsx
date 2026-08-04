@@ -22,8 +22,8 @@ export default function ExtendRegistrationModal({
 }: ExtendRegistrationModalProps) {
   return (
     <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex items-center justify-center z-50 p-4">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl shadow-black/60">
-        <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-slate-800/80 bg-slate-950/30">
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm overflow-visible shadow-2xl shadow-black/60">
+        <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-slate-800/80 bg-slate-950/30 rounded-t-2xl">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-orange-500/15 border border-orange-500/25 flex items-center justify-center">
               <CalendarDays className="w-4 h-4 text-orange-400" />
